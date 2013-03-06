@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<link href="cs2_assignment.css" rel="stylesheet" type="text/css" />
+<title>CS2 Assignment 9: Othello - Part 2</title>
+</head>
+
+<body>
+<div class="content">
+
+<div class="author">Author: Kevin Chen</div>
+<h1>CS2 Assignment 9: Othello - Part 2</h1>
+<h2>Due Monday, March 18, 2013, at 28:00 PST</h2>
+
+<hr />
+
+<h2>Introduction</h2>
+
+<p>This is <b>Part 2</b> of a two-part CS2 assignment on Othello. 
+<a href="assignment9_part1.html">For <b>Part 1</b>, click here.</a></p>
+<hr />
+
+<h2>Assignment Background</h2>
+
+<p>As mentioned in part 1, <span class="keyword">decision trees</span> are 
+the standard for AI in most board games such as Othello. A decision tree
+is a tree of all possible moves down to a certain depth; the AI can then
+choose the branch that leads to the best outcome. For simple games like 
+tic-tac-toe, this can be done for the depth of the entire game, while for 
+complicated games like chess where the decision tree branches quickly it 
+is only feasible to construct a decision tree for a limited depth 
+(e.g. 10 moves ahead). For games with an especially high "branching factor",
+e.g. Go, constructing the entire decision tree is entirely impractical, 
+and so programs must decide intelligently which parts of the decision tree
+to explore. This is also true in environments where time is a real 
+constraint, e.g. an AI playing a casual game against a human, or an AI 
+playing in a tournament setting where each side is allotted a maximum total 
+time. For Othello, the top of our tree might look something like this:</p>
+<img src="images/tree.png" />
+
+<p>The main idea behind a decision tree is that we want to make the choice that <span class="hilite">maximizes our minimum gain.</span> That is, we want to make the choice that, if the opponent consistently makes choices that minimize our score, gives us the best possible minimum score. We do this because often making the choice that simply maximizes our score is not the best option; there are situations where we could take a large number of pieces from our opponent only to have the majority of them retaken by a series of clever moves. Maximizing our minimum gain ensures that we are not so vulnerable to such 'critical hits'.</p>
+
+<p>So we could simply generate a decision tree down to a practical depth and choose the branch where the smallest possible end score within that branch is the highest such score across all branches. However, this is an inefficient approach, since we spend a lot of time considering branches that will end up being worse than branches we have already considered or that our opponent would never let us reach. If we could stop ourselves from tracing too far into these, we could save time, allowing us to look deeper with the time we have.</p>
+
+<p>To accomplish this, we could use an idea called <span class="keyword">alpha-beta pruning</span>. As we construct the decision tree, we keep track of two statistics: <span class="hilite">alpha is our best overall score</span>, and <span class="hilite">beta is the opponent's best overall score</span>. We start alpha at some large negative number and beta at some large positive number; as we traverse the tree, we increase alpha (since we try to maximize), and we decrease beta (since the opponent tries to minimize). If at any point we discover that making a move would set alpha greater than beta, we need not trace further into that subtree, since that represents a "mistake" made by some side; either we have made a bad move that allowed the opponent to drive the minimum score too low, or the opponent has made a bad move that allowed us to drive the maximum score too high. In any case, the entire subtree resulting from that decision need not be explored further.</p>
+
+<p>The danger with conducting our search to a large depth is that, if a position has a high branching factor, we could run out of time and end up with incomplete results. To that effect, we can employ a strategy called <span class="keyword">iterative deepening</span>, where we start out the search with a small depth and then repeat it at larger depths while using information from the earlier trials. That way, if we are interrupted due to time constraints, we can still have a good (if not necessarily optimal) result.</p>
+
+<p>There are other techniques (maintaining an opening book, maintaining a transposition table) that might be useful to you when constructing your AI. You are free to read up on these. In fact, for this assignment, you are free to read up on anything that might help you, with the only exception being actual source code in any non-pseudocode language.</p>
+
+<hr />
+
+<h2>Prerequisites</h2>
+
+<p>These are the prerequisites for getting this assignment to compile 
+(ubuntu package names):
+    <ul>
+    <li>g++ 4.6.x+</li>
+    <li>openjdk-6-jre</li>    
+    <li>openjdk-6-jdk (optional - only if you want to use Java)
+    </ul>
+Ask a TA if you need help retrieving these packages, or if these packages appear 
+to be missing from the CS cluster.</p>
+<hr />
+
+<h2>Assignment (20 points)</h2>
+
+<p>For this week, your goal is to continue improving your AI. You will earn points
+by crushing the provided AI opponents.</p>
+
+<p><div class="points easy">5</div>
+    Beat <b>ConstantTimePlayer</b> (performs a quick evaluation of moves, then chooses one).</p>
+<p><div class="points easy">3</div>
+    Beat <b>BetterPlayer</b> (recursively evaluates moves to depth 3, then chooses the best move).</p>
+<p><div class="points hard">2</div>
+    Beat <b>OogeePlayer</b> (similar to BetterPlayer, recursing to depth 4 with different parameters). <span class="emph">The OogeePlayer player will not be provided to you.</span></p>
+<p><div class="points hard">1</div>
+    Beat <b>DeepKwok</b> (maintains an opening book, uses alpha-beta pruning, uses a transposition table, searches as far as it thinks it can within time limit). <span class="emph">The DeepKwok player will not be provided to you.</span></p>
+    
+<p>You may earn points for each objective by either defeating each opponent at least once during the tournament, or outranking each opponent in the final tournament standings. Draws are judged in your favor, except where caused by an error (in which case judgment is passed by the TAs).</p>
+
+<br />
+<p>In addition to your AI bot, fill in the <span class="code">README.txt</span> file 
+in your repository with the following (make sure to <span class="hilite">git add</span> it when committing):
+</p>
+
+<p><div class="points easy">3</div>
+Describe how and what each group member contributed for the past two weeks. If you
+are solo, these points will be part of the next section.</p>
+
+<p><div class="points easy">6</div>
+Document the improvements that your group made to your AI to make it tournament-worthy.
+Explain why you think your strategy(s) will work. Feel free to discuss any ideas were
+tried but didn't work out.</p>
+
+<p>
+Remember, the tournament will take place on
+<b>Tuesday, March 19, at 5:00 PM</b> in <b>Annenberg 104 (computer cluster)</b>, and will be publicly viewable. We will be providing refreshments (pizza and drinks) if you want to come by and watch - it should be fun!</p>
+
+<p>On the day of the tournament, you will be able to view realtime standings at: </p>
+<a href="http://courses.cms.caltech.edu/cs2/status.html">http://courses.cms.caltech.edu/cs2/status.html</a>
+
+
+<hr />
+<p>If you have any questions about this week's assignment, please contact cs2-tas@ugcs.caltech.edu, or show up at any TA's office hours.</p>
+
+</div>
+
+
+
+</body>
+
+</html>

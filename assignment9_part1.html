@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<link href="cs2_assignment.css" rel="stylesheet" type="text/css" />
+<title>CS2 Assignment 9: Othello - Part 1</title>
+</head>
+
+<body>
+<div class="content">
+
+<div class="author">Author: Kevin Chen</div>
+<h1>CS2 Assignment 9: Othello - Part 1</h1>
+<h2>Due Monday, March 11, 2013, at 28:00 PST</h2>
+
+<hr />
+
+<h2>Introduction</h2>
+
+<p>This is <b>Part 1</b> of a two-part CS2 assignment on Othello. 
+<a href="assignment9_part2.html">For <b>Part 2</b>, click here.</a></p>
+<hr />
+
+<h2>Assignment Background</h2>
+
+<p>Othello (also known as Reversi) is a board game played on an 8x8 board between two sides: White and Black. The board starts out with the four centermost squares populated in an alternating pattern, like so:</p>
+
+<table class="board">
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="W"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+</table>
+<div style="clear: both"></div>
+
+<p>On every move, a player must play a stone such that one or more of their opponent's stones are located contiguously between the stone placed and some other stone of the same color in the horizontal, vertical, or diagonal directions. All such stones belonging to an opponent are then flipped to the player's own color.</p>
+
+<p>To make this more clear, consider what happens when black plays the following move (highlighted in red). 
+Notice that the white stone is flipped because it is between the the stone that was just put down 
+and another black stone.</p>
+
+<table class="board">
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B S"></div></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="W"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+</table>
+
+<table class="board">
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
+</table>
+<div style="clear: both"></div>
+
+<p>If a player cannot make any moves, play continues with the other player. The game ends when there are no legal moves remaining, and <span class="keyword">the player with the most stones of their own color wins.</span></p>
+
+<p>Now that you know the rules of Othello, your team's task is to create an AI program
+capable of playing the game! Your AI will be graded based on its performance
+versus a force of precoded bots codenamed SimplePlayer, ConstantTimePlayer, 
+BetterPlayer, OogeePlayer, and DeepKwok. In addition, we'll pit your team's AI against
+those of your classmates in a (hopefully) epic tournament for honor and glory.</p>
+
+<p>This is a difficult task, no doubt. In fact, 8x8 Othello is not yet "solved", 
+which means that we still cannot determine, computationally or otherwise, the 
+outcome of a game where both players play perfectly (as a side note, 8x8 checkers 
+<span class="emph">is</span> weakly solved). Don't worry though; we'll start small. 
+For this week, your goals are to create an AI that can <span class="keyword">
+(1) play valid moves</span>, and <span class="keyword">(2) beat SimplePlayer</span>
+(which just plays randomly).
+
+<p>Any good Othello AI needs a method of ranking different moves in order to 
+choose the best one. This is generally done in terms of the board position;
+a good move will (eventually) result in a favorable board position
+for the AI, while a bad move will in an unfavorable one. To determine which
+board states are favorable and which are not, you will want to develop
+a <span class="keyword">heuristic</span> that takes a board position and 
+returns a numeric "score". This score describes how far in your favor the 
+board position is (usually a heuristic is set up so that a higher score is 
+better).</p>
+
+<p>Because Othello is won by having the greater number of stones by the end
+of the game, one simple heuristic might be the difference between the 
+number of pieces you have and the number of pieces your opponent has:</p>
+
+    <div class="code">board position score = (# pieces you have) - (# pieces your opponent has)</div>
+
+<p>However, we can think of more strategic considerations. For example, 
+notice that a piece in the corner of the board can never be captured, and 
+a piece on the edge of the board can only be captured by other edge pieces. 
+These spaces, then, are quite valuable. Spaces that grant access to the 
+corners, though, are a terrible idea to play a piece in, since then the 
+opponent can often play a piece in the corner.</p> 
+
+<p>We can incorporate these observations into our heuristic as modifiers.
+For example, we could multiply the value of a play in the corner by 3, causing 
+such plays preferred over others; or, we could multiply a play in a square 
+adjacent to the corner by -3, causing such plays to be considered only if 
+the alternatives are truly unfavorable.</p>
+
+<p>Now we can now play the move that results in a board position with the 
+highest score. This is much better than playing randomly! However, there is 
+still a problem with this approach. Because a heuristic is simply an 
+estimate, a board position that may look good early in the game might actually
+be terrible in the long run. This is particularly true in the early and mid
+stages of an Othello game; it is not uncommon for a player to recover
+from having only 1 piece left to retake the whole board by the end.</p>
+
+<p>One standard way to solve this problem is the use a
+<span class="keyword">decision tree</span> - a tree of all possible moves
+down to a certain depth. Then, you can choose the branch that leads to the
+best outcome. A decision tree essentially lets you look a number of steps into 
+the future, where your heuristic will hopefully be more accurate. The full
+details are described in <a href="assignment9_part2.html"><b>Part 2</b></a>, 
+if you would like to get a head start for next week. While a tree is almost
+certainly required to defeat more difficult opponents, one is not necessarily 
+required to beat SimplePlayer.</p>
+<hr />
+
+<h2>Prerequisites</h2>
+
+<p>These are the prerequisites for getting this assignment to compile 
+(ubuntu package names):
+    <ul>
+    <li>g++ 4.6.x+</li>
+    <li>openjdk-6-jre</li>    
+    <li>openjdk-6-jdk (optional - only if you want to use Java)
+    </ul>
+Ask a TA if you need help retrieving these packages, or if these packages appear 
+to be missing from the CS cluster.</p>
+<hr />
+
+<h2>Assignment (20 points)</h2>
+
+<h3>Using Bitbucket and Git</h3>
+<p>In past weeks, you have pulled the assignment directories using Git, but have
+turned your code in via Moodle. For this project, to encourage you to take
+advantage of Git's version control functionality, you will be required to use Git
+to turn in your assignments as well.</p>
+
+<p>Since this project is optionally a team project, we are also encouraging you 
+to use Git as a software development tool. Using Git will help you keep your
+group's code synchronized and help your group reconcile changes.</p>
+
+<p>Here's what you should already have done, given that you're reading this:</p>
+
+<ul>
+    <li>Create a Bitbucket account for yourself. This applies even if you're
+    in a group.</li>
+    <li>If you're in a group, one of you should create a team account for the
+    group. Then, add every group member to the team account.This will make it 
+    easier for your group to share code.
+    </li>
+    <li>Go to <a href="https://bitbucket.org/caltechcs2/cs2_othello">the 
+    repository page</a> for this assignment.</li>
+    <li>Click on the "Fork" button. Set the owner to your group's team account,
+    or to yourself if soloing. Make sure "Inherit repository user/group
+    permissions" is checked, so the TAs can access your repository for grading.
+    Then, click "Fork repository".</li>
+    <li>Click on the "Clone" button. Copy the command line it provides, and
+    run that. That will create a new local repository synchronized to your fork.</li>
+</ul>
+
+
+<p>Here's what you should do now, to practice the basic version-control operations 
+you'll need to perform during the course of this assignment:</p>
+
+<ul>
+    <li>Each group member should make some small changes to the 
+    <span class="code">exampleplayer.cpp</span> file. Then, each group member
+    should commit their changes locally using 
+    <span class="code">git commit -a</span>.</li>
+    <li>Each group should now also create a file called 
+    <span class="code">README.txt</span>. The file need not contain anything
+    of substance just yet; it'll be populated next week. The person creating
+    the file should now <span class="code">git add README.txt</span> at the
+    command line, then commit the added file using 
+    <span class="code">git commit</span>.</li>
+    <li>Each group member should now <span class="code">git push</span>
+    their changes. Each group member should <span class="code">git pull</span> 
+    before pushing to avoid throwing an error.</li>
+    <li>In the event that a merge conflict is generated, open up the problem
+    file in a text editor and resolve the conflict by hand; then commit and
+    push.</li>
+</ul>
+
+<p><div class="points easy">5</div>As an incentive for getting familiar with Git
+early (and starting early!), there's a small bonus if every member of your group 
+has committed at least one change by <span class="keyword">Sunday, March 10, at 
+09:00 PDT</span>.</p>
+
+<h3>Writing Your AI</h3>
+
+<p>In this assignment, we have provided you with a framework that will simulate
+the tournament setup. While the actual framework code is in Java (hence the
+Java runtime requirement), we have provided you with some wrapper classes so
+that you can code in C++. If you would like to use a language other than C++,
+check out the <a href="#other_languages">section at the end</a>.
+</p>
+
+<p>To get started, check out <span class="keyword">exampleplayer.cpp</span>. You'll
+notice that it includes one function definition, <span class="code">doMove()</span>. 
+The framework will call this function with your opponent's last move as well as 
+the time you have left for the game. Your AI will be expected to return a valid 
+move (or <span class="code">NULL</span> if there are none). Of course, to figure 
+out which moves are valid or not, your AI will need to keep track of the Othello 
+board state for itself. To help get you started, we have provided an Othello board 
+class in <span class="keyword">board.cpp</span>.</p>
+
+<p>As you can see, it has a bunch of useful functions, such as 
+<span class="code">checkMove()</span>, <span class="code">doMove()</span>, 
+and <span class="code">hasMoves()</span>. You are free to use and modify this 
+class as you wish. Be aware though; while it does the job, it is definitely not 
+the most efficient. We expect that the highest-performing AI's will end up rolling 
+their own board-state implementations.</p>
+
+<p>The makefile is set up to build exampleplayer.cpp into the executable 
+<span class="keyword">player</span>. <span class="hilite">
+You should rename your AI something more unique by setting the PLAYERNAME 
+variable in the makefile (the name should reflect your team name).</span>
+To test your AI, run the 
+<span class="keyword">testgame.cpp</span> program. To use it, simply pass it the 
+names of two AI programs as arguments (the first program will play as black,
+the second as white). The testgame program will also accept the names of the
+three easier precoded AIs ("SimplePlayer", "ConstantTimePlayer", "BetterPlayer") 
+as well as "Human", which lets you play one of the sides. For example, to play 
+your AI as black against SimplePlayer, you would run:</p>
+
+    <div class="code">./testgame player SimplePlayer</div>
+
+<p>This should invoke a Java application that will render the game to a 
+separate window. To play against SimplePlayer yourself:</p>
+
+    <div class="code">./testgame Human SimplePlayer</div>
+
+<p>testgame also takes an optional 3rd argument, which is the time allotted to
+each player in milliseconds. If it is not provided, both players are given
+unlimited time. For example, to give each player 16 minutes each:</p>
+
+    <div class="code">./testgame player SimplePlayer 960000</div>
+<br />
+
+<p><div class="points easy">14</div>
+Now, it's up to you to actually implement a working AI. Use exampleplayer as a base
+(rename it if you wish) and fill in the appropriate functions:
+<ul>
+    <li><span class="code">constructor</span> - should do all of your 
+        initialization, such as setting up any variables (like your board object).</li>
+    <li><span class="code">Move *doMove(Move *opponentsMove, int msLeft)</span> -
+        should update your internal board state based on the given opponent's 
+        move and then calculate and return a valid move</li>
+</ul>
+Remember, you can use the provided Board class to make things easier.
+By "working AI", we mean one that can successfully play games to completion 
+within the tournament framework (no invalid moves, passes when it should, etc).
+For these 14 points, your AI does not have to be good; it simply has to 
+<span class="hilite">work</span>.
+</p>
+
+<div style="background-color:#ffcccc;padding:0 10px 10px 10px;border:2px solid red;">
+<p><span class="keyword">IMPORTANT:</span> Because the C++ wrapper communicates with 
+the Java framework using <span class="code">stdin</span> and 
+<span class="code">stdout</span>, you should <span class="keyword">NOT</span> 
+use <span class="code">stdout</span> when debugging. Instead, use 
+<span class="code">stderr</span>; this is as simple as replacing 
+<span class="code">cout</span> with <span class="code">cerr</span>:</p>
+    <div class="code">std::cerr << "blah" << std::endl;</div>
+<p>If you want to use <span class="code">printf()</span>, you can do:</p>
+    <div class="code">fprintf(stderr, "%d\n", "123");</div>
+</div>
+</p>
+
+<p><div class="points hard">6</div>
+The next step is to make your AI good enough to beat SimplePlayer. Remember,
+SimplePlayer just plays randomly, so this shouldn't be too difficult. A good
+heuristic function should be enough to beat it consistently.
+
+
+<p>When writing your AI, you should keep in mind a few rules for the tournament:
+<ul>
+    <li>Your final executable program should have a unique name related to your team name.</li>
+    <li>During the tournament, each side is allowed up to 16 minutes total per game; this is
+    subject to change, so make sure to pay attention to <span class="code">msLeft</span>.</li>
+    <li>The constructor for your AI must return within 30 seconds.</li>
+    <li>Your AI must not try to steal resources from the other player (such as memory). During
+    the tournament, you will be limited to 768M of memory (the wrapper classes already do this).
+    </li>
+    <li>Your AI may be permitted to read from and write to files with filename beginning with your team name (or some other name unique to you). The data files will be in the same folder as your executable. Remember that there will be multiple copies of your AI running at the same time. This rule may be subject to change if it is found infeasible.</li>
+</ul>
+</p>
+<hr />
+<a name="other_languages">
+<h3>Using Other Languages</h3>
+</a>
+While we only provide framework code for C++, you can actually use any language
+you want to write your AI, <span class="keyword"> as long as it runs on the 
+cluster computers.</span>. If your team is planning to use a different 
+language, please make sure to let the TAs know.</p>
+
+<p>If you take a look at <span class="code">java/WrapperPlayer.java</span>, you will see 
+that it simply runs an external program and communicates with it using 
+<span class="code">stdin</span> and <span class="code">stdout</span>.
+After your AI is done initializing, the wrapper expects a single newline (\n) delimited
+line. Then, for moves the wrapper sends lines of the form:</p>
+    <div class="code">x y msLeft</div>
+<p>where <span class="code">x</span> and <span class="code">y</span> represent
+your opponent's move (both -1 to indicate a pass), and <span class="code">msLeft</span>
+is the time you have left in milliseconds. The wrapper expects lines of the form:</p>
+    <div class="code">x y</div>
+<p>where <span class="code">x</span> and <span class="code">y</span> represent
+your move (both -1 for a pass). Look at <span class="code">wrapper.cpp</span>
+for a concrete example of how your program should communicate.</p>
+
+
+If you want to use <span class="keyword">Java</span>, it's slightly simpler
+since the framework is also in Java. Check out <span class="code">java/ExamplePlayer.java</span>
+and <span class="code">java/OthelloBoard.java</span>; they are equivalent to
+the C++ starting classes we give you. In addition, there are makefile targets
+for building/cleaning the Java files if you want to use them:</p>
+    <div class="code">make java
+make cleanjava</div>
+<p>You will want to modify <span class="code">java/TestGame.java</span> to test
+your Java AI.</p>
+
+<p>Just remember - using a higher level language like Java or Python will 
+likely put you at a disadvantage in terms of pure speed versus using C++ 
+(which means you probably won't be able to use your allotted time as efficiently).</p>
+
+<hr />
+<p>If you have any questions about this week's assignment, please contact cs2-tas@ugcs.caltech.edu, or show up at any TA's office hours.</p>
+
+</div>
+
+
+
+</body>
+
+</html>
