@@ -60,6 +60,16 @@ public class WrapperPlayer implements OthelloPlayer {
                 Thread.yield();
                 Thread.sleep(100);
             }
+            
+            // Print out everything from stderr again.
+            try {
+                while (stderr.ready()) {
+                    System.out.println(stderr.readLine());
+                }
+            } catch (Exception e) {   
+                e.printStackTrace();             
+            }
+                    
             line = br.readLine();
             if (line == null || line.equals("-1 -1")) {
                 return null;
@@ -80,15 +90,10 @@ public class WrapperPlayer implements OthelloPlayer {
     public void init(OthelloSide side) {
         try {
             String cmd = "ulimit -m " + MAX_MEMORY_KB + " -v " + MAX_MEMORY_KB + ";";
-            cmd += name + " " + side;
+            cmd += "./" + name + " " + side;
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", cmd);
             p = pb.start();            
             
-            /*String[] cmdarray = new String[2];            
-            cmdarray[0] = "./" + name;
-            cmdarray[1] = side.toString();
-            
-            p = Runtime.getRuntime().exec(cmdarray);*/
             br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));                    
             bw = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));

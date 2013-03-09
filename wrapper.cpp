@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
         cout.flush();
         
         // Delete move objects.
-        delete opponentsMove;
-        delete playersMove;        
+        if (opponentsMove != NULL) delete opponentsMove;
+        if (playersMove != NULL) delete playersMove; 
     }
 
     return 0;
