@@ -42,7 +42,7 @@ public class WrapperPlayer implements OthelloPlayer {
                 System.out.println(stderr.readLine());
             }
         } catch (Exception e) {   
-            e.printStackTrace();             
+            e.printStackTrace();
         }
 
         startTime = System.currentTimeMillis();
@@ -54,22 +54,28 @@ public class WrapperPlayer implements OthelloPlayer {
                 bw.write(opponentsMove.getX() + " " + opponentsMove.getY()
                     + " " + millisLeft + "\n");
             }
-            bw.flush();            
+            bw.flush();
             
             while (!br.ready()) {
+                // Print out everything from stderr again.
+                try {
+                    while (stderr.ready()) {
+                        System.out.println(stderr.readLine());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                try {
+                    int exitvalue = p.exitValue();
+                    // If we got an exit value (versus exception), it means
+                    // the program has ended; don't wait for input.
+                    break;
+                } catch (IllegalThreadStateException e) {
+                    // Program still running, don't do anything.
+                }                                
                 Thread.yield();
                 Thread.sleep(100);
             }
-            
-            // Print out everything from stderr again.
-            try {
-                while (stderr.ready()) {
-                    System.out.println(stderr.readLine());
-                }
-            } catch (Exception e) {   
-                e.printStackTrace();             
-            }
-                    
             line = br.readLine();
             if (line == null || line.equals("-1 -1")) {
                 return null;
