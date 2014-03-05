@@ -11,4 +11,4 @@ OthelloFramework.jar: $(CLASSES)
 	$(JAVAC) $<
 
 clean:
-	rm -f $(CLASSES) OthelloGame*MoveThread.class OthelloGame*InitThread.class
+	rm -f $(CLASSES) OthelloGame*MoveThread.class OthelloGame*InitThread.class WrapperPlayer*.class
