@@ -161,3 +161,20 @@ int Board::countBlack() {
 int Board::countWhite() {
     return taken.count() - black.count();
 }
+
+/*
+ * Sets the board state given an 8x8 char array where 'w' indicates a white
+ * piece and 'b' indicates a black piece. Mainly for testing purposes.
+ */
+void Board::setBoard(char data[]) {
+    taken.reset();
+    black.reset();
+    for (int i = 0; i < 64; i++) {
+        if (data[i] == 'b') {
+            taken.set(i);
+            black.set(i);
+        } if (data[i] == 'w') {
+            taken.set(i);
+        }
+    }
+}

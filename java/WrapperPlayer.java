@@ -10,15 +10,42 @@ import java.io.OutputStreamWriter;
  */
 public class WrapperPlayer implements OthelloPlayer {
     private final static int MAX_MEMORY_KB = 786432;
-    private long startTime;
     private Process p;
     private BufferedReader br;
     private BufferedReader stderr;    
     private BufferedWriter bw;
     private String name;
-    private String test;
+
     public WrapperPlayer(String programName) {
         this.name = programName;
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                try {
+                    if (p != null) {
+                        br.close();
+                        stderr.close();
+                        bw.close();
+                        p.destroy();
+                    }
+                } catch (Exception e) {   
+                    e.printStackTrace();
+                }                
+            }
+        });
+    }
+
+    /**
+     * Prints out the stderr of the process to stdout.
+     */
+    private void printStdErr() {
+        try {
+            while (stderr.ready()) {
+                System.out.println(stderr.readLine());
+            }
+        } catch (Exception e) {   
+            e.printStackTrace();
+        }
     }
     
     /**
@@ -36,16 +63,8 @@ public class WrapperPlayer implements OthelloPlayer {
      * no legal moves to make.
      */
     public Move doMove(Move opponentsMove, long millisLeft) {    
-        // Print out everything from stderr.
-        try {
-            while (stderr.ready()) {
-                System.out.println(stderr.readLine());
-            }
-        } catch (Exception e) {   
-            e.printStackTrace();
-        }
+        printStdErr();
 
-        startTime = System.currentTimeMillis();
         String line;
         try {
             if (opponentsMove == null) {
@@ -57,14 +76,8 @@ public class WrapperPlayer implements OthelloPlayer {
             bw.flush();
             
             while (!br.ready()) {
-                // Print out everything from stderr again.
-                try {
-                    while (stderr.ready()) {
-                        System.out.println(stderr.readLine());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                printStdErr();
+
                 try {
                     int exitvalue = p.exitValue();
                     // If we got an exit value (versus exception), it means
@@ -76,6 +89,8 @@ public class WrapperPlayer implements OthelloPlayer {
                 Thread.yield();
                 Thread.sleep(100);
             }
+            printStdErr();
+
             line = br.readLine();
             if (line == null || line.equals("-1 -1")) {
                 return null;

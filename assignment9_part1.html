@@ -7,6 +7,37 @@
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <link href="cs2_assignment.css" rel="stylesheet" type="text/css" />
 <title>CS2 Assignment 9: Othello - Part 1</title>
+
+<script>
+function print_board(s, small, highlight) {
+    var classes = "board";
+    if (small) classes += " small";
+    if (highlight) classes += " highlight";
+
+    document.write('<table class="' + classes + '">');    
+    s.replace(/\s+/g, ' ');
+    for (var i = 0; i < 8; i++) {
+        document.write('<tr>');
+        for (var j = 0; j < 8; j++) {
+            document.write('<td>');
+            var c = s.charAt(i*8 + j);
+            if (c == 'o') {
+                document.write('<div class="W"></div>');
+            } else if (c == 'x') {
+                document.write('<div class="B"></div>');
+            } else if (c == 'O') {
+                document.write('<div class="W S"></div>');
+            } else if (c == 'X') {
+                document.write('<div class="B S"></div>');
+            }            
+            document.write('</td>');
+        }
+        document.write('</tr>\n');
+    }
+    document.write('</table>');
+}
+</script>
+
 </head>
 
 <body>
@@ -14,7 +45,7 @@
 
 <div class="author">Author: Kevin Chen</div>
 <h1>CS2 Assignment 9: Othello - Part 1</h1>
-<h2>Due Monday, March 11, 2013, at 28:00 PST</h2>
+<h2>Due Tuesday, March 11, 2014, at 17:00 PST</h2>
 
 <hr />
 
@@ -26,19 +57,25 @@
 
 <h2>Assignment Background</h2>
 
+
+<h3>Othello Rules</h3>
+
 <p>Othello (also known as Reversi) is a board game played on an 8x8 board between two sides: White and Black. The board starts out with the four centermost squares populated in an alternating pattern, like so:</p>
 
-<table class="board">
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="W"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-</table>
-<div style="clear: both"></div>
+<div align="center">
+<script>
+print_board('\
+--------\
+--------\
+--------\
+---ox---\
+---xo---\
+--------\
+--------\
+--------\
+');
+</script>
+</div>
 
 <p>On every move, a player must play a stone such that one or more of their opponent's stones are located contiguously between the stone placed and some other stone of the same color in the horizontal, vertical, or diagonal directions. All such stones belonging to an opponent are then flipped to the player's own color.</p>
 
@@ -46,44 +83,74 @@
 Notice that the white stone is flipped because it is between the the stone that was just put down 
 and another black stone.</p>
 
-<table class="board">
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B S"></div></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="W"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-</table>
+<div align="center">
+<div style="display: inline-block">
+<script>
+print_board('\
+--------\
+--------\
+---X----\
+---ox---\
+---xo---\
+--------\
+--------\
+--------\
+');
+</script>
+</div>
+<div style="display: inline-block; margin-left: 20px">
+<script>
+print_board('\
+--------\
+--------\
+---x----\
+---xx---\
+---xo---\
+--------\
+--------\
+--------\
+');
+</script>
+</div>
+</div>
 
-<table class="board">
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="B"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td><div class="B"></div></td> <td><div class="W"></div></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-<tr><td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td> <td></td></tr>
-</table>
-<div style="clear: both"></div>
+<p>If a player cannot make any moves, play continues with the other player. The game ends when there are no legal moves remaining, and <span class="keyword">the player with the most stones of their own color wins.</span> For example, the following board shows a finished game that black won 34-29. Note that even though there
+is an empty square, there are no more valid moves for either player:</p>
 
-<p>If a player cannot make any moves, play continues with the other player. The game ends when there are no legal moves remaining, and <span class="keyword">the player with the most stones of their own color wins.</span></p>
+<div align="center">
+<script>
+print_board('\
+o-xxxxxx\
+ooxxxxxx\
+oooxxxxx\
+ooxoxxxx\
+oooxoxxx\
+ooxoxoxx\
+ooxxoxox\
+oooooooo\
+');
+</script>
+</div>
 
 <p>Now that you know the rules of Othello, your team's task is to create an AI program
 capable of playing the game! Your AI will be graded based on its performance
-versus a force of precoded bots codenamed SimplePlayer, ConstantTimePlayer, 
+versus a force of bots codenamed SimplePlayer, ConstantTimePlayer, 
 BetterPlayer, OogeePlayer, and DeepKwok. In addition, we'll pit your team's AI against
 those of your classmates in a (hopefully) epic tournament for honor and glory.</p>
 
-<p>This is a difficult task, no doubt. In fact, 8x8 Othello is not yet "solved", 
-which means that we still cannot determine, computationally or otherwise, the 
-outcome of a game where both players play perfectly (as a side note, 8x8 checkers 
-<span class="emph">is</span> weakly solved). Don't worry though; we'll start small. 
-For this week, your goals are to create an AI that can <span class="keyword">
-(1) play valid moves</span>, and <span class="keyword">(2) beat SimplePlayer</span>
-(which just plays randomly).
+<p>This is a difficult task, no doubt. In fact, 8x8 Othello is not yet
+"solved", which means that we still cannot determine, computationally or
+otherwise, the outcome of a game where both players play perfectly (as a side
+note, 8x8 checkers <span class="emph">is</span> weakly solved). Don't worry
+though: we'll take steps one at a time.  For this week, your goals are to
+create an AI that can <span class="keyword"> (1) play valid moves</span>, <span
+class="keyword">(2) beat SimplePlayer</span> (which just plays randomly), and
+<span class="keyword">(3) build and use a minimax decision tree</span>.
+</p>
+
+
+<br/>
+<h3>Heuristic Functions</h3>
 
 <p>Any good Othello AI needs a method of ranking different moves in order to 
 choose the best one. This is generally done in terms of the board position;
@@ -97,13 +164,13 @@ better).</p>
 
 <p>Because Othello is won by having the greater number of stones by the end
 of the game, one simple heuristic might be the difference between the 
-number of pieces you have and the number of pieces your opponent has:</p>
+number of stones you have and the number of stones your opponent has:</p>
 
-    <div class="code">board position score = (# pieces you have) - (# pieces your opponent has)</div>
+    <div class="code">board position score = (# stones you have) - (# stones your opponent has)</div>
 
 <p>However, we can think of more strategic considerations. For example, 
 notice that a piece in the corner of the board can never be captured, and 
-a piece on the edge of the board can only be captured by other edge pieces. 
+a piece on the edge of the board can only be captured by other edge stones. 
 These spaces, then, are quite valuable. Spaces that grant access to the 
 corners, though, are a terrible idea to play a piece in, since then the 
 opponent can often play a piece in the corner.</p> 
@@ -122,15 +189,226 @@ be terrible in the long run. This is particularly true in the early and mid
 stages of an Othello game; it is not uncommon for a player to recover
 from having only 1 piece left to retake the whole board by the end.</p>
 
-<p>One standard way to solve this problem is the use a
-<span class="keyword">decision tree</span> - a tree of all possible moves
-down to a certain depth. Then, you can choose the branch that leads to the
-best outcome. A decision tree essentially lets you look a number of steps into 
-the future, where your heuristic will hopefully be more accurate. The full
-details are described in <a href="assignment9_part2.html"><b>Part 2</b></a>, 
-if you would like to get a head start for next week. While a tree is almost
-certainly required to defeat more difficult opponents, one is not necessarily 
-required to beat SimplePlayer.</p>
+
+<br/>
+<h3>Minimax Decision Trees</h3>
+
+<p>One standard way to solve this problem is the use a <span
+    class="keyword">decision tree</span> - a tree of all possible moves down to
+a certain depth. Then, you can choose the branch that leads to the best
+outcome. A decision tree essentially lets you look a number of steps into the
+future, where your heuristic will hopefully be more accurate. While a tree is
+almost certainly required to defeat more difficult opponents, one is not
+necessarily required to beat SimplePlayer.</p> 
+
+<p>
+For simple games like tic-tac-toe, this can be done for the depth
+of the entire game; for complicated games like chess, where the decision
+tree branches quickly, it is only feasible to construct a decision tree for a
+limited depth (e.g. 10 moves ahead). For games with an especially high
+"branching factor", e.g. Go, constructing the entire decision tree is entirely
+impractical, so programs must decide intelligently which parts of the
+decision tree to explore. This is also true in environments where time is a
+real constraint, e.g. an AI playing a casual game against a human, or an AI
+playing in a tournament setting where each side is allotted a maximum total
+time. </p>
+
+<a name="minimax_example"></a>
+<p>
+Let's consider a simple Othello decision tree with 2-ply depth 
+(ie. a turn by white followed by a turn by black):
+</p>
+
+<table id="minimaxTable" border="0" cellpadding="0" cellspacing="0">
+<tr>
+<td colspan="5">
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+');
+</script>
+<div class="bracket"></div>
+</td>
+</tr>
+
+<tr>
+<td colspan="2" width="400">
+<script>
+print_board('\
+--------\
+-O------\
+-o------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+', true, true);
+</script>
+<div class="bracket"></div>
+</td>
+
+<td colspan="3">
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xoooooO-\
+--------\
+--------\
+--------\
+--------\
+', true);
+</script>
+<div class="bracket" style="width: 66%">
+    <div class="bracket" style="width: 1px; border-left: 0; border-top: 0; margin: auto"></div>
+</div>
+</td>
+</tr>
+
+<tr>
+<td>
+<script>
+print_board('\
+--------\
+Xo------\
+-x------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+', true);
+</script>
+score = -5
+</td>
+
+<td>
+<script>
+print_board('\
+--------\
+-oX-----\
+-x------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+', true);
+</script>
+score = -5
+</td>
+
+<td>
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xxxxxxxX\
+--------\
+--------\
+--------\
+--------\
+', true);
+</script>
+score = -9
+</td>
+
+<td>
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xxooooo-\
+-X------\
+--------\
+--------\
+--------\
+', true);
+</script>
+score = +1
+</td>
+
+<td>
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xoxoooo-\
+---X----\
+--------\
+--------\
+--------\
+', true);
+</script>
+score = +1
+</td>
+
+</tr>
+</table>
+
+<p>
+Starting from the initial board state, we see that white can play 2
+potential moves; the board states after these 2 moves are shown in
+the 2nd layer of the tree. The 3rd layer of the tree shows the board 
+states for the possible moves for black, starting from one of the boards
+in layer 2. If we wanted to generate a 4th layer, we would enumerate all 
+the moves for white starting from the boards in layer 3; and so on. 
+The score in the last layer is just using the simple heuristic 
+described previously (difference in piece count).
+</p>
+
+<p>To use the tree, we want to make the choice that
+<span class="hilite">maximizes our minimum gain</span> (this idea is also
+referred to as <span class="keyword"> minimax</span>). That is, we want to
+make the choice that maximizes our eventual score, given that our opponent
+is also intelligent and consistently makes choices that minimize our future
+score. We do this because making the choice that simply maximizes our current
+score is often not the best option. There are situations where we could take a
+large number of stones from our opponent, only to have them retaken by a series
+of clever moves in the future. Maximizing our minimum gain ensures that we are
+not so vulnerable to such "critical hits".</p>
+
+<p>
+The above tree is a simple example of how minimax is better than a greedy
+approach. It initially seems like white's move on the right is good, since 
+it capture 4 of black's stones (for a heuristic score of +4). 
+However, minimizing white's score, black will play a move that recaptures
+these stones. This results in a terrible heuristic score of -9 (and game over)
+for white in the end.
+</p>
+
+<p>
+On the left branch, we see that white initally only captures 1 piece for a 
+score of -2. However, the best black can do in the next turn is to minimize
+white's score to -5 (either of the two moves does this).
+Since white obviously wants to maximize its score at each step, it should 
+choose the left move (highlighted in red), which leads to a score of -5, 
+versus the right move, which leads to a worse score of -9.
+</p>
+
+<p>
+So we could simply generate a decision tree down to a practical depth and
+use minimax to choose the branch that maximizes our minimum score. However, 
+this is an inefficient approach, since we spend a lot of time considering 
+branches that will end up being worse than branches we have already considered
+or that our opponent would never let us reach. If we could stop ourselves from
+tracing too far into these, we could save time, allowing us to look deeper with
+the time we have.  We will deal with solutions to this inefficiency next week.
+<a href="assignment9_part2.html">Feel free to look ahead though!</a>
+</p> 
+
 <hr />
 
 <h2>Prerequisites</h2>
@@ -183,7 +461,7 @@ you'll need to perform during the course of this assignment:</p>
 
 <ul>
     <li>Each group member should make some small changes to the 
-    <span class="code">exampleplayer.cpp</span> file. Then, each group member
+    <span class="code">player.cpp</span> file. Then, each group member
     should commit their changes locally using 
     <span class="code">git commit -a</span>.</li>
     <li>Each group should now also create a file called 
@@ -200,10 +478,12 @@ you'll need to perform during the course of this assignment:</p>
     push.</li>
 </ul>
 
-<p><div class="points easy">5</div>As an incentive for getting familiar with Git
+<p><div class="points easy">5</div>
+<div class="hint"><p>
+As an incentive for getting familiar with Git
 early (and starting early!), there's a small bonus if every member of your group 
-has committed at least one change by <span class="keyword">Sunday, March 10, at 
-09:00 PDT</span>.</p>
+has committed at least one change by <span class="keyword">Sunday, March 9, at 
+09:00 PDT</span>.</p></div></p>
 
 <h3>Writing Your AI</h3>
 
@@ -214,14 +494,14 @@ that you can code in C++. If you would like to use a language other than C++,
 check out the <a href="#other_languages">section at the end</a>.
 </p>
 
-<p>To get started, check out <span class="keyword">exampleplayer.cpp</span>. You'll
+<p>To get started, check out <span class="code">player.cpp</span>. You'll
 notice that it includes one function definition, <span class="code">doMove()</span>. 
 The framework will call this function with your opponent's last move as well as 
 the time you have left for the game. Your AI will be expected to return a valid 
 move (or <span class="code">NULL</span> if there are none). Of course, to figure 
 out which moves are valid or not, your AI will need to keep track of the Othello 
 board state for itself. To help get you started, we have provided an Othello board 
-class in <span class="keyword">board.cpp</span>.</p>
+class in <span class="code">board.cpp</span>.</p>
 
 <p>As you can see, it has a bunch of useful functions, such as 
 <span class="code">checkMove()</span>, <span class="code">doMove()</span>, 
@@ -230,12 +510,16 @@ class as you wish. Be aware though; while it does the job, it is definitely not
 the most efficient. We expect that the highest-performing AI's will end up rolling 
 their own board-state implementations.</p>
 
-<p>The makefile is set up to build exampleplayer.cpp into the executable 
-<span class="keyword">player</span>. <span class="hilite">
+<p>The makefile is set up to build <span class="code">player.cpp</span> into the executable 
+<span class="code">player</span>. <span class="keyword">
 You should rename your AI something more unique by setting the PLAYERNAME 
-variable in the makefile (the name should reflect your team name).</span>
-To test your AI, run the 
-<span class="keyword">testgame.cpp</span> program. To use it, simply pass it the 
+variable in the Makefile (the name should reflect your team name)</span>:</p>
+
+    <div class="code">PLAYERNAME  = bestplayerever</div>
+
+
+<p>To test your AI, run the 
+<span class="code">testgame</span> program. To use it, simply pass it the 
 names of two AI programs as arguments (the first program will play as black,
 the second as white). The testgame program will also accept the names of the
 three easier precoded AIs ("SimplePlayer", "ConstantTimePlayer", "BetterPlayer") 
@@ -249,31 +533,35 @@ separate window. To play against SimplePlayer yourself:</p>
 
     <div class="code">./testgame Human SimplePlayer</div>
 
-<p>testgame also takes an optional 3rd argument, which is the time allotted to
+<p><span class="code">testgame</span> also takes an optional 3rd argument, which is the time allotted to
 each player in milliseconds. If it is not provided, both players are given
 unlimited time. For example, to give each player 16 minutes each:</p>
 
     <div class="code">./testgame player SimplePlayer 960000</div>
 <br />
 
-<p><div class="points easy">14</div>
-Now, it's up to you to actually implement a working AI. Use exampleplayer as a base
-(rename it if you wish) and fill in the appropriate functions:
+<p><div class="points easy">5</div>
+Now, it's up to you to actually implement a working AI. Use player as a base
+and fill in the appropriate functions:
 <ul>
-    <li><span class="code">constructor</span> - should do all of your 
+    <li><span class="code">Player()</span> (constructor) - should do all of your 
         initialization, such as setting up any variables (like your board object).</li>
     <li><span class="code">Move *doMove(Move *opponentsMove, int msLeft)</span> -
         should update your internal board state based on the given opponent's 
-        move and then calculate and return a valid move</li>
+        move and then calculate and return a valid move.</li>
 </ul>
-Remember, you can use the provided Board class to make things easier.
+Feel free to add helper functions or even new classes. Remember, you can use the 
+provided Board class to get started.</p>
+
+<p>
 By "working AI", we mean one that can successfully play games to completion 
 within the tournament framework (no invalid moves, passes when it should, etc).
-For these 14 points, your AI does not have to be good; it simply has to 
-<span class="hilite">work</span>.
+For these points, your AI does not have to be good; it simply has to 
+<span class="hilite">work</span>. A good starting point is to write an AI that
+just randomly plays valid moves.
 </p>
 
-<div style="background-color:#ffcccc;padding:0 10px 10px 10px;border:2px solid red;">
+<div class="attention" style="padding-top: 0">
 <p><span class="keyword">IMPORTANT:</span> Because the C++ wrapper communicates with 
 the Java framework using <span class="code">stdin</span> and 
 <span class="code">stdout</span>, you should <span class="keyword">NOT</span> 
@@ -284,15 +572,95 @@ use <span class="code">stdout</span> when debugging. Instead, use
 <p>If you want to use <span class="code">printf()</span>, you can do:</p>
     <div class="code">fprintf(stderr, "%d\n", "123");</div>
 </div>
+
+
+<p><div class="points easy">9</div> The next step is to make your AI good
+enough to beat SimplePlayer. Remember, SimplePlayer just plays randomly, so
+this shouldn't be too difficult. A good heuristic function should be enough to
+beat it consistently without implementing the next step. </p>
+
+<p><div class="points easy">6</div> Now, you'll want to make your AI implement
+a <span class="keyword">minimax</span> algorithm so it can look ahead into
+the future and make even better decisions!
 </p>
 
-<p><div class="points hard">6</div>
-The next step is to make your AI good enough to beat SimplePlayer. Remember,
-SimplePlayer just plays randomly, so this shouldn't be too difficult. A good
-heuristic function should be enough to beat it consistently.
+<p>We have provided a <span class="code">testminimax.cpp</span> file to
+help test your implementation for correctness. Starting from the example
+board used in the background section, your player should play the following
+move. For the test, your player should use a 2-ply depth minimax and the heuristic 
+of the difference in number of stones on the board, just like the 
+<a href="#minimax_example">example</a>.
+
+<div align="center">
+<div style="display: inline-block">
+<script>
+print_board('\
+--------\
+--------\
+-x------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+');
+</script>
+</div>
+<div style="display:inline-block; margin-left: 20px">
+<script>
+print_board('\
+--------\
+-O------\
+-o------\
+xoxxxx--\
+--------\
+--------\
+--------\
+--------\
+');
+</script>
+</div>
+</div>
 
 
-<p>When writing your AI, you should keep in mind a few rules for the tournament:
+<p>
+The <span class="code">testminimax.cpp</span> file already creates a
+<span class="code">Board</span> object with the initial state that you can use;
+however, <span class="keyword">it is up to you to update your player's internal board state 
+appropriately</span> (since this will likely be different for everyone).
+If you are using the provided Board class, this might be
+as simple as setting your player's board to the created board.
+</p>
+
+<p>To compile/run the test:</p>
+<div class="code">make testminimax
+./testminimax
+</div>
+
+<p>
+<div class="hint">
+<p>We are aware that you will likely want to use a better heuristic or
+search to a depth greater than 2 with your minimax. However, this could potentially
+lead to a different result for the minimax test.</p>
+
+<p>
+To get around this, the <span class="code">Player</span> class includes a 
+boolean flag as a member variable:
+</p>
+<div class="code">bool testingMinimax;</div>
+<p>
+This will be set to <span class="code">true</span> in the 
+<span class="code">testminimax</span> program, and 
+<span class="code">false</span> otherwise. You can use this boolean to switch 
+between using the 2-ply minimax and naive heuristic for the minimax test and using a 
+different approach for actual competitive play.
+</p>
+</div>
+</p>
+
+
+
+<p>Finally, when writing your AI, you should keep in mind a few rules for the tournament:
 <ul>
     <li>Your final executable program should have a unique name related to your team name.</li>
     <li>During the tournament, each side is allowed up to 16 minutes total per game; this is
@@ -310,7 +678,8 @@ heuristic function should be enough to beat it consistently.
 </a>
 While we only provide framework code for C++, you can actually use any language
 you want to write your AI, <span class="keyword"> as long as it runs on the 
-cluster computers.</span>. If your team is planning to use a different 
+cluster computers.</span>. In addition, you must implement an equivalent testsuite
+for testing your AI's minimax algorithm. If your team is planning to use a different 
 language, please make sure to let the TAs know.</p>
 
 <p>If you take a look at <span class="code">java/WrapperPlayer.java</span>, you will see 
@@ -336,7 +705,8 @@ for building/cleaning the Java files if you want to use them:</p>
     <div class="code">make java
 make cleanjava</div>
 <p>You will want to modify <span class="code">java/TestGame.java</span> to test
-your Java AI.</p>
+your Java AI.  NOTE: If you are building the java files on the cluster, change the java/Makefile first line to the following:</p>
+<div class="code"> JAVAC = gcj -C </div>
 
 <p>Just remember - using a higher level language like Java or Python will 
 likely put you at a disadvantage in terms of pure speed versus using C++ 

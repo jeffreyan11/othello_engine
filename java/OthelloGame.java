@@ -231,7 +231,7 @@ public class OthelloGame implements Runnable {
             public void run() {
                 try {
                     OthelloPlayer p = (turn == OthelloSide.BLACK)?black:white;
-                    m = p.doMove(lastMove, timeout);
+                    m = p.doMove(lastMove, timed? timeout : -1);
                 }
                 catch(Throwable t) {
                     // If there's an error, store it so the player can be

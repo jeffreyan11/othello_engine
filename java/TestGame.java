@@ -14,6 +14,7 @@ public class TestGame {
         }
         
         // Initialize the players.
+        int which = 1;
         OthelloPlayer[] players = new OthelloPlayer[2];
         for (int i = 0; i < 2; i++) {
             if (args[i].equalsIgnoreCase("SimplePlayer")) {
@@ -23,13 +24,13 @@ public class TestGame {
             } else if (args[i].equalsIgnoreCase("BetterPlayer")) {
                 players[i] = new BetterPlayer();
             } else if (args[i].equalsIgnoreCase("Human")) {
-                players[i] = new OthelloDisplay();
+                players[i] = new OthelloDisplay(which++);
             } else {
                 players[i] = new WrapperPlayer(args[i]);
             }             
         }
         
-        // Start the game.     
+        // Start the game.
         OthelloObserver o = new OthelloDisplay();
         OthelloGame g = null;
         if (args.length == 2) {

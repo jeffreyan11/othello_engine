@@ -1,11 +1,14 @@
-#include "exampleplayer.h"
+#include "player.h"
 
 /*
  * Constructor for the player; initialize everything here. The side your AI is
  * on (BLACK or WHITE) is passed in as "side". The constructor must finish 
  * within 30 seconds.
  */
-ExamplePlayer::ExamplePlayer(Side side) {
+Player::Player(Side side) {
+    // Will be set to true in test_minimax.cpp.
+    testingMinimax = false;
+
     /* 
      * TODO: Do any initialization you need to do here (setting up the board,
      * precalculating things, etc.) However, remember that you will only have
@@ -16,25 +19,25 @@ ExamplePlayer::ExamplePlayer(Side side) {
 /*
  * Destructor for the player.
  */
-ExamplePlayer::~ExamplePlayer() {
+Player::~Player() {
 }
 
-
 /*
- * Compute the next move given the opponent's last move. Each AI is
+ * Compute the next move given the opponent's last move. Your AI is
  * expected to keep track of the board on its own. If this is the first move,
  * or if the opponent passed on the last move, then opponentsMove will be NULL.
  *
- * If there are no valid moves for your side, doMove must return NULL.
+ * msLeft represents the time your AI has left for the total game, in
+ * milliseconds. doMove() must take no longer than msLeft, or your AI will
+ * be disqualified! An msLeft value of -1 indicates no time limit.
  *
- * Important: doMove must take no longer than the timeout passed in 
- * msLeft, or your AI will lose! The move returned must also be legal.
+ * The move returned must be legal; if there are no valid moves for your side,
+ * return NULL.
  */
-Move *ExamplePlayer::doMove(Move *opponentsMove, int msLeft) {
+Move *Player::doMove(Move *opponentsMove, int msLeft) {
     /* 
      * TODO: Implement how moves your AI should play here. You should first
      * process the opponent's opponents move before calculating your own move
      */ 
     return NULL;
 }
-    

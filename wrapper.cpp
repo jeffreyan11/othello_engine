@@ -1,9 +1,7 @@
-#include <string>
 #include <iostream>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "exampleplayer.h"
+#include "player.h"
 using namespace std;
 
 int main(int argc, char *argv[]) {    
@@ -15,16 +13,16 @@ int main(int argc, char *argv[]) {
     Side side = (!strcmp(argv[1], "Black")) ? BLACK : WHITE;
 
     // Initialize player.
-    ExamplePlayer *player = new ExamplePlayer(side);
+    Player *player = new Player(side);
 
     // Tell java wrapper that we are done initializing.
     cout << "Init done" << endl;
     cout.flush();    
     
-    while (true) {
-        // Get opponent's move and time left for player.
-        int moveX, moveY, msLeft;
-        cin >> moveX >> moveY >> msLeft;
+    int moveX, moveY, msLeft;    
+
+    // Get opponent's move and time left for player each turn.
+    while (cin >> moveX >> moveY >> msLeft) {
         Move *opponentsMove = NULL;
         if (moveX >= 0 && moveY >= 0) {
             opponentsMove = new Move(moveX, moveY);
@@ -38,6 +36,7 @@ int main(int argc, char *argv[]) {
             cout << "-1 -1" << endl;
         }
         cout.flush();
+        cerr.flush();
         
         // Delete move objects.
         if (opponentsMove != NULL) delete opponentsMove;

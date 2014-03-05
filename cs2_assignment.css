@@ -30,6 +30,16 @@ hr {
 .draft {
     color: #008080;
 }
+div.attention {
+    background: #ffcccc;
+    border: 2px dashed red;
+    padding: 11px 21px 11px 21px;
+}
+div.hint {
+    background: lightgreen;
+    border: 2px dashed green;
+    padding: 0 21px 0 21px;
+}
 
 table {
     padding: 0;
@@ -106,13 +116,15 @@ div.points.hard {
 }
 
 table.board {
-    float: left;
-    margin-left: 20px;
     border: 1px solid #000;
     border-right: 0;
     border-top: 0;
     border-spacing: 0; 
 }
+table.board.highlight {
+    border: 5px solid #f00;
+}
+
 table.board tr {
     border: 0;
 }
@@ -125,47 +137,55 @@ table.board td {
     height: 25px;  
     background: #0a0;
     vertical-align: middle;
+}
 
+table.small td {
+    width: 15px;
+    height: 15px;  
+}
+
+table.board div {
+    -webkit-border-radius: 999px;
+    -moz-border-radius: 999px;
+    border-radius: 999px;
+    behavior: url(PIE.htc);
+    border: 0;
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+    margin-right: auto;    
 }
 
 table.board div.W {
-    -webkit-border-radius: 999px;
-    -moz-border-radius: 999px;
-    border-radius: 999px;
-    behavior: url(PIE.htc);
-    border: 0;
-    width: 20px;
-    height: 20px;
-    margin-left:auto;
-    margin-right:auto;    
-    background: #fff;        
+    background: #fff;
 }
 table.board div.B {
-    -webkit-border-radius: 999px;
-    -moz-border-radius: 999px;
-    border-radius: 999px;
-    behavior: url(PIE.htc);
-    border: 0;
-    width: 20px;
-    height: 20px;
-    margin-left:auto; 
-    margin-right:auto;    
-    background: #000;        
-}
-table.board div.G {
-    -webkit-border-radius: 999px;
-    -moz-border-radius: 999px;
-    border-radius: 999px;
-    behavior: url(PIE.htc);
-    border: 0;
-    width: 20px;
-    height: 20px;
-    margin-left:auto; 
-    margin-right:auto;    
-    background: #353;        
+    background: #000;
 }
 table.board div.S {
     border: 2px solid #f00;
 }
 
+table.small div {
+    width: 10px;
+    height: 10px;
+}
 
+#minimaxTable {
+    border: 0;
+    font-weight: bold;
+}
+#minimaxTable > tbody > tr > td {
+    border: 0;
+    text-align: center;
+}
+#minimaxTable td > table {
+    margin: auto;
+}
+#minimaxTable .bracket {
+    margin: 10px auto 10px auto;
+    border: 3px solid #000;
+    border-bottom: 0;
+    width: 50%;
+    height: 25px;
+}
