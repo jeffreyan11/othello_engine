@@ -9,6 +9,10 @@ using namespace std;
 class Player {
 
 public:
+    Board game;
+    Side mySide;
+    Side oppSide;
+
     Player(Side side);
     ~Player();
     
