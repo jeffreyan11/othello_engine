@@ -33,7 +33,9 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
+
     
+
     return NULL;
 }
 
