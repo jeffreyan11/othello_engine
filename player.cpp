@@ -8,6 +8,10 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
+    if(testingMinimax)
+        maxDepth = 2;
+    else
+        maxDepth = 4;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -43,8 +47,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     Move *myMove = NULL;
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
-        int tempScore = heuristic(&game, legalMoves[i]);
-        if (tempScore > score) {
+        Board *copy = game.copy();
+        copy->doMove(legalMoves[i], mySide);
+        int tempScore =
+            minimax(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth);
+        if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
         }
@@ -54,37 +61,46 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return myMove;
 }
 
+/*
+ * Helper function for implementing minimax. The base case is depth <= 2 because
+ * one depth is performed in doMove()
+*/
 int Player::minimax(Board * b, Side side, int depth) {
-    if (depth == 1) {
+    if (depth <= 2) { // base case
+        // score: maximizing from negative if your turn,
+        // minimizing from positive if opponents turn
         int score;
         if (side == mySide)
             score = -64;
         else
             score = 64;
+        // get all legal moves, create boards to test with, find best move
         vector <Move *> legalMoves = b->getLegalMoves(side);
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             int tempScore = heuristic(b, legalMoves[i]);
-            if (tempScore > score && side == mySide)
+            if (side == mySide && tempScore >= score)
                 score = tempScore;
-            else if (tempScore < score && side != mySide)
+            else if (side != mySide && tempScore <= score)
                 score = tempScore;
         }
         return score;
     }
-    else {
+    else { // recursive step
         int score;
         if (side == mySide)
             score = -64;
         else
             score = 64;
+        // recurse for each step in tree
         vector <Move *> legalMoves = b->getLegalMoves(side);
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            b->doMove(legalMoves[i], side);
-            int tempScore = minimax(b, ((side == WHITE) ? (BLACK) :
+            Board *copy = b->copy();
+            copy->doMove(legalMoves[i], side);
+            int tempScore = minimax(copy, ((side == WHITE) ? (BLACK) :
                 WHITE), depth-1);
-            if (tempScore > score && side == mySide)
+            if (side == mySide && tempScore >= score)
                 score = tempScore;
-            else if (tempScore < score && side != mySide)
+            else if (side != mySide && tempScore <= score)
                 score = tempScore;
         }
         return score;

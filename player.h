@@ -11,8 +11,9 @@ using namespace std;
 
 class Player {
 
-/*private:
-    bits CORNERS;     //(0x8100000000000081)
+private:
+    int maxDepth;
+    /*bits CORNERS;     //(0x8100000000000081)
     bits EDGES;       //(0x3C0081818181003C)
     bits ADJ_CORNERS; //(0x42C300000000C342)
 
