@@ -11,7 +11,7 @@ Player::Player(Side side) {
     if(testingMinimax)
         maxDepth = 2;
     else
-        maxDepth = 4;
+        maxDepth = 2;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -43,7 +43,7 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
     
-    int score = -64;
+    int score = -99999;
     Move *myMove = NULL;
     // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
@@ -51,8 +51,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
-        int tempScore =
-            minimax(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth);
+        int tempScore = negascout(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth, -99999, 99999);
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
@@ -62,12 +61,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(myMove != NULL) {
         myMove = new Move(myMove->getX(), myMove->getY());
         deleteMoveVector(legalMoves);
+        //cerr << myMove->getX() << ", " << myMove->getY() << ", " << mySide << endl;
     }
     else {
         deleteMoveVector(legalMoves);
         myMove = NULL;
     }
 
+    //cerr << myMove << ", " << mySide << endl;
     game.doMove(myMove, mySide);
     return myMove;
 }
@@ -89,10 +90,7 @@ int Player::minimax(Board * b, Side side, int depth) {
                 score = tempScore;
         }
         deleteMoveVector(legalMoves);
-        // if this was searching for best moves for opponent, negate so that
-        // scores are now from your point of view
-        //if(side != mySide)
-            score = -score;
+        score = -score;
         return score;
     }
     else { // recursive step
@@ -112,6 +110,43 @@ int Player::minimax(Board * b, Side side, int depth) {
         score = -score;
         return score;
     }
+}
+
+int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
+    int side;
+    if (s == mySide)
+        side = 1;
+    else
+        side = -1;
+
+    if (depth == 0) {
+        return side * heuristic2(b);
+    }
+
+    int score;
+    vector <Move *> legalMoves = b->getLegalMoves(s);
+    for (unsigned int i = 0; i < legalMoves.size(); i++) {
+        Board *copy = b->copy();
+        copy->doMove(legalMoves[i], s);
+        if (i == 0) {
+            score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+                WHITE), depth-1, -alpha-1, -alpha);
+            if (alpha < score && score < beta) {
+                score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+                WHITE), depth-1, -beta, -score);
+            }
+        }
+        else {
+            score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+                WHITE), depth-1, -beta, -alpha);
+            }
+        if (alpha < score)
+            alpha = score;
+        if (alpha >= beta)
+            break;
+        delete copy;
+    }
+    return alpha;
 }
 
 int Player::heuristic (Board *b, Move * nextMove) {
@@ -148,6 +183,11 @@ int Player::heuristic (Board *b, Move * nextMove) {
             score -= 3;
     }
     delete copy;
+    return score;
+}
+
+int Player::heuristic2 (Board *b) {
+    int score = b->count(mySide) - b->count(oppSide);
     return score;
 }
 
