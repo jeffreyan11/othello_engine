@@ -42,15 +42,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int score = -64;
     Move *myMove = NULL;
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
-    std::cerr << legalMoves.size() << std::endl;
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
-        std::cerr << i << std::endl;
-        Move *tempMove = legalMoves[i];
-        int tempScore = heuristic(tempMove);
-        std::cerr << tempScore << std::endl;
+        int tempScore = heuristic(&game, legalMoves[i]);
         if (tempScore > score) {
             score = tempScore;
-            myMove = tempMove;
+            myMove = legalMoves[i];
         }
     }
 
@@ -58,8 +54,45 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return myMove;
 }
 
-int Player::heuristic (Move * nextMove) {
-    Board * copy = game.copy();
+int Player::minimax(Board * b, Side side, int depth) {
+    if (depth == 1) {
+        int score;
+        if (side == mySide)
+            score = -64;
+        else
+            score = 64;
+        vector <Move *> legalMoves = b->getLegalMoves(side);
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            int tempScore = heuristic(b, legalMoves[i]);
+            if (tempScore > score && side == mySide)
+                score = tempScore;
+            else if (tempScore < score && side != mySide)
+                score = tempScore;
+        }
+        return score;
+    }
+    else {
+        int score;
+        if (side == mySide)
+            score = -64;
+        else
+            score = 64;
+        vector <Move *> legalMoves = b->getLegalMoves(side);
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            b->doMove(legalMoves[i], side);
+            int tempScore = minimax(b, ((side == WHITE) ? (BLACK) :
+                WHITE), depth-1);
+            if (tempScore > score && side == mySide)
+                score = tempScore;
+            else if (tempScore < score && side != mySide)
+                score = tempScore;
+        }
+        return score;
+    }
+}
+
+int Player::heuristic (Board *b, Move * nextMove) {
+    Board * copy = b->copy();
     copy->doMove(nextMove, mySide);
     int score = copy->count(mySide) - copy->count(oppSide);
     /*bits movemask = moveToBit(nextMove);
@@ -69,7 +102,7 @@ int Player::heuristic (Move * nextMove) {
     else if(movemask & ADJ_CORNERS)
         score -= 3;*/
 
-    if (nextMove->getX() == 0) {
+    /*if (nextMove->getX() == 0) {
         if (nextMove->getY() == 0 || nextMove->getY() == 7)
             score += 5;
         else if (nextMove->getY() == 1 || nextMove->getY() == 6)
@@ -90,7 +123,7 @@ int Player::heuristic (Move * nextMove) {
         if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
                 nextMove->getY() == 6 || nextMove->getY() == 7)
             score -= 3;
-    }
+    }*/
     return score;
 }
 
