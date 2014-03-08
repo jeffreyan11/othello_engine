@@ -59,8 +59,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
         delete copy;
     }
-    myMove = new Move(myMove->getX(), myMove->getY());
-    deleteMoveVector(legalMoves);
+    if(myMove != NULL) {
+        myMove = new Move(myMove->getX(), myMove->getY());
+        deleteMoveVector(legalMoves);
+    }
+    else {
+        deleteMoveVector(legalMoves);
+        myMove = NULL;
+    }
 
     game.doMove(myMove, mySide);
     return myMove;
