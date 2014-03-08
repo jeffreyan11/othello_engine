@@ -33,9 +33,17 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
-
     
-
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Move * myMove = new Move(i, j);
+            if (game.checkMove(myMove, mySide)) {
+                game.doMove(myMove, mySide);
+                return myMove;
+            }
+            delete myMove;
+        }
+    }
     return NULL;
 }
 
