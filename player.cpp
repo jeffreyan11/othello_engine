@@ -78,31 +78,25 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 */
 int Player::minimax(Board * b, Side side, int depth) {
     if (depth <= 2) { // base case
-        // score: maximizing from negative if your turn,
-        // minimizing from positive if opponents turn
-        int score;
-        if (side == mySide)
-            score = -64;
-        else
-            score = 64;
+        // score: maximizing from negative from POV of whoever's turn it is
+        int score = -64;
+
         // get all legal moves, create boards to test with, find best move
         vector <Move *> legalMoves = b->getLegalMoves(side);
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             int tempScore = heuristic(b, legalMoves[i]);
-            if (side == mySide && tempScore >= score)
-                score = tempScore;
-            else if (side != mySide && tempScore <= score)
+            if (tempScore > score)
                 score = tempScore;
         }
         deleteMoveVector(legalMoves);
+        // if this was searching for best moves for opponent, negate so that
+        // scores are now from your point of view
+        //if(side != mySide)
+            score = -score;
         return score;
     }
     else { // recursive step
-        int score;
-        if (side == mySide)
-            score = -64;
-        else
-            score = 64;
+        int score = -64;
         // recurse for each legal move from current board position
         vector <Move *> legalMoves = b->getLegalMoves(side);
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
@@ -111,12 +105,11 @@ int Player::minimax(Board * b, Side side, int depth) {
             int tempScore = minimax(copy, ((side == WHITE) ? (BLACK) :
                 WHITE), depth-1);
             delete copy;
-            if (side == mySide && tempScore >= score)
-                score = tempScore;
-            else if (side != mySide && tempScore <= score)
+            if (tempScore > score)
                 score = tempScore;
         }
         deleteMoveVector(legalMoves);
+        score = -score;
         return score;
     }
 }
