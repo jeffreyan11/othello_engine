@@ -13,9 +13,9 @@ Player::Player(Side side) {
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
 
     // set up bitmasks
-    CORNERS = bitset<64> (0x8100000000000081);
-    EDGES = bitset<64> (0x3C0081818181003C);
-    ADJ_CORNERS = bitset<64> (0x42C300000000C342);
+    /*CORNERS = 0x8100000000000081;
+    EDGES = 0x3C0081818181003C;
+    ADJ_CORNERS = 0x42C300000000C342;*/
 }
 
 /*
@@ -42,10 +42,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int score = -64;
     Move *myMove = NULL;
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
+    std::cerr << legalMoves.size() << std::endl;
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
+        std::cerr << i << std::endl;
         Move *tempMove = legalMoves[i];
-        if (heuristic(tempMove) > score) {
-            score = heuristic(tempMove);
+        int tempScore = heuristic(tempMove);
+        std::cerr << tempScore << std::endl;
+        if (tempScore > score) {
+            score = tempScore;
             myMove = tempMove;
         }
     }
@@ -58,6 +62,13 @@ int Player::heuristic (Move * nextMove) {
     Board * copy = game.copy();
     copy->doMove(nextMove, mySide);
     int score = copy->count(mySide) - copy->count(oppSide);
+    /*bits movemask = moveToBit(nextMove);
+
+    if(movemask & CORNERS)
+        score += 5;
+    else if(movemask & ADJ_CORNERS)
+        score -= 3;*/
+
     if (nextMove->getX() == 0) {
         if (nextMove->getY() == 0 || nextMove->getY() == 7)
             score += 5;
@@ -86,8 +97,10 @@ int Player::heuristic (Move * nextMove) {
 /*
  * Converts a move into a bitmask (which will be all zeros except a single one)
 */
-bitset<64> Player::moveToBit(Move *m) {
-    bitset<64> result;
-    result.set(m->getX() + 8 * m->getY());
+/*bits Player::moveToBit(Move *m) {
+    bits result = 1;
+    for(int i = 0; i < (m->getX() + 8 * m->getY()); i++) {
+        result <<= 1;
+    }
     return result;
-}
+}*/
