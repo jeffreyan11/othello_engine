@@ -53,5 +53,27 @@ int Player::heuristic (Move * nextMove) {
     Board * copy = game.copy();
     copy->doMove(nextMove, mySide);
     int score = copy->count(mySide) - copy->count(oppSide);
+    if (nextMove->getX() == 0) {
+        if (nextMove->getY() == 0 || nextMove->getY() == 7)
+            score += 5;
+        else if (nextMove->getY() == 1 || nextMove->getY() == 6)
+            score -= 3;
+    }
+    else if (nextMove->getX() == 7) {
+        if (nextMove->getY() == 0 || nextMove->getY() == 7)
+            score += 5;
+        else if (nextMove->getY() == 1 || nextMove->getY() == 6)
+            score -= 3;
+    }
+    else if (nextMove->getX() == 1) {
+        if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
+                nextMove->getY() == 6 || nextMove->getY() == 7)
+            score -= 3;
+    }
+    else if (nextMove->getX() == 6) {
+        if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
+                nextMove->getY() == 6 || nextMove->getY() == 7)
+            score -= 3;
+    }
     return score;
 }
