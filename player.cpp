@@ -34,16 +34,24 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
     
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            Move * myMove = new Move(i, j);
-            if (game.checkMove(myMove, mySide)) {
-                game.doMove(myMove, mySide);
-                return myMove;
-            }
-            delete myMove;
+    int score = -64;
+    Move *myMove = NULL;
+    vector<Move *> legalMoves = game.getLegalMoves(mySide);
+    for (unsigned int i = 0; i < legalMoves.size(); i++) {
+        Move *tempMove = legalMoves[i];
+        if (heuristic(tempMove) > score) {
+            score = heuristic(tempMove);
+            myMove = tempMove;
         }
     }
-    return NULL;
+
+    game.doMove(myMove, mySide);
+    return myMove;
 }
 
+int Player::heuristic (Move * nextMove) {
+    Board * copy = game.copy();
+    copy->doMove(nextMove, mySide);
+    int score = copy->count(mySide) - copy->count(oppSide);
+    return score;
+}
