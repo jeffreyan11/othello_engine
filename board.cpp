@@ -163,6 +163,21 @@ int Board::countWhite() {
 }
 
 /*
+ * Returns a vector of all legal moves.
+*/
+vector<Move *> Board::getLegalMoves(Side side) {
+    vector<Move *> result;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            Move * myMove = new Move(i, j);
+            if (checkMove(myMove, side))
+                result.push_back(myMove);
+        }
+    }
+    return result;
+}
+
+/*
  * Sets the board state given an 8x8 char array where 'w' indicates a white
  * piece and 'b' indicates a black piece. Mainly for testing purposes.
  */
