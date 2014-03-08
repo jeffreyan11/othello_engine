@@ -18,6 +18,7 @@ private:
     bits ADJ_CORNERS; //(0x42C300000000C342)
 
     bits moveToBit(Move *m);*/
+    void deleteMoveVector(vector<Move *> v);
 
 public:
     Board game;

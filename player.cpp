@@ -55,7 +55,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             score = tempScore;
             myMove = legalMoves[i];
         }
+        delete copy;
     }
+    //TODO deleteMoveVector(legalMoves);
 
     game.doMove(myMove, mySide);
     return myMove;
@@ -83,6 +85,7 @@ int Player::minimax(Board * b, Side side, int depth) {
             else if (side != mySide && tempScore <= score)
                 score = tempScore;
         }
+        deleteMoveVector(legalMoves);
         return score;
     }
     else { // recursive step
@@ -91,18 +94,20 @@ int Player::minimax(Board * b, Side side, int depth) {
             score = -64;
         else
             score = 64;
-        // recurse for each step in tree
+        // recurse for each legal move from current board position
         vector <Move *> legalMoves = b->getLegalMoves(side);
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = b->copy();
             copy->doMove(legalMoves[i], side);
             int tempScore = minimax(copy, ((side == WHITE) ? (BLACK) :
                 WHITE), depth-1);
+            delete copy;
             if (side == mySide && tempScore >= score)
                 score = tempScore;
             else if (side != mySide && tempScore <= score)
                 score = tempScore;
         }
+        deleteMoveVector(legalMoves);
         return score;
     }
 }
@@ -118,7 +123,7 @@ int Player::heuristic (Board *b, Move * nextMove) {
     else if(movemask & ADJ_CORNERS)
         score -= 3;*/
 
-    /*if (nextMove->getX() == 0) {
+    if (nextMove->getX() == 0) {
         if (nextMove->getY() == 0 || nextMove->getY() == 7)
             score += 5;
         else if (nextMove->getY() == 1 || nextMove->getY() == 6)
@@ -139,7 +144,8 @@ int Player::heuristic (Board *b, Move * nextMove) {
         if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
                 nextMove->getY() == 6 || nextMove->getY() == 7)
             score -= 3;
-    }*/
+    }
+    delete copy;
     return score;
 }
 
@@ -153,3 +159,20 @@ int Player::heuristic (Board *b, Move * nextMove) {
     }
     return result;
 }*/
+
+void Player::deleteMoveVector(vector<Move *> v) {
+    while(v.size() > 0) {
+        Move *m = v.back();
+        v.pop_back();
+        delete m;
+    }
+}
+
+// g++ -o memtest player.cpp board.cpp
+int main(int argc, char **argv) {
+    Player p(BLACK);
+    Move m (3,5);
+    p.doMove(&m, -1);
+    Move m2 (2,6);
+    p.doMove(&m2, -1);
+}
