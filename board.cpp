@@ -172,6 +172,7 @@ vector<Move *> Board::getLegalMoves(Side side) {
             Move * myMove = new Move(i, j);
             if (checkMove(myMove, side))
                 result.push_back(myMove);
+            else delete myMove;
         }
     }
     return result;

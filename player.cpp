@@ -45,10 +45,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     
     int score = -64;
     Move *myMove = NULL;
+    // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
+        // run the recursion to find scores
         int tempScore =
             minimax(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth);
         if (tempScore >= score) {
@@ -57,7 +59,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
         delete copy;
     }
-    //TODO deleteMoveVector(legalMoves);
+    myMove = new Move(myMove->getX(), myMove->getY());
+    deleteMoveVector(legalMoves);
 
     game.doMove(myMove, mySide);
     return myMove;
@@ -169,10 +172,10 @@ void Player::deleteMoveVector(vector<Move *> v) {
 }
 
 // g++ -o memtest player.cpp board.cpp
-int main(int argc, char **argv) {
+/*int main(int argc, char **argv) {
     Player p(BLACK);
     Move m (3,5);
     p.doMove(&m, -1);
     Move m2 (2,6);
     p.doMove(&m2, -1);
-}
+}*/
