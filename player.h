@@ -8,6 +8,13 @@ using namespace std;
 
 class Player {
 
+private:
+    bitset<64> CORNERS;     //(0x8100000000000081)
+    bitset<64> EDGES;       //(0x3C0081818181003C)
+    bitset<64> ADJ_CORNERS; //(0x42C300000000C342)
+
+    bitset<64> moveToBit(Move *m);
+
 public:
     Board game;
     Side mySide;

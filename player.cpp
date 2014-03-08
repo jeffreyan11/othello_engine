@@ -11,6 +11,11 @@ Player::Player(Side side) {
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
+
+    // set up bitmasks
+    CORNERS = bitset<64> (0x8100000000000081);
+    EDGES = bitset<64> (0x3C0081818181003C);
+    ADJ_CORNERS = bitset<64> (0x42C300000000C342);
 }
 
 /*
@@ -76,4 +81,13 @@ int Player::heuristic (Move * nextMove) {
             score -= 3;
     }
     return score;
+}
+
+/*
+ * Converts a move into a bitmask (which will be all zeros except a single one)
+*/
+bitset<64> Player::moveToBit(Move *m) {
+    bitset<64> result;
+    result.set(m->getX() + 8 * m->getY());
+    return result;
 }
