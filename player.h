@@ -24,7 +24,7 @@ public:
     Board game;
     Side mySide;
     Side oppSide;
-    //int[] weights;
+    int weights[72];
 
     Player(Side side);
     ~Player();
