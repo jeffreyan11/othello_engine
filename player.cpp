@@ -11,7 +11,7 @@ Player::Player(Side side) {
     if(testingMinimax)
         maxDepth = 2;
     else
-        maxDepth = 4;
+        maxDepth = 5;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -52,7 +52,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
-        int tempScore = negascout(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth, -99999, 99999);
+        int tempScore = negascout(copy, mySide, maxDepth, -99999, 99999);
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
@@ -89,15 +89,15 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
         Board *copy = b->copy();
         copy->doMove(legalMoves[i], s);
         if (i == 0) {
-            score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+            score = -negascout(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+                score = -negascout(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -score);
             }
         }
         else {
-            score = -negascout(copy, ((side == WHITE) ? (BLACK) :
+            score = -negascout(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
             }
         if (alpha < score)
@@ -115,8 +115,8 @@ int Player::heuristic (Board *b) {
     bitbrd bm = b->toBits(mySide);
 
     score += 5 * countSetBits(bm & CORNERS);
-    //score += 2 * countSetBits(bm & EDGES);
-    score -= 4 * countSetBits(bm & ADJ_CORNERS);
+    score += 3 * countSetBits(bm & EDGES);
+    score -= 5 * countSetBits(bm & ADJ_CORNERS);
     return score;
 }
 
