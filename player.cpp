@@ -11,7 +11,7 @@ Player::Player(Side side) {
     if(testingMinimax)
         maxDepth = 2;
     else
-        maxDepth = 2;
+        maxDepth = 4;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -44,6 +44,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
     
     int score = -99999;
+    //int score = -64;
     Move *myMove = NULL;
     // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
@@ -52,6 +53,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
         int tempScore = negascout(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth, -99999, 99999);
+        //int tempScore = minimax(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth);
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
@@ -61,14 +63,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(myMove != NULL) {
         myMove = new Move(myMove->getX(), myMove->getY());
         deleteMoveVector(legalMoves);
-        //cerr << myMove->getX() << ", " << myMove->getY() << ", " << mySide << endl;
     }
     else {
         deleteMoveVector(legalMoves);
         myMove = NULL;
     }
 
-    //cerr << myMove << ", " << mySide << endl;
     game.doMove(myMove, mySide);
     return myMove;
 }
@@ -186,8 +186,19 @@ int Player::heuristic (Board *b, Move * nextMove) {
     return score;
 }
 
+
 int Player::heuristic2 (Board *b) {
+    int weights[] =
+{0,0,5,0,1,-10,0,6,-10,0,7,5,1,0,-10,1,1,-10,1,6,-10,1,7,-10,2,0,3,2,7,3,3,0,3,3,7,3,
+4,0,3,4,7,3,5,0,3,5,7,3,6,0,-10,6,1,-10,6,6,-10,6,7,-10,7,0,5,7,1,-10,7,6,-10,7,6,5};
     int score = b->count(mySide) - b->count(oppSide);
+    for (int i = 0; i < 24; i++) {
+        int x = weights[i*3];
+        int y = weights[i*3+1];
+        int w = weights[i*3+2];
+        if (b->get(mySide, x, y))
+            score += w;
+    }
     return score;
 }
 
