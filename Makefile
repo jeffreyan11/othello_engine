@@ -1,5 +1,5 @@
 CC          = g++
-CFLAGS      = -Wall -ansi -pedantic -ggdb
+CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g
 OBJS        = player.o board.o
 PLAYERNAME  = the_riders_of_rohan
 

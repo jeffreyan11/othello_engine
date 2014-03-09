@@ -9,10 +9,12 @@ using namespace std;
 class Board {
    
 private:
-    bitset<64> black;
-    bitset<64> taken;    
-       
+    bitbrd taken;
+    bitbrd black;
+    bitbrd MOVEMASK[64];
+
     bool occupied(int x, int y);
+    bool get(Side side, int x, int y);
     void set(Side side, int x, int y);
     bool onBoard(int x, int y);
       
@@ -22,7 +24,6 @@ public:
     Board *copy();
         
     bool isDone();
-    bool get(Side side, int x, int y);
     bool hasMoves(Side side);
     bool checkMove(Move *m, Side side);
     void doMove(Move *m, Side side);
@@ -30,6 +31,7 @@ public:
     int countBlack();
     int countWhite();
     vector<Move *> getLegalMoves(Side side);
+    bitbrd toBits(Side side);
 
     void setBoard(char data[]);
 };

@@ -17,9 +17,9 @@ Player::Player(Side side) {
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
 
     // set up bitmasks
-    /*CORNERS = 0x8100000000000081;
+    CORNERS = 0x8100000000000081;
     EDGES = 0x3C0081818181003C;
-    ADJ_CORNERS = 0x42C300000000C342;*/
+    ADJ_CORNERS = 0x42C300000000C342;
 }
 
 /*
@@ -53,7 +53,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
         int tempScore = negascout(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth, -99999, 99999);
-        //int tempScore = minimax(copy, ((mySide == WHITE) ? (BLACK) : WHITE), maxDepth);
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
@@ -73,45 +72,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return myMove;
 }
 
-/*
- * Helper function for implementing minimax. The base case is depth <= 2 because
- * one depth is performed in doMove()
-*/
-int Player::minimax(Board * b, Side side, int depth) {
-    if (depth <= 2) { // base case
-        // score: maximizing from negative from POV of whoever's turn it is
-        int score = -64;
-
-        // get all legal moves, create boards to test with, find best move
-        vector <Move *> legalMoves = b->getLegalMoves(side);
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            int tempScore = heuristic(b, legalMoves[i]);
-            if (tempScore > score)
-                score = tempScore;
-        }
-        deleteMoveVector(legalMoves);
-        score = -score;
-        return score;
-    }
-    else { // recursive step
-        int score = -64;
-        // recurse for each legal move from current board position
-        vector <Move *> legalMoves = b->getLegalMoves(side);
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = b->copy();
-            copy->doMove(legalMoves[i], side);
-            int tempScore = minimax(copy, ((side == WHITE) ? (BLACK) :
-                WHITE), depth-1);
-            delete copy;
-            if (tempScore > score)
-                score = tempScore;
-        }
-        deleteMoveVector(legalMoves);
-        score = -score;
-        return score;
-    }
-}
-
 int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
     int side;
     if (s == mySide)
@@ -119,8 +79,8 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
     else
         side = -1;
 
-    if (depth == 0) {
-        return side * heuristic2(b);
+    if (depth <= 1) {
+        return side * heuristic(b);
     }
 
     int score;
@@ -149,69 +109,26 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
     return alpha;
 }
 
-int Player::heuristic (Board *b, Move * nextMove) {
-    Board * copy = b->copy();
-    copy->doMove(nextMove, mySide);
-    int score = copy->count(mySide) - copy->count(oppSide);
-    /*bits movemask = moveToBit(nextMove);
 
-    if(movemask & CORNERS)
-        score += 5;
-    else if(movemask & ADJ_CORNERS)
-        score -= 3;*/
-
-    if (nextMove->getX() == 0) {
-        if (nextMove->getY() == 0 || nextMove->getY() == 7)
-            score += 5;
-        else if (nextMove->getY() == 1 || nextMove->getY() == 6)
-            score -= 3;
-    }
-    else if (nextMove->getX() == 7) {
-        if (nextMove->getY() == 0 || nextMove->getY() == 7)
-            score += 5;
-        else if (nextMove->getY() == 1 || nextMove->getY() == 6)
-            score -= 3;
-    }
-    else if (nextMove->getX() == 1) {
-        if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
-                nextMove->getY() == 6 || nextMove->getY() == 7)
-            score -= 3;
-    }
-    else if (nextMove->getX() == 6) {
-        if (nextMove->getY() == 0 || nextMove->getY() == 1 ||
-                nextMove->getY() == 6 || nextMove->getY() == 7)
-            score -= 3;
-    }
-    delete copy;
-    return score;
-}
-
-
-int Player::heuristic2 (Board *b) {
-    int weights[] =
-{0,0,5,0,1,-10,0,6,-10,0,7,5,1,0,-10,1,1,-10,1,6,-10,1,7,-10,2,0,3,2,7,3,3,0,3,3,7,3,
-4,0,3,4,7,3,5,0,3,5,7,3,6,0,-10,6,1,-10,6,6,-10,6,7,-10,7,0,5,7,1,-10,7,6,-10,7,6,5};
+int Player::heuristic (Board *b) {
     int score = b->count(mySide) - b->count(oppSide);
-    for (int i = 0; i < 24; i++) {
-        int x = weights[i*3];
-        int y = weights[i*3+1];
-        int w = weights[i*3+2];
-        if (b->get(mySide, x, y))
-            score += w;
-    }
+    bitbrd bm = b->toBits(mySide);
+
+    score += 5 * countSetBits(bm & CORNERS);
+    //score += 2 * countSetBits(bm & EDGES);
+    score -= 4 * countSetBits(bm & ADJ_CORNERS);
     return score;
 }
 
-/*
- * Converts a move into a bitmask (which will be all zeros except a single one)
-*/
-/*bits Player::moveToBit(Move *m) {
-    bits result = 1;
-    for(int i = 0; i < (m->getX() + 8 * m->getY()); i++) {
-        result <<= 1;
+int Player::countSetBits(bitbrd b) {
+    int n = 0;
+    // while there are 1s
+    while(b) {
+        n++;
+        b &= b - 1; // reset least significant 1
     }
-    return result;
-}*/
+    return n;
+}
 
 void Player::deleteMoveVector(vector<Move *> v) {
     while(v.size() > 0) {

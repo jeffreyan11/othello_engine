@@ -1,15 +1,20 @@
 #include "board.h"
+#include <iostream>
 
 /*
  * Make a standard 8x8 othello board and initialize it to the standard setup.
  */
 Board::Board() {
-    taken.set(3 + 8 * 3);
-    taken.set(3 + 8 * 4);
-    taken.set(4 + 8 * 3);
-    taken.set(4 + 8 * 4);
-    black.set(4 + 8 * 3);
-    black.set(3 + 8 * 4);
+    taken = 0x0000001818000000;
+    black = 0x0000000810000000;
+
+    // initialize movemasks
+    for(int i = 0; i < 64; i++) {
+        MOVEMASK[i] = 1;
+        for(int j = 0; j < i; j++) {
+            MOVEMASK[i] <<= 1;
+        }
+    }
 }
 
 /*
@@ -29,16 +34,23 @@ Board *Board::copy() {
 }
 
 bool Board::occupied(int x, int y) {
-    return taken[x + 8*y];
+    return (MOVEMASK[x + 8*y] & taken);
 }
 
 bool Board::get(Side side, int x, int y) {
-    return occupied(x, y) && (black[x + 8*y] == (side == BLACK));
+    if(side == BLACK)
+        return (MOVEMASK[x + 8*y] & black);
+    else
+        return (occupied(x,y) && (MOVEMASK[x+8*y] & (black ^ taken)));
 }
 
 void Board::set(Side side, int x, int y) {
-    taken.set(x + 8*y);
-    black.set(x + 8*y, side == BLACK);
+    taken = MOVEMASK[x + 8*y] | taken;
+    if(side == BLACK) {
+        black = MOVEMASK[x + 8*y] | black;
+    }
+    else
+        black = ((~MOVEMASK[x + 8*y]) & black);
 }
 
 bool Board::onBoard(int x, int y) {
@@ -152,14 +164,28 @@ int Board::count(Side side) {
  * Current count of black stones.
  */
 int Board::countBlack() {
-    return black.count();
+    int n = 0;
+    bitbrd b = black;
+    // while there are 1s
+    while(b) {
+        n++;
+        b &= b - 1; // reset least significant 1
+    }
+    return n;
 }
 
 /*
  * Current count of white stones.
  */
 int Board::countWhite() {
-    return taken.count() - black.count();
+    int n = 0;
+    bitbrd b = black ^ taken;
+    // while there are 1s
+    while(b) {
+        n++;
+        b &= b - 1; // reset least significant 1
+    }
+    return n;
 }
 
 /*
@@ -178,19 +204,26 @@ vector<Move *> Board::getLegalMoves(Side side) {
     return result;
 }
 
+bitbrd Board::toBits(Side side) {
+    if(side == BLACK)
+        return black;
+    else
+        return (taken ^ black);
+}
+
 /*
  * Sets the board state given an 8x8 char array where 'w' indicates a white
  * piece and 'b' indicates a black piece. Mainly for testing purposes.
  */
 void Board::setBoard(char data[]) {
-    taken.reset();
-    black.reset();
+    taken = 0;
+    black = 0;
     for (int i = 0; i < 64; i++) {
         if (data[i] == 'b') {
-            taken.set(i);
-            black.set(i);
+            taken = taken | MOVEMASK[i];
+            black = black | MOVEMASK[i];
         } if (data[i] == 'w') {
-            taken.set(i);
+            taken = taken | MOVEMASK[i];
         }
     }
 }

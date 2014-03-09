@@ -1,6 +1,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#define bitbrd unsigned long long
+
 enum Side { 
     WHITE, BLACK
 };
