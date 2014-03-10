@@ -11,7 +11,7 @@ Player::Player(Side side) {
     if(testingMinimax)
         maxDepth = 2;
     else
-        maxDepth = 5;
+        maxDepth = 4;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -115,8 +115,8 @@ int Player::heuristic (Board *b) {
     bitbrd bm = b->toBits(mySide);
 
     score += 5 * countSetBits(bm & CORNERS);
-    score += 3 * countSetBits(bm & EDGES);
-    score -= 5 * countSetBits(bm & ADJ_CORNERS);
+    //score += 3 * countSetBits(bm & EDGES);
+    score -= 3 * countSetBits(bm & ADJ_CORNERS);
     return score;
 }
 
