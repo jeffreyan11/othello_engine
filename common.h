@@ -1,7 +1,7 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-#define bitbrd unsigned long long
+#define bitbrd uint64_t
 
 enum Side { 
     WHITE, BLACK

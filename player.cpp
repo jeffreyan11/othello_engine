@@ -88,7 +88,7 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = b->copy();
         copy->doMove(legalMoves[i], s);
-        if (i == 0) {
+        if (i != 0) {
             score = -negascout(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
@@ -99,7 +99,7 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
         else {
             score = -negascout(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
-            }
+        }
         if (alpha < score)
             alpha = score;
         if (alpha >= beta)
