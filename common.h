@@ -13,7 +13,7 @@ public:
     int x, y;
     Move(int x, int y) {
         this->x = x;
-        this->y = y;        
+        this->y = y;     
     }
     ~Move() {}
 

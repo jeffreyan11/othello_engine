@@ -8,10 +8,8 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    if(testingMinimax)
-        maxDepth = 2;
-    else
-        maxDepth = 4;
+    maxDepth = 6;
+    minDepth = 6;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -52,21 +50,36 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
-        int tempScore = negascout(copy, mySide, maxDepth, -99999, 99999);
+        int tempScore = negascout(copy, mySide, minDepth, -99999, 99999);
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
         }
         delete copy;
     }
-    if(myMove != NULL) {
-        myMove = new Move(myMove->getX(), myMove->getY());
-        deleteMoveVector(legalMoves);
+
+    if (myMove == NULL)
+        return myMove;
+
+    // sort legalMoves, delete bad branches
+    // change if statement below
+
+    if (msLeft > 0) {
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            Board *copy = game.copy();
+            copy->doMove(legalMoves[i], mySide);
+            // run the recursion to find scores
+            int tempScore = negascout(copy, mySide, maxDepth, -99999, 99999);
+            if (tempScore >= score) {
+                score = tempScore;
+                myMove = legalMoves[i];
+            }
+            delete copy;
+        }
     }
-    else {
-        deleteMoveVector(legalMoves);
-        myMove = NULL;
-    }
+
+    myMove = new Move(myMove->getX(), myMove->getY());
+    deleteMoveVector(legalMoves);
 
     game.doMove(myMove, mySide);
     return myMove;
@@ -102,10 +115,13 @@ int Player::negascout(Board *b, Side s, int depth, int alpha, int beta) {
         }
         if (alpha < score)
             alpha = score;
-        if (alpha >= beta)
+        if (alpha >= beta) {
+            delete copy;
             break;
+        }
         delete copy;
     }
+    deleteMoveVector(legalMoves);
     return alpha;
 }
 
@@ -138,7 +154,7 @@ void Player::deleteMoveVector(vector<Move *> v) {
     }
 }
 
-// g++ -o memtest player.cpp board.cpp
+// g++ -std=c++0x -o memtest player.cpp board.cpp
 /*int main(int argc, char **argv) {
     Player p(BLACK);
     Move m (3,5);
