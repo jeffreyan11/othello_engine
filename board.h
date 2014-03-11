@@ -12,11 +12,40 @@ private:
     bitbrd taken;
     bitbrd black;
     bitbrd MOVEMASK[64];
+    bitbrd NORTHLINE;
+    bitbrd SOUTHLINE;
+    bitbrd EASTLINE;
+    bitbrd WESTLINE;
+    bitbrd NELINE;
+    bitbrd NWLINE;
+    bitbrd SWLINE;
+    bitbrd SELINE;
 
     bool occupied(int x, int y);
     bool get(Side side, int x, int y);
     void set(Side side, int x, int y);
     bool onBoard(int x, int y);
+
+    // ------------bitboard operators--------------------
+    // checking to see if move is legal
+    bool northCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool southCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool eastCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool westCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool neCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool nwCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool swCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool seCheck(bitbrd move, bitbrd pos, bitbrd self);
+
+    // performing move, assuming legal
+    bitbrd northFill(bitbrd move, bitbrd pos);
+    bitbrd southFill(bitbrd move, bitbrd pos);
+    bitbrd eastFill(bitbrd move, bitbrd pos);
+    bitbrd westFill(bitbrd move, bitbrd pos);
+    bitbrd neFill(bitbrd move, bitbrd pos);
+    bitbrd nwFill(bitbrd move, bitbrd pos);
+    bitbrd swFill(bitbrd move, bitbrd pos);
+    bitbrd seFill(bitbrd move, bitbrd pos);
       
 public:
     Board();
