@@ -7,23 +7,6 @@
 Board::Board() {
     taken = 0x0000001818000000;
     black = 0x0000000810000000;
-
-    // initialize movemasks
-    for(int i = 0; i < 64; i++) {
-        MOVEMASK[i] = 1;
-    }
-    for(int i = 1; i < 64; i++) {
-        MOVEMASK[i] = MOVEMASK[i-1] << 1;
-    }
-
-    NORTHLINE = 0x00000000000000FF;
-    SOUTHLINE = 0xFF00000000000000;
-    EASTLINE = 0x8080808080808080;
-    WESTLINE = 0x0101010101010101;
-    NELINE = 0x80808080808080FF;
-    NWLINE = 0x01010101010101FF;
-    SWLINE = 0xFF01010101010101;
-    SELINE = 0xFF80808080808080;
 }
 
 /*
@@ -241,157 +224,136 @@ void Board::setBoard(char data[]) {
 
 // -------------Helper functions to check if a move is legal-------------
 bool Board::northCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd captures = 0;
+    // Check for anchor
+    self = ~self;
     bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move >> 8) & pos;
+    if(!((mtemp >>= 8) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp >>= 8;
     }
 
-    bitbrd anchor = 0;
-    self = ~self;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 8) & self;
+    // Now we are on the first self piece in line with the move in this
+    // direction. Backtrack to confirm that all spaces in between were black,
+    // not empty.
+    mtemp <<= 8;
+    while(mtemp & pos) {
+        mtemp <<= 8;
     }
-    return ((anchor == captures) && ((anchor >> 8) == anchor));
+
+    return mtemp == move;
 }
 bool Board::southCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move << 8) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 8) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp <<= 8) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp <<= 8;
     }
 
-    return ((anchor == captures) && ((anchor << 8) == anchor));
+    mtemp >>= 8;
+    while(mtemp & pos) {
+        mtemp >>= 8;
+    }
+
+    return mtemp == move;
 }
 bool Board::eastCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move << 1) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 1) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp <<= 1) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp << 1) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    return ((anchor == captures) && ((anchor << 1) == anchor));
+    mtemp >>= 1;
+    while(mtemp & pos) {
+        mtemp >>= 1;
+    }
+
+    return mtemp == move;
 }
 bool Board::westCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move >> 1) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 1) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp >>= 1) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp >> 1) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    return ((anchor == captures) && ((anchor >> 1) == anchor));
+    mtemp <<= 1;
+    while(mtemp & pos) {
+        mtemp <<= 1;
+    }
+
+    return mtemp == move;
 }
 bool Board::neCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move >> 7) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 7) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp >>= 7) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp >> 7) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    return ((anchor == captures) && ((anchor >> 7) == anchor));
+    mtemp <<= 7;
+    while(mtemp & pos) {
+        mtemp <<= 7;
+    }
+
+    return mtemp == move;
 }
 bool Board::nwCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move >> 9) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 9) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp >>= 9) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp >> 9) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    return ((anchor == captures) && ((anchor >> 9) == anchor));
+    mtemp <<= 9;
+    while(mtemp & pos) {
+        mtemp <<= 9;
+    }
+
+    return mtemp == move;
 }
 bool Board::swCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move << 7) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 7) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp <<= 7) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp << 7) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    return ((anchor == captures) && ((anchor << 7) == anchor));
+    mtemp >>= 7;
+    while(mtemp & pos) {
+        mtemp >>= 7;
+    }
+
+    return mtemp == move;
 }
 bool Board::seCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd captures = 0;
-    bitbrd mtemp = move;
-    while(move) {
-        captures |= move;
-        move = (move << 9) & pos;
-    }
-
-    bitbrd anchor = 0;
     self = ~self;
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 9) & self;
+    bitbrd mtemp = move;
+    if(!((mtemp <<= 9) & self))
+        return false;
+    while(mtemp & self) {
+        mtemp = (mtemp << 9) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    return ((anchor == captures) && ((anchor << 9) == anchor));
+    mtemp >>= 9;
+    while(mtemp & pos) {
+        mtemp >>= 9;
+    }
+
+    return mtemp == move;
 }
 
 // -------------Helper functions to perform a move on the bitboard-------------
