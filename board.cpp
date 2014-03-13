@@ -133,7 +133,7 @@ bool Board::checkMove(Move *m, Side side) {
 
 /*
  * Overloaded function taking x, y instead of a move object for internal use.
- * Pass is not an option here.
+ * Passing is not an option here.
 */
 bool Board::checkMove(int X, int Y, Side side) {
     // Make sure the square hasn't already been taken.

@@ -60,16 +60,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         delete copy;
     }
 
-    sort(legalMoves, scores, 0, legalMoves.size()-1);
-    int a = legalMoves.size()/3;
-    legalMoves.erase(legalMoves.end()-a, legalMoves.end());
-
     if (myMove == NULL)
         return myMove;
 
     // change if statement below
 
     if (msLeft > 0) {
+        sort(legalMoves, scores, 0, legalMoves.size()-1);
+        int a = legalMoves.size()/3;
+        legalMoves.erase(legalMoves.end()-a, legalMoves.end());
+
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = game.copy();
             copy->doMove(legalMoves[i], mySide);
@@ -152,11 +152,8 @@ int Player::countSetBits(bitbrd b) {
 }
 
 void Player::deleteMoveVector(vector<Move *> v) {
-    while(v.size() > 0) {
-        Move *m = v.back();
-        v.pop_back();
-        delete m;
-    }
+    for(unsigned int i; i < v.size(); i++)
+        delete v[i];
 }
 
 void Player::sort(vector<Move *> &moves, vector<int> &scores, int left, int right)
