@@ -253,6 +253,18 @@ vector<Move *> Board::getLegalMoves(Side side) {
     return result;
 }
 
+int Board::numLegalMoves(Side side) {
+    int result;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (checkMove(i, j, side)) {
+                result++;
+            }
+        }
+    }
+    return result;
+}
+
 bitbrd Board::toBits(Side side) {
     if(side == BLACK)
         return black;

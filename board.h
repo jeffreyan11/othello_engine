@@ -52,6 +52,7 @@ public:
     int countBlack();
     int countWhite();
     vector<Move *> getLegalMoves(Side side);
+    int numLegalMoves(Side side);
     bitbrd toBits(Side side);
 
     void setBoard(char data[]);

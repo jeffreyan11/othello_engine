@@ -135,9 +135,11 @@ int Player::heuristic (Board *b) {
     int score = b->count(mySide) - b->count(oppSide);
     bitbrd bm = b->toBits(mySide);
 
-    score += 5 * countSetBits(bm & CORNERS);
+    score += 15 * countSetBits(bm & CORNERS);
     //score += 3 * countSetBits(bm & EDGES);
-    score -= 3 * countSetBits(bm & ADJ_CORNERS);
+    score -= 8 * countSetBits(bm & ADJ_CORNERS);
+
+    score += b->numLegalMoves(mySide) - b->numLegalMoves(oppSide);
     return score;
 }
 
