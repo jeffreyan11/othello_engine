@@ -42,15 +42,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
     
     int score = -99999;
-    //int score = -64;
     Move *myMove = NULL;
     // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
+    vector<int> scores;
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
         int tempScore = negascout(copy, mySide, minDepth, -99999, 99999);
+        scores.push_back(tempScore);
+        
         if (tempScore >= score) {
             score = tempScore;
             myMove = legalMoves[i];
@@ -58,10 +60,13 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         delete copy;
     }
 
+    sort(legalMoves, scores, 0, legalMoves.size()-1);
+    int a = legalMoves.size()/3;
+    legalMoves.erase(legalMoves.end()-a, legalMoves.end());
+
     if (myMove == NULL)
         return myMove;
 
-    // sort legalMoves, delete bad branches
     // change if statement below
 
     if (msLeft > 0) {
@@ -152,6 +157,54 @@ void Player::deleteMoveVector(vector<Move *> v) {
         v.pop_back();
         delete m;
     }
+}
+
+void Player::sort(vector<Move *> &moves, vector<int> &scores, int left, int right)
+{
+    int index = left;
+
+    if (left < right)
+    {
+        index = partition(moves, scores, left, right, index);
+        sort(moves, scores, left, index-1);
+        sort(moves, scores, index+1, right);
+    }
+}
+
+void Player::swap(vector<Move *> &moves, vector<int> &scores, int i, int j)
+{
+    Move * less1;
+    int less2;
+
+    less1 = moves[j];
+    moves[j] = moves[i];
+    moves[i] = less1;
+
+    less2 = scores[j];
+    scores[j] = scores[i];
+    scores[i] = less2;
+}
+
+int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
+        int right, int pindex)
+{
+    int index = left;
+    int pivot = scores[pindex];
+
+    swap(moves, scores, pindex, right);
+
+    for (int i = left; i < right; i++)
+    {
+        if (scores[i] >= pivot)
+        // if (scores[i] <= pivot)
+        {
+            swap(moves, scores, i, index);
+            index++;
+        }
+    }
+    swap(moves, scores, index, right);
+
+    return index;
 }
 
 // g++ -std=c++0x -o memtest player.cpp board.cpp

@@ -18,6 +18,10 @@ private:
 
     int countSetBits(bitbrd b);
     void deleteMoveVector(vector<Move *> v);
+    void sort(vector<Move *> &moves, vector<int> &scores, int left, int right);
+    void swap(vector<Move *> &moves, vector<int> &scores, int i, int j);
+    int partition(vector<Move *> &moves, vector<int> &scores, int left, int
+        right, int pindex);
 
 public:
     Board game;
