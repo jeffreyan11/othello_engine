@@ -50,7 +50,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
-        int tempScore = negascout(copy, mySide, minDepth, -99999, 99999);
+        int tempScore = -negascout(copy, oppSide, minDepth, -99999, 99999);
         scores.push_back(tempScore);
         
         if (tempScore >= score) {
@@ -74,7 +74,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             Board *copy = game.copy();
             copy->doMove(legalMoves[i], mySide);
             // run the recursion to find scores
-            int tempScore = negascout(copy, mySide, maxDepth, -99999, 99999);
+            int tempScore = -negascout(copy, oppSide, maxDepth, -99999, 99999);
             if (tempScore >= score) {
                 score = tempScore;
                 myMove = legalMoves[i];
@@ -196,7 +196,6 @@ int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
     for (int i = left; i < right; i++)
     {
         if (scores[i] >= pivot)
-        // if (scores[i] <= pivot)
         {
             swap(moves, scores, i, index);
             index++;
