@@ -254,7 +254,7 @@ vector<Move *> Board::getLegalMoves(Side side) {
 }
 
 int Board::numLegalMoves(Side side) {
-    int result;
+    /*int result;
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if (checkMove(i, j, side)) {
@@ -262,7 +262,77 @@ int Board::numLegalMoves(Side side) {
             }
         }
     }
-    return result;
+    return result;*/
+
+    bitbrd result = 0;
+    bitbrd tempM;
+    bitbrd self = (side == BLACK) ? (black) : (taken ^ black);
+    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd empty = ~taken;
+    // check north captures
+    tempM = (self >> 8) & other;
+    while(tempM) {
+        bitbrd temp = (tempM >> 8);
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // south
+    tempM = (self << 8) & other;
+    while(tempM) {
+        bitbrd temp = (tempM << 8);
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // east
+    tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // west
+    tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // ne
+    tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // nw
+    tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // sw
+    tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // se
+    tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+
+    int n = 0;
+    // while there are 1s
+    while(result) {
+        n++;
+        result &= result - 1; // flip least significant 1
+    }
+    return n;
 }
 
 bitbrd Board::toBits(Side side) {

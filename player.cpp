@@ -154,8 +154,11 @@ int Player::countSetBits(bitbrd b) {
 }
 
 void Player::deleteMoveVector(vector<Move *> v) {
-    for(unsigned int i; i < v.size(); i++)
-        delete v[i];
+    while(v.size() > 0) {
+        Move *m = v.back();
+        v.pop_back();
+        delete m;
+    }
 }
 
 void Player::sort(vector<Move *> &moves, vector<int> &scores, int left, int right)
