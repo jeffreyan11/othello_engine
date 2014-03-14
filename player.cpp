@@ -65,7 +65,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // change if statement below
 
-    if (msLeft > 0) {
+    if (false) {
         sort(legalMoves, scores, 0, legalMoves.size()-1);
         int a = legalMoves.size()/3;
         legalMoves.erase(legalMoves.end()-a, legalMoves.end());
@@ -229,5 +229,9 @@ int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
         ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w'
     };
     b.setBoard(boardData);
-    cout << b.potentialMobility(BLACK) << endl;
+    Move m (4,5);
+    for(int i = 0; i < 200000000; i++) {
+        b.checkMove(&m, BLACK);
+    }
+    cout << "done" << endl;
 }*/

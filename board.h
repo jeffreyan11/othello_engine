@@ -28,8 +28,9 @@ private:
     bool nwCheck(bitbrd move, bitbrd pos, bitbrd self);
     bool swCheck(bitbrd move, bitbrd pos, bitbrd self);
     bool seCheck(bitbrd move, bitbrd pos, bitbrd self);
+    bool bitCheck(bitbrd move, bitbrd pos, bitbrd self);
 
-    // performing move, assuming legal
+    // performing move
     bitbrd northFill(bitbrd move, bitbrd pos);
     bitbrd southFill(bitbrd move, bitbrd pos);
     bitbrd eastFill(bitbrd move, bitbrd pos);
