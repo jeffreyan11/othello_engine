@@ -89,12 +89,7 @@ bool Board::isDone() {
  * Returns true if there are legal moves for the given side.
  */
 bool Board::hasMoves(Side side) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (checkMove(i, j, side)) return true;
-        }
-    }
-    return false;
+    return numLegalMoves(side);
 }
 
 /*
@@ -254,16 +249,6 @@ vector<Move *> Board::getLegalMoves(Side side) {
 }
 
 int Board::numLegalMoves(Side side) {
-    /*int result;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (checkMove(i, j, side)) {
-                result++;
-            }
-        }
-    }
-    return result;*/
-
     bitbrd result = 0;
     bitbrd tempM;
     bitbrd self = (side == BLACK) ? (black) : (taken ^ black);

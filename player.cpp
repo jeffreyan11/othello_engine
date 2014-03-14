@@ -215,4 +215,18 @@ int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
     p.doMove(&m, -1);
     Move m2 (2,6);
     p.doMove(&m2, -1);
+
+    Board b;
+    char boardData[64] = {
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
+        ' ', ' ', 'b', 'b', 'b', ' ', ' ', ' ', 
+        ' ', ' ', ' ', 'b', 'w', 'b', 'w', ' ', 
+        ' ', ' ', ' ', ' ', ' ', 'w', 'w', 'w', 
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+    };
+    b.setBoard(boardData);
+    cout << b.numLegalMoves(BLACK, true) << endl;
 }*/
