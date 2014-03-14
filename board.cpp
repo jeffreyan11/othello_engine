@@ -320,6 +320,53 @@ int Board::numLegalMoves(Side side) {
     return n;
 }
 
+int Board::potentialMobility(Side side) {
+    bitbrd result = 0;
+    bitbrd temp;
+    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd empty = ~taken;
+    // check north
+    temp = (other >> 8) & empty;
+    temp <<= 8;
+    result |= temp;
+    // south
+    temp = (other << 8) & empty;
+    temp >>= 8;
+    result |= temp;
+    // east
+    temp = (other << 1) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp >>= 1;
+    result |= temp;
+    // west
+    temp = (other >> 1) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp <<= 1;
+    result |= temp;
+    // ne
+    temp = (other >> 7) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp <<= 7;
+    result |= temp;
+    // nw
+    temp = (other >> 9) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp <<= 9;
+    result |= temp;
+    // sw
+    temp = (other << 7) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp >>= 7;
+    result |= temp;
+    // se
+    temp = (other << 9) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp >>= 9;
+    result |= temp;
+
+    int n = 0;
+    // while there are 1s
+    while(result) {
+        n++;
+        result &= result - 1; // flip least significant 1
+    }
+    return n;
+}
+
 bitbrd Board::toBits(Side side) {
     if(side == BLACK)
         return black;

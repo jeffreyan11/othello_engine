@@ -8,7 +8,7 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 6;
+    maxDepth = 7;
     minDepth = 6;
 
     mySide = side;
@@ -140,6 +140,7 @@ int Player::heuristic (Board *b) {
     score -= 8 * countSetBits(bm & ADJ_CORNERS);
 
     score += b->numLegalMoves(mySide) - b->numLegalMoves(oppSide);
+    score += b->potentialMobility(mySide) - b->potentialMobility(oppSide);
     return score;
 }
 
@@ -224,9 +225,9 @@ int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
         ' ', ' ', 'b', 'b', 'b', ' ', ' ', ' ', 
         ' ', ' ', ' ', 'b', 'w', 'b', 'w', ' ', 
         ' ', ' ', ' ', ' ', ' ', 'w', 'w', 'w', 
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w', 
+        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w'
     };
     b.setBoard(boardData);
-    cout << b.numLegalMoves(BLACK, true) << endl;
+    cout << b.potentialMobility(BLACK) << endl;
 }*/
