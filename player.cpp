@@ -42,7 +42,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
     
     int score = -99999;
-    Move *myMove = NULL;
+    Move *myMove = openingBook.get(game.getTaken(), game.getBlack());
+    if(myMove != NULL) {
+        cerr << "Opening book used!" << endl;
+        game.doMove(myMove, mySide);
+        return myMove;
+    }
     // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
     vector<int> scores;

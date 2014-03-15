@@ -1,25 +1,30 @@
 #ifndef __OPENINGS_H__
 #define __OPENINGS_H__
 
-#include <ifstream>
+#include <fstream>
 #include <string>
 #include "common.h"
 
-#define OPENING_BOOK_SIZE 1
+#define OPENING_BOOK_SIZE 2
 
-class OpeningBook {
+struct Node {
+    bitbrd taken, black;
+    Move * move;
+};
+
+class Openings {
 
 private:
-    (Move *)openings[OPENING_BOOK_SIZE];
+    Node *openings[OPENING_BOOK_SIZE];
+    int binarySearch(bitbrd pos, bitbrd black);
 
-    unsigned int hash(bitbrd pos);
-    void readFile();
+    bool readFile();
 
 public:
-    OpeningBook();
-    ~OpeningBook();
+    Openings();
+    ~Openings();
 
-    Move *get(bitbrd pos);
+    Move *get(bitbrd pos, bitbrd black);
 };
 
 #endif

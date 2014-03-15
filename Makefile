@@ -1,6 +1,6 @@
 CC          = g++
 CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g
-OBJS        = player.o board.o
+OBJS        = player.o board.o openings.o
 PLAYERNAME  = the_riders_of_rohan
 
 all: $(PLAYERNAME) testgame

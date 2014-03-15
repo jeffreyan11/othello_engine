@@ -58,6 +58,8 @@ public:
     bitbrd toBits(Side side);
 
     void setBoard(char data[]);
+    bitbrd getTaken();
+    bitbrd getBlack();
 };
 
 #endif

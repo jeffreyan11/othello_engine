@@ -379,6 +379,13 @@ void Board::setBoard(char data[]) {
     }
 }
 
+bitbrd Board::getTaken() {
+    return taken;
+}
+bitbrd Board::getBlack() {
+    return black;
+}
+
 // -------------Helper functions to check if a move is legal-------------
 bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
     bool result = false;
