@@ -11,8 +11,7 @@ class Board {
 private:
     bitbrd taken;
     bitbrd black;
-    bitbrd legalb;
-    bitbrd legalw;
+    bitbrd legal;
 
     bool occupied(int x, int y);
     bool get(Side side, int x, int y);

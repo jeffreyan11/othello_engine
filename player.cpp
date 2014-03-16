@@ -9,17 +9,12 @@ Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
     maxDepth = 7;
-    minDepth = 7;
+    minDepth = 8;
     sortDepth = 4;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
     turn = (side == BLACK) ? 3 : 4;
-
-    // set up bitmasks
-    CORNERS = 0x8100000000000081;
-    EDGES = 0x3C0081818181003C;
-    ADJ_CORNERS = 0x42C300000000C342;
 }
 
 /*
@@ -77,10 +72,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     // change if statement below
-    /*if (false) {
-        sort(legalMoves, scores, 0, legalMoves.size()-1);
-        int a = legalMoves.size()/3;
-        legalMoves.erase(legalMoves.end()-a, legalMoves.end());
+    /*if (msLeft/60 > 16000) {
+        //sort(legalMoves, scores, 0, legalMoves.size()-1);
+        //int a = legalMoves.size()/2;
+        //legalMoves.erase(legalMoves.end()-a, legalMoves.end());
 
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = game.copy();
@@ -218,18 +213,20 @@ int Player::heuristic (Board *b) {
     int score;
     if(turn < 40)
         score = b->count(mySide) - b->count(oppSide);
-    else if(turn < 58)
+    else if(turn < 57)
         score = 2 * (b->count(mySide) - b->count(oppSide));
     else
-        score = 5 * (b->count(mySide) - b->count(oppSide));
+        score = 12 * (b->count(mySide) - b->count(oppSide));
 
     bitbrd bm = b->toBits(mySide);
 
     score += 50 * countSetBits(bm & CORNERS);
-    if(turn > 35) {
-        score += 6 * countSetBits(bm & EDGES);
-    }
-    score -= 8 * countSetBits(bm & ADJ_CORNERS);
+    if(turn > 35)
+        score += 4 * countSetBits(bm & EDGES);
+    else
+        score -= 2 * countSetBits(bm & EDGES);
+    score -= 15 * countSetBits(bm & X_CORNERS);
+    score -= 10 * countSetBits(bm & ADJ_CORNERS);
 
     score += 3 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 3 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));

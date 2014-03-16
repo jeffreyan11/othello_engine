@@ -34,8 +34,7 @@ const bitbrd SELINE = 0xFF80808080808080;
 Board::Board() {
     taken = 0x0000001818000000;
     black = 0x0000000810000000;
-    legalb = 0x0000102004080000;
-    legalw = 0;
+    legal = 0x0000102004080000;
 }
 
 /*
@@ -51,8 +50,7 @@ Board *Board::copy() {
     Board *newBoard = new Board();
     newBoard->black = black;
     newBoard->taken = taken;
-    newBoard->legalb = legalb;
-    newBoard->legalw = legalw;
+    newBoard->legal = legal;
     return newBoard;
 }
 
@@ -116,10 +114,10 @@ bool Board::checkMove(Move *m, Side side) {
     else {
         return bitCheck(mv, black, taken^black);
     }*/
-    if(side == BLACK)
-        return legalb & MOVEMASK[m->getX() + 8 * m->getY()];
-    else
-        return legalw & MOVEMASK[m->getX() + 8 * m->getY()];
+    if(legal == 0xFFFF000000000000)
+        getLegal(side);
+
+    return legal & MOVEMASK[m->getX() + 8 * m->getY()];
 }
 
 /*
@@ -127,10 +125,10 @@ bool Board::checkMove(Move *m, Side side) {
  * Passing is not an option here.
 */
 bool Board::checkMove(int X, int Y, Side side) {
-    if(side == BLACK)
-        return legalb & MOVEMASK[X + 8 * Y];
-    else
-        return legalw & MOVEMASK[X + 8 * Y];
+    if(legal == 0xFFFF000000000000)
+        getLegal(side);
+
+    return legal & MOVEMASK[X + 8 * Y];
 }
 
 /*
@@ -163,7 +161,7 @@ void Board::doMove(Move *m, Side side) {
         taken |= filled;
         black |= filled;
 
-        getLegal((side == BLACK) ? (WHITE) : (BLACK));
+        legal = 0xFFFF000000000000;
     }
     else {
         bitbrd filled = northFill(mv, black);
@@ -178,7 +176,7 @@ void Board::doMove(Move *m, Side side) {
         taken |= filled;
         black &= ~filled;
 
-        getLegal((side == BLACK) ? (WHITE) : (BLACK));
+        legal = 0xFFFF000000000000;
     }
 }
 
@@ -296,14 +294,7 @@ void Board::getLegal(Side side) {
         tempM = temp & other;
     }
 
-    if(side == BLACK) {
-        legalb = result;
-        legalw = 0;
-    }
-    else {
-        legalw = result;
-        legalb = 0;
-    }
+    legal = result;
 }
 
 int Board::numLegalMoves(Side side) {
