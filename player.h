@@ -38,7 +38,10 @@ public:
     
     Move *doMove(Move *opponentsMove, int msLeft);
     int heuristic (Board *b);
-    int negascout(Board *b, Side side, int depth, int alpha, int beta);
+    Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
+        Side side, int depth, int alpha, int beta);
+    int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
+    int minimax(Board * b, Side side, int depth);
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
