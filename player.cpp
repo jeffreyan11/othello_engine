@@ -8,9 +8,9 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 7;
-    minDepth = 8;
-    sortDepth = 4;
+    maxDepth = 10;
+    minDepth = 7;
+    sortDepth = 3;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -40,7 +40,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     turn++;
 
     // check opening book
-    Move *myMove = NULL;//openingBook.get(game.getTaken(), game.getBlack());
+    Move *myMove = openingBook.get(game.getTaken(), game.getBlack());
     if(myMove != NULL) {
         cerr << "Opening book used!" << endl;
         game.doMove(myMove, mySide);
@@ -50,6 +50,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // find and test all legal moves
     vector<Move *> legalMoves = game.getLegalMoves(mySide);
     vector<int> scores;
+
+    if (legalMoves.size() <= 0) {
+        game.doMove(NULL, mySide);
+        turn++;
+        return NULL;
+    }
 
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = game.copy();
@@ -66,28 +72,19 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     myMove = negascout(&game, legalMoves, scores, mySide, minDepth, -99999,
         99999);
 
-    if (myMove == NULL) {
-        turn++;
-        return myMove;
-    }
-
+    //myMove = NULL;
     // change if statement below
-    /*if (msLeft/60 > 16000) {
-        //sort(legalMoves, scores, 0, legalMoves.size()-1);
-        //int a = legalMoves.size()/2;
-        //legalMoves.erase(legalMoves.end()-a, legalMoves.end());
-
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = game.copy();
-            copy->doMove(legalMoves[i], mySide);
-            // run the recursion to find scores
-            int tempScore = -negascout(copy, oppSide, maxDepth, -99999, 99999);
-            if (tempScore >= score) {
-                score = tempScore;
-                myMove = legalMoves[i];
-            }
-            delete copy;
+    /*if (msLeft/(64-turn) > 16000) {
+        sort(legalMoves, scores, 0, legalMoves.size()-1);
+        int a = legalMoves.size()/2;
+        for(int i = 0; i < a; i++) {
+            Move *todel = legalMoves.back();
+            legalMoves.pop_back();
+            delete todel;
         }
+
+        myMove = negascout(&game, legalMoves, scores, mySide, maxDepth,
+            -99999, 99999);
     }*/
 
     myMove = new Move(myMove->getX(), myMove->getY());
@@ -211,7 +208,7 @@ int Player::minimax(Board * b, Side side, int depth) {
 
 int Player::heuristic (Board *b) {
     int score;
-    if(turn < 40)
+    if(turn < 30)
         score = b->count(mySide) - b->count(oppSide);
     else if(turn < 57)
         score = 2 * (b->count(mySide) - b->count(oppSide));
@@ -223,13 +220,11 @@ int Player::heuristic (Board *b) {
     score += 50 * countSetBits(bm & CORNERS);
     if(turn > 35)
         score += 4 * countSetBits(bm & EDGES);
-    else
-        score -= 2 * countSetBits(bm & EDGES);
-    score -= 15 * countSetBits(bm & X_CORNERS);
-    score -= 10 * countSetBits(bm & ADJ_CORNERS);
+    score -= 12 * countSetBits(bm & X_CORNERS);
+    score -= 6 * countSetBits(bm & ADJ_CORNERS);
 
-    score += 3 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    score += 3 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
     return score;
 }
 
