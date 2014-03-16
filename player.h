@@ -13,10 +13,13 @@ class Player {
 private:
     int maxDepth;
     int minDepth;
+    int sortDepth;
     bitbrd CORNERS;     //(0x8100000000000081)
     bitbrd EDGES;       //(0x3C0081818181003C)
     bitbrd ADJ_CORNERS; //(0x42C300000000C342)
     Openings openingBook;
+
+    int turn;
 
     int countSetBits(bitbrd b);
     void deleteMoveVector(vector<Move *> v);
