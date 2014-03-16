@@ -34,6 +34,8 @@ const bitbrd SELINE = 0xFF80808080808080;
 Board::Board() {
     taken = 0x0000001818000000;
     black = 0x0000000810000000;
+    legalb = 0x0000102004080000;
+    legalw = 0;
 }
 
 /*
@@ -49,6 +51,8 @@ Board *Board::copy() {
     Board *newBoard = new Board();
     newBoard->black = black;
     newBoard->taken = taken;
+    newBoard->legalb = legalb;
+    newBoard->legalw = legalw;
     return newBoard;
 }
 
@@ -96,7 +100,7 @@ bool Board::hasMoves(Side side) {
  * Returns true if a move is legal for the given side; false otherwise.
  */
 bool Board::checkMove(Move *m, Side side) {
-    // Passing is only legal if you have no moves.
+    /*// Passing is only legal if you have no moves.
     if (m == NULL) return !hasMoves(side);
 
     int X = m->getX();
@@ -111,7 +115,11 @@ bool Board::checkMove(Move *m, Side side) {
     }
     else {
         return bitCheck(mv, black, taken^black);
-    }
+    }*/
+    if(side == BLACK)
+        return legalb & MOVEMASK[m->getX() + 8 * m->getY()];
+    else
+        return legalw & MOVEMASK[m->getX() + 8 * m->getY()];
 }
 
 /*
@@ -119,7 +127,7 @@ bool Board::checkMove(Move *m, Side side) {
  * Passing is not an option here.
 */
 bool Board::checkMove(int X, int Y, Side side) {
-    // Make sure the square hasn't already been taken.
+    /*// Make sure the square hasn't already been taken.
     if (occupied(X, Y)) return false;
 
     Side other = (side == BLACK) ? WHITE : BLACK;
@@ -140,7 +148,11 @@ bool Board::checkMove(int X, int Y, Side side) {
             }
         }
     }
-    return false;
+    return false;*/
+    if(side == BLACK)
+        return legalb & MOVEMASK[X + 8 * Y];
+    else
+        return legalw & MOVEMASK[X + 8 * Y];
 }
 
 /*
@@ -148,7 +160,10 @@ bool Board::checkMove(int X, int Y, Side side) {
  */
 void Board::doMove(Move *m, Side side) {
     // A NULL move means pass.
-    if (m == NULL) return;
+    if (m == NULL) {
+        getLegal((side == BLACK) ? (WHITE) : (BLACK));
+        return;
+    }
 
     // Ignore if move is invalid.
     if (!checkMove(m, side)) return;
@@ -169,6 +184,8 @@ void Board::doMove(Move *m, Side side) {
 
         taken |= filled;
         black |= filled;
+
+        getLegal((side == BLACK) ? (WHITE) : (BLACK));
     }
     else {
         bitbrd filled = northFill(mv, black);
@@ -182,6 +199,8 @@ void Board::doMove(Move *m, Side side) {
 
         taken |= filled;
         black &= ~filled;
+
+        getLegal((side == BLACK) ? (WHITE) : (BLACK));
     }
 }
 
@@ -234,6 +253,79 @@ vector<Move *> Board::getLegalMoves(Side side) {
         }
     }
     return result;
+}
+
+void Board::getLegal(Side side) {
+    bitbrd result = 0;
+    bitbrd tempM;
+    bitbrd self = (side == BLACK) ? (black) : (taken ^ black);
+    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd empty = ~taken;
+    // check north captures
+    tempM = (self >> 8) & other;
+    while(tempM) {
+        bitbrd temp = (tempM >> 8);
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // south
+    tempM = (self << 8) & other;
+    while(tempM) {
+        bitbrd temp = (tempM << 8);
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // east
+    tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // west
+    tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // ne
+    tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // nw
+    tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // sw
+    tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
+    while(tempM) {
+        bitbrd temp = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+    // se
+    tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
+    while(tempM) {
+        bitbrd temp = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
+        result |= temp & empty;
+        tempM = temp & other;
+    }
+
+    if(side == BLACK) {
+        legalb = result;
+        legalw = 0;
+    }
+    else {
+        legalw = result;
+        legalb = 0;
+    }
 }
 
 int Board::numLegalMoves(Side side) {
@@ -458,72 +550,6 @@ bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
     result |= (bool)(mtemp & self);
 
     return result;
-}
-bool Board::northCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    // Check for pieces to capture
-    move = (move >> 8) & pos;
-    while(move & pos) {
-        move >>= 8;
-    }
-
-    // Check for anchor
-    return (move & self);
-}
-bool Board::southCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move << 8) & pos;
-    while(move & pos) {
-        move <<= 8;
-    }
-
-    return (move & self);
-}
-bool Board::eastCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move << 1) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    return (move & self);
-}
-bool Board::westCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move >> 1) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    return (move & self);
-}
-bool Board::neCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move >> 7) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    return (move & self);
-}
-bool Board::nwCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move >> 9) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    return (move & self);
-}
-bool Board::swCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move << 7) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    return (move & self);
-}
-bool Board::seCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    move = (move << 9) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    return (move & self);
 }
 
 // -------------Helper functions to perform a move on the bitboard-------------

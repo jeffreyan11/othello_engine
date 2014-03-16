@@ -11,23 +11,17 @@ class Board {
 private:
     bitbrd taken;
     bitbrd black;
+    bitbrd legalb;
+    bitbrd legalw;
 
     bool occupied(int x, int y);
     bool get(Side side, int x, int y);
     void set(Side side, int x, int y);
     bool onBoard(int x, int y);
     bool checkMove(int X, int Y, Side side);
+    void getLegal(Side side);
 
     // ------------bitboard operators--------------------
-    // checking to see if move is legal
-    bool northCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool southCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool eastCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool westCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool neCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool nwCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool swCheck(bitbrd move, bitbrd pos, bitbrd self);
-    bool seCheck(bitbrd move, bitbrd pos, bitbrd self);
     bool bitCheck(bitbrd move, bitbrd pos, bitbrd self);
 
     // performing move
