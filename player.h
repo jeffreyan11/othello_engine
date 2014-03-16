@@ -39,7 +39,8 @@ public:
     ~Player();
     
     Move *doMove(Move *opponentsMove, int msLeft);
-    int heuristic (Board *b);
+    int heuristic(Board *b);
+    int mmheuristic(Board *b);
     Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
         Side side, int depth, int alpha, int beta);
     int negascout_h(Board *b, Side side, int depth, int alpha, int beta);

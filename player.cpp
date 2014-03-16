@@ -9,8 +9,8 @@ Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
     maxDepth = 10;
-    minDepth = 7;
-    sortDepth = 3;
+    minDepth = 8;
+    sortDepth = 4;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -37,12 +37,14 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(opponentsMove, oppSide);
-    turn++;
+    if(opponentsMove != NULL)
+        turn++;
 
     // check opening book
     Move *myMove = openingBook.get(game.getTaken(), game.getBlack());
     if(myMove != NULL) {
         cerr << "Opening book used!" << endl;
+        turn++;
         game.doMove(myMove, mySide);
         return myMove;
     }
@@ -180,7 +182,7 @@ int Player::minimax(Board * b, Side side, int depth) {
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = b->copy();
             copy->doMove(legalMoves[i], side);
-            int tempScore = heuristic(copy) * ((side == mySide) ? 1 : -1);
+            int tempScore = mmheuristic(copy) * ((side == mySide) ? 1 : -1);
             delete copy;
             if (tempScore > score)
                 score = tempScore;
@@ -212,8 +214,34 @@ int Player::heuristic (Board *b) {
         score = b->count(mySide) - b->count(oppSide);
     else if(turn < 57)
         score = 2 * (b->count(mySide) - b->count(oppSide));
-    else
-        score = 12 * (b->count(mySide) - b->count(oppSide));
+    else {
+        score = b->count(mySide) - b->count(oppSide);
+        return score;
+    }
+
+    bitbrd bm = b->toBits(mySide);
+
+    score += 50 * countSetBits(bm & CORNERS);
+    if(turn > 35)
+        score += 4 * countSetBits(bm & EDGES);
+    score -= 12 * countSetBits(bm & X_CORNERS);
+    score -= 6 * countSetBits(bm & ADJ_CORNERS);
+
+    score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    return score;
+}
+
+int Player::mmheuristic (Board *b) {
+    int score;
+    if(turn < 30)
+        score = b->count(mySide) - b->count(oppSide);
+    else if(turn < 61)
+        score = 2 * (b->count(mySide) - b->count(oppSide));
+    else {
+        score = b->count(mySide) - b->count(oppSide);
+        return score;
+    }
 
     bitbrd bm = b->toBits(mySide);
 
