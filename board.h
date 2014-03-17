@@ -9,10 +9,6 @@ using namespace std;
 class Board {
    
 private:
-    bitbrd taken;
-    bitbrd black;
-    bitbrd legal;
-
     bool occupied(int x, int y);
     bool get(Side side, int x, int y);
     void set(Side side, int x, int y);
@@ -34,6 +30,10 @@ private:
     bitbrd seFill(bitbrd move, bitbrd pos);
       
 public:
+    bitbrd taken;
+    bitbrd black;
+    bitbrd legal;
+
     Board();
     ~Board();
     Board *copy();
@@ -53,6 +53,11 @@ public:
     void setBoard(char data[]);
     bitbrd getTaken();
     bitbrd getBlack();
+
+    inline bool operator==(const Board &other) const {
+        return (taken == other.taken) && (black == other.black) &&
+            (legal == other.legal);
+    }
 };
 
 #endif

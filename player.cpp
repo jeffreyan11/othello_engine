@@ -141,11 +141,11 @@ int Player::negascout_h(Board *b, Side s, int depth, int alpha, int beta) {
         side = -1;
 
     if (depth <= 0) {
-        string board = transposition(b);
-        score = transposition_table[board];
+        //string board = transposition(b);
+        score = transposition_table[*b];
         if (score == 0) {
             score = side * heuristic(b);
-            transposition_table[board] = score;
+            transposition_table[*b] = score;
         }
         return score;
     }
@@ -261,21 +261,6 @@ int Player::mmheuristic (Board *b) {
     score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
     return score;
-}
-
-string Player::transposition (Board *b) {
-
-    string board;
-
-    bitbrd taken = b->getTaken();
-    bitbrd black = b->getBlack();
-    const char* t = (const char*)(&taken);
-    const char* bl = (const char*)(&black);
-
-    board.append(t, sizeof(bitbrd));
-    board.append(bl, sizeof(bitbrd));
-
-    return board;
 }
 
 int Player::countSetBits(bitbrd b) {
