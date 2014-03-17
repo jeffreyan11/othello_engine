@@ -101,19 +101,6 @@ bool Board::checkMove(Move *m, Side side) {
     // Passing is only legal if you have no moves.
     if (m == NULL) return !hasMoves(side);
 
-    /*int X = m->getX();
-    int Y = m->getY();
-
-    // Make sure the square hasn't already been taken.
-    if (occupied(X, Y)) return false;
-
-    bitbrd mv = MOVEMASK[m->getX() + 8 * m->getY()];
-    if(side == BLACK) {
-        return bitCheck(mv, taken^black, black);
-    }
-    else {
-        return bitCheck(mv, black, taken^black);
-    }*/
     if(legal == 0xFFFF000000000000)
         getLegal(side);
 
@@ -137,7 +124,7 @@ bool Board::checkMove(int X, int Y, Side side) {
 void Board::doMove(Move *m, Side side) {
     // A NULL move means pass.
     if (m == NULL) {
-        getLegal((side == BLACK) ? (WHITE) : (BLACK));
+        legal = 0xFFFF000000000000;
         return;
     }
 
@@ -523,180 +510,106 @@ bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
 
 // -------------Helper functions to perform a move on the bitboard-------------
 bitbrd Board::northFill(bitbrd move, bitbrd pos) {
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move >>= 8;
+    while(move & pos) {
         result |= move;
-        move = (move >> 8) & pos;
+        move >>= 8;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 8) & self;
-    }
-
-    if( (result == anchor) && ((result ^ NORTHLINE) == (result | NORTHLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::southFill(bitbrd move, bitbrd pos) {
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move <<= 8;
+    while(move & pos) {
         result |= move;
-        move = (move << 8) & pos;
+        move <<= 8;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 8) & self;
-    }
-
-    if( (result == anchor) && ((result ^ SOUTHLINE) == (result | SOUTHLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::eastFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
         result |= move;
-        move = (move << 1) & pos;
+        move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 1) & self;
-    }
-
-    if( (result == anchor) && ((result ^ EASTLINE) == (result | EASTLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::westFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
         result |= move;
-        move = (move >> 1) & pos;
+        move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 1) & self;
-    }
-
-    if( (result == anchor) && ((result ^ WESTLINE) == (result | WESTLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::neFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
         result |= move;
-        move = (move >> 7) & pos;
+        move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 7) & self;
-    }
-
-    if( (result == anchor) && ((result ^ NELINE) == (result | NELINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::nwFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
         result |= move;
-        move = (move >> 9) & pos;
+        move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp >> 9) & self;
-    }
-
-    if( (result == anchor) && ((result ^ NWLINE) == (result | NWLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::swFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperH = 0x7F7F7F7F7F7F7F7F;
-    pos &= wrapperH;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
         result |= move;
-        move = (move << 7) & pos;
+        move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperH;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 7) & self;
-    }
-
-    if( (result == anchor) && ((result ^ SWLINE) == (result | SWLINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
 bitbrd Board::seFill(bitbrd move, bitbrd pos) {
-    bitbrd wrapperA = 0xFEFEFEFEFEFEFEFE;
-    pos &= wrapperA;
-    bitbrd result = 0;
-    bitbrd mtemp = move;
-    while(move) {
+    bitbrd result = move;
+    bitbrd self = taken ^ pos;
+    move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
         result |= move;
-        move = (move << 9) & pos;
+        move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
     }
 
-    bitbrd anchor = 0;
-    bitbrd self = ~(taken ^ pos);
-    self &= wrapperA;
-    while(mtemp) {
-        anchor |= mtemp;
-        mtemp = (mtemp << 9) & self;
-    }
-
-    if( (result == anchor) && ((result ^ SELINE) == (result | SELINE)) )
+    if(move & self)
         return result;
-    else
-        return 0;
+    else return 0;
 }
