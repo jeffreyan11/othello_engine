@@ -38,6 +38,7 @@ private:
     int maxDepth;
     int minDepth;
     int sortDepth;
+    int endgameDepth;
     Openings openingBook;
 
     unordered_map<Board, int, BoardHashFunc> transposition_table;
@@ -61,10 +62,14 @@ public:
     
     Move *doMove(Move *opponentsMove, int msLeft);
     int heuristic(Board *b);
+    int eheuristic(Board *b);
     int mmheuristic(Board *b);
     Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
         Side side, int depth, int alpha, int beta);
     int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
+    Move *endgame(Board *b, vector<Move *> &moves, Side s, int depth,
+        int alpha, int beta);
+    int endgame_h(Board *b, Side s, int depth, int alpha, int beta);
     int minimax(Board * b, Side side, int depth);
 
     // Flag to tell if the player is running within the test_minimax context
