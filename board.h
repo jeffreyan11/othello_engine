@@ -16,7 +16,6 @@ private:
     bool checkMove(int X, int Y, Side side);
     void getLegal(Side side);
 
-    // ------------bitboard operators--------------------
     bool bitCheck(bitbrd move, bitbrd pos, bitbrd self);
 
     // performing move

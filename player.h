@@ -41,7 +41,11 @@ private:
     int endgameDepth;
     Openings openingBook;
 
+    int added;
+    int used;
+
     unordered_map<Board, int, BoardHashFunc> transposition_table;
+    unordered_map<Board, int, BoardHashFunc> endgame_table;
 
     int turn;
 
