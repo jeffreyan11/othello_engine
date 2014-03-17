@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <unordered_map>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -20,6 +21,8 @@ private:
     int minDepth;
     int sortDepth;
     Openings openingBook;
+
+    unordered_map<string, int> transposition_table;
 
     int turn;
 
@@ -45,6 +48,7 @@ public:
         Side side, int depth, int alpha, int beta);
     int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
     int minimax(Board * b, Side side, int depth);
+    string transposition (Board *b);
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;

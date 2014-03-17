@@ -134,17 +134,22 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
 }
 
 int Player::negascout_h(Board *b, Side s, int depth, int alpha, int beta) {
-    int side;
+    int side, score;
     if (s == mySide)
         side = 1;
     else
         side = -1;
 
     if (depth <= 0) {
-        return side * heuristic(b);
+        string board = transposition(b);
+        score = transposition_table[board];
+        if (score == 0) {
+            score = side * heuristic(b);
+            transposition_table[board] = score;
+        }
+        return score;
     }
 
-    int score;
     vector<Move *> legalMoves = b->getLegalMoves(s);
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = b->copy();
@@ -210,6 +215,7 @@ int Player::minimax(Board * b, Side side, int depth) {
 
 int Player::heuristic (Board *b) {
     int score;
+
     if(turn < 30)
         score = b->count(mySide) - b->count(oppSide);
     else if(turn < 57)
@@ -229,6 +235,7 @@ int Player::heuristic (Board *b) {
 
     score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+
     return score;
 }
 
@@ -254,6 +261,21 @@ int Player::mmheuristic (Board *b) {
     score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
     return score;
+}
+
+string Player::transposition (Board *b) {
+
+    string board;
+
+    bitbrd taken = b->getTaken();
+    bitbrd black = b->getBlack();
+    const char* t = (const char*)(&taken);
+    const char* bl = (const char*)(&black);
+
+    board.append(t, sizeof(bitbrd));
+    board.append(bl, sizeof(bitbrd));
+
+    return board;
 }
 
 int Player::countSetBits(bitbrd b) {
