@@ -8,7 +8,7 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 14;
+    maxDepth = 13;
     minDepth = 10;
     sortDepth = 4;
     endgameDepth = 20;
@@ -150,7 +150,7 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, Side s, int depth,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() > 25 && i < moves.size() / 2)
+        if(time_span.count() > 30 && i < moves.size() / 2)
             return NULL;
 
         Board *copy = b->copy();
@@ -244,7 +244,7 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() > 90 && i < moves.size() / 2)
+        if(time_span.count() > 120 && i < moves.size() / 2)
             return NULL;
 
         Board *copy = b->copy();
