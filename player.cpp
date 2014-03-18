@@ -8,9 +8,9 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 10;
-    minDepth = 8;
-    sortDepth = 5;
+    maxDepth = 14;
+    minDepth = 12;
+    sortDepth = 6;
     endgameDepth = 20;
 
     mySide = side;
@@ -60,7 +60,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     while(turn > (64 - endgameDepth - 1)) {
-        transposition_table.clear();
         cerr << game.numLegalMoves(mySide) << " " << game.potentialMobility(mySide) << endl;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth+1, -99999,
             99999);
@@ -91,8 +90,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     sort(legalMoves, scores, 0, legalMoves.size()-1);
     scores.clear();
 
-    myMove = negascout(&game, legalMoves, mySide, minDepth, -99999,
-        99999);
+    myMove = negascout(&game, legalMoves, mySide, minDepth, -99999, 99999);
+    if(myMove == NULL)
+        myMove = negascout(&game, legalMoves, mySide, minDepth-2, -99999,
+            99999);
 
     //myMove = NULL;
     // if enough time, search deeper
@@ -104,7 +105,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             Board *copy = game.copy();
             copy->doMove(legalMoves[i], mySide);
             // run the recursion to find scores
-            int tempScore = -minimax(copy, oppSide, sortDepth+1);
+            int tempScore = -minimax(copy, oppSide, sortDepth+2);
             scores.push_back(tempScore);
             delete copy;
         }
@@ -149,7 +150,7 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, Side s, int depth,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() > 20 && i < moves.size() / 2)
+        if(time_span.count() > 24 && i < moves.size() / 2)
             return NULL;
 
         Board *copy = b->copy();
@@ -187,12 +188,7 @@ int Player::negascout_h(Board *b, Side s, int depth, int alpha, int beta) {
         side = -1;
 
     if (depth <= 0) {
-        //score = transposition_table[*b];
-        //if (score == 0) {
-            score = side * heuristic(b);
-            //transposition_table[*b] = score;
-        //}
-        return score;
+        return side * heuristic(b);
     }
 
     vector<Move *> legalMoves = b->getLegalMoves(s);
@@ -301,7 +297,7 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
         return (side * eheuristic(b));
     }
 
-    if(depth > 15) {
+    if(depth > 12) {
         int temp = endgame_table[*b];
         if (temp != 0) {
             temp--;
