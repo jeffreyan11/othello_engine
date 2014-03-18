@@ -8,10 +8,10 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 10;
+    maxDepth = 12;
     minDepth = 9;
     sortDepth = 4;
-    endgameDepth = 19;
+    endgameDepth = 18;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -59,8 +59,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return NULL;
     }
 
+    if(turn > (64 - endgameDepth - 1) && endgameDepth > 15) {
+        if( ((game.numLegalMoves(mySide) + game.potentialMobility(mySide) +
+            game.numLegalMoves(oppSide) + game.potentialMobility(oppSide)) > 40)
+            || msLeft < 300000)
+            endgameDepth -= 2;
+    }
+
     if(turn > (64 - endgameDepth - 1)) {
         transposition_table.clear();
+        cerr << game.numLegalMoves(mySide) << " " << game.potentialMobility(mySide) << endl;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth+1, -99999,
             99999);
 
@@ -206,8 +214,13 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
 
     int temp = endgame_table[*b];
     if (temp != 0) {
-        temp = (temp-1) % 100;
+        cerr << temp << endl;
+        if(temp >= 0)
+            temp = (temp-1) % 100;
+        else
+            temp = 100 + ((temp-1) % 100);
         Move* tempMove = new Move(temp%8, temp/8);
+        cerr << tempMove->getX() << ", " << tempMove->getY() << endl;
         return tempMove;
     }
 
@@ -393,12 +406,8 @@ int Player::heuristic (Board *b) {
 
     if(turn < 30)
         score = b->count(mySide) - b->count(oppSide);
-    else if(turn <= 45)
+    else
         score = 2 * (b->count(mySide) - b->count(oppSide));
-    else {
-        score = b->count(mySide) - b->count(oppSide);
-        return score;
-    }
 
     bitbrd bm = b->toBits(mySide);
 
