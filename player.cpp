@@ -8,10 +8,10 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 12;
-    minDepth = 9;
-    sortDepth = 4;
-    endgameDepth = 18;
+    maxDepth = 10;
+    minDepth = 8;
+    sortDepth = 5;
+    endgameDepth = 20;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
@@ -59,18 +59,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return NULL;
     }
 
-    if(turn > (64 - endgameDepth - 1) && endgameDepth > 15) {
-        if( ((game.numLegalMoves(mySide) + game.potentialMobility(mySide) +
-            game.numLegalMoves(oppSide) + game.potentialMobility(oppSide)) > 40)
-            || msLeft < 300000)
-            endgameDepth -= 2;
-    }
-
-    if(turn > (64 - endgameDepth - 1)) {
+    while(turn > (64 - endgameDepth - 1)) {
         transposition_table.clear();
         cerr << game.numLegalMoves(mySide) << " " << game.potentialMobility(mySide) << endl;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth+1, -99999,
             99999);
+        if(myMove == NULL) {
+            cerr << "broken" << endl;
+            endgameDepth -= 2;
+            break;
+        }
 
         endgameDepth--;
         myMove = new Move(myMove->getX(), myMove->getY());
@@ -93,23 +91,41 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     sort(legalMoves, scores, 0, legalMoves.size()-1);
     scores.clear();
 
-    myMove = negascout(&game, legalMoves, scores, mySide, minDepth, -99999,
+    myMove = negascout(&game, legalMoves, mySide, minDepth, -99999,
         99999);
 
     //myMove = NULL;
-    // change if statement below
-    /*if (msLeft/(64-turn) > 16000) {
+    // if enough time, search deeper
+    if ((msLeft-300000)/(64-turn) > 16000) {
+        cerr << "here" << endl;
+        Move* bestM = myMove;
+
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            Board *copy = game.copy();
+            copy->doMove(legalMoves[i], mySide);
+            // run the recursion to find scores
+            int tempScore = -minimax(copy, oppSide, sortDepth+1);
+            scores.push_back(tempScore);
+            delete copy;
+        }
         sort(legalMoves, scores, 0, legalMoves.size()-1);
-        int a = legalMoves.size()/2;
-        for(int i = 0; i < a; i++) {
-            Move *todel = legalMoves.back();
-            legalMoves.pop_back();
-            delete todel;
+
+        vector<Move *> deeperMoves;
+        deeperMoves.push_back(bestM);
+        for(unsigned int i = 0; i < legalMoves.size() / 2; i++) {
+            if(legalMoves[i] != bestM) {
+                deeperMoves.push_back(legalMoves[i]);
+            }
         }
 
-        myMove = negascout(&game, legalMoves, scores, mySide, maxDepth,
-            -99999, 99999);
-    }*/
+        myMove = negascout(&game, deeperMoves, mySide, maxDepth, -99999, 99999);
+        if(myMove == NULL) {
+            cerr << "broken" << endl;
+            myMove = bestM;
+        }
+        if(myMove != bestM)
+            cerr << "changed" << endl;
+    }
 
     myMove = new Move(myMove->getX(), myMove->getY());
     deleteMoveVector(legalMoves);
@@ -119,13 +135,23 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return myMove;
 }
 
-Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
-    Side s, int depth, int alpha, int beta) {
+Move *Player::negascout(Board *b, vector<Move *> &moves, Side s, int depth,
+    int alpha, int beta) {
+
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
 
     int score;
     Move *tempMove = moves[0];
 
     for (unsigned int i = 0; i < moves.size(); i++) {
+        auto end_time = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(
+            end_time-start_time);
+
+        if(time_span.count() > 20 && i < moves.size() / 2)
+            return NULL;
+
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
         if (i != 0) {
@@ -140,7 +166,6 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
             score = -negascout_h(copy, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
-        scorev.push_back(score);
         if (score > alpha) {
             alpha = score;
             tempMove = moves[i];
@@ -162,11 +187,11 @@ int Player::negascout_h(Board *b, Side s, int depth, int alpha, int beta) {
         side = -1;
 
     if (depth <= 0) {
-        score = transposition_table[*b];
-        if (score == 0) {
+        //score = transposition_table[*b];
+        //if (score == 0) {
             score = side * heuristic(b);
-            transposition_table[*b] = score;
-        }
+            //transposition_table[*b] = score;
+        //}
         return score;
     }
 
@@ -214,20 +239,28 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
 
     int temp = endgame_table[*b];
     if (temp != 0) {
-        cerr << temp << endl;
         if(temp >= 0)
             temp = (temp-1) % 100;
         else
             temp = 100 + ((temp-1) % 100);
         Move* tempMove = new Move(temp%8, temp/8);
-        cerr << tempMove->getX() << ", " << tempMove->getY() << endl;
         return tempMove;
     }
+
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
 
     int score;
     Move *tempMove = moves[0];
 
     for (unsigned int i = 0; i < moves.size(); i++) {
+        auto end_time = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(
+            end_time-start_time);
+
+        if(time_span.count() > 90 && i < moves.size() / 2)
+            return NULL;
+
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
 

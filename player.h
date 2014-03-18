@@ -1,6 +1,7 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <unordered_map>
@@ -68,8 +69,8 @@ public:
     int heuristic(Board *b);
     int eheuristic(Board *b);
     int mmheuristic(Board *b);
-    Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
-        Side side, int depth, int alpha, int beta);
+    Move *negascout(Board *b, vector<Move *> &moves, Side side, int depth,
+        int alpha, int beta);
     int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
     Move *endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         int alpha, int beta);
