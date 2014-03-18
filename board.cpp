@@ -1,6 +1,9 @@
 #include "board.h"
 #include <iostream>
 
+/**
+ * @brief For converting a move number 0-63 to a bitmask.
+*/
 const bitbrd MOVEMASK[64] = {
 0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008,
 0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080,
@@ -19,17 +22,9 @@ const bitbrd MOVEMASK[64] = {
 0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 0x0800000000000000,
 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000,
 };
-const bitbrd NORTHLINE = 0x00000000000000FF;
-const bitbrd SOUTHLINE = 0xFF00000000000000;
-const bitbrd EASTLINE = 0x8080808080808080;
-const bitbrd WESTLINE = 0x0101010101010101;
-const bitbrd NELINE = 0x80808080808080FF;
-const bitbrd NWLINE = 0x01010101010101FF;
-const bitbrd SWLINE = 0xFF01010101010101;
-const bitbrd SELINE = 0xFF80808080808080;
 
-/*
- * Make a standard 8x8 othello board and initialize it to the standard setup.
+/**
+ * @brief Make a standard 8x8 othello board and initialize it to the standard setup.
  */
 Board::Board() {
     taken = 0x0000001818000000;
@@ -37,14 +32,14 @@ Board::Board() {
     legal = 0x0000102004080000;
 }
 
-/*
- * Destructor for the board.
+/**
+ * @brief Destructor for the board.
  */
 Board::~Board() {
 }
 
-/*
- * Returns a copy of this board.
+/**
+ * @brief Returns a copy of this board.
  */
 Board *Board::copy() {
     Board *newBoard = new Board();
@@ -79,23 +74,23 @@ bool Board::onBoard(int x, int y) {
 }
 
  
-/*
- * Returns true if the game is finished; false otherwise. The game is finished 
- * if neither side has a legal move.
+/**
+ * @brief Returns true if the game is finished; false otherwise. The game is
+ * finished if neither side has a legal move.
  */
 bool Board::isDone() {
     return !(hasMoves(BLACK) || hasMoves(WHITE));
 }
 
-/*
- * Returns true if there are legal moves for the given side.
+/**
+ * @brief Returns true if there are legal moves for the given side.
  */
 bool Board::hasMoves(Side side) {
     return numLegalMoves(side);
 }
 
-/*
- * Returns true if a move is legal for the given side; false otherwise.
+/**
+ * @brief Returns true if a move is legal for the given side; false otherwise.
  */
 bool Board::checkMove(Move *m, Side side) {
     // Passing is only legal if you have no moves.
@@ -118,8 +113,8 @@ bool Board::checkMove(int X, int Y, Side side) {
     return legal & MOVEMASK[X + 8 * Y];
 }
 
-/*
- * Modifies the board to reflect the specified move.
+/**
+ * @brief Modifies the board to reflect the specified move.
  */
 void Board::doMove(Move *m, Side side) {
     // A NULL move means pass.
@@ -202,8 +197,8 @@ int Board::countWhite() {
     return n;
 }
 
-/*
- * Returns a vector of all legal moves.
+/**
+ * @brief Returns a vector of all legal moves.
 */
 vector<Move *> Board::getLegalMoves(Side side) {
     vector<Move *> result;
@@ -218,6 +213,13 @@ vector<Move *> Board::getLegalMoves(Side side) {
     return result;
 }
 
+/**
+ * @brief Stores all legal moves for a side in the bitbrd object legal, for
+ * quick retrieval later by checkMove().
+ * 
+ * This method operates by checking in all eight directions, first for the line
+ * of pieces of the opposite color, then for the anchor once the line ends.
+*/
 void Board::getLegal(Side side) {
     bitbrd result = 0;
     bitbrd tempM;

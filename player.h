@@ -14,15 +14,38 @@ const bitbrd EDGES = 0x3C0081818181003C;
 const bitbrd ADJ_CORNERS = 0x4281000000008142;
 const bitbrd X_CORNERS = 0x0042000000004200;
 
+struct BoardHashFunc {
+    size_t operator()(const Board &b) const {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        return ( (hash<bitbrd>()(b.taken) << 1)
+                 ^ hash<bitbrd>()(b.black)
+                 ^ (hash<bitbrd>()(b.legal) >> 1) );
+    }
+};
+
+/* TODO more info in transposition table?
+struct TTInfo {
+    int score;
+    
+};*/
+
 class Player {
 
 private:
     int maxDepth;
     int minDepth;
     int sortDepth;
+    int endgameDepth;
     Openings openingBook;
 
-    unordered_map<string, int> transposition_table;
+    int added;
+    int used;
+
+    unordered_map<Board, int, BoardHashFunc> transposition_table;
+    unordered_map<Board, int, BoardHashFunc> endgame_table;
 
     int turn;
 
@@ -43,12 +66,15 @@ public:
     
     Move *doMove(Move *opponentsMove, int msLeft);
     int heuristic(Board *b);
+    int eheuristic(Board *b);
     int mmheuristic(Board *b);
     Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scorev,
         Side side, int depth, int alpha, int beta);
     int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
+    Move *endgame(Board *b, vector<Move *> &moves, Side s, int depth,
+        int alpha, int beta);
+    int endgame_h(Board *b, Side s, int depth, int alpha, int beta);
     int minimax(Board * b, Side side, int depth);
-    string transposition (Board *b);
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
