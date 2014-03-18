@@ -2,7 +2,7 @@ Jeffrey - set up bitbucket, Player() constructor, bitboards, minimax, negamax,
     negascout, heuristic, opening book, endgame solver, iterative deepening
 
 Kimberly - wrote doMove() in player.cpp to play random moves, heuristic,
-    minimax, negascout, iterative deepening, transposition tables
+    minimax, negascout, iterative deepening
 
 
 
@@ -24,11 +24,10 @@ This is possible because there are fewer possible lines of play.
 and searches deeper than the current depth if time remains.
 
     We made changes to the heuristic for better play. Instead of just considering
-the number of stones on the board, we also considered mobility, potential mobility,
-and position. Of the positions, we gave more weight to corners and tried to avoid
-those squares adjacent to corners.
+the number of stones on the board, we also considered mobility, potential
+mobility, and position. Of the positions, we gave more weight to corners and
+tried to avoid those squares adjacent to corners.
 
     We tried implementing transposition tables but found that they slowed the
-AI down because the program had to search the whole table each move. We still
-have transposition tables for the endgame solver because there are fewer possible
-moves that late in the game.
+AI down because the program had to deal with overhead for converting and hashing
+the boards and moves into a form useable by the hashtable.

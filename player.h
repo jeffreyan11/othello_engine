@@ -4,7 +4,6 @@
 #include <chrono>
 #include <cstdint>
 #include <iostream>
-#include <unordered_map>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -15,24 +14,6 @@ const bitbrd EDGES = 0x3C0081818181003C;
 const bitbrd ADJ_CORNERS = 0x4281000000008142;
 const bitbrd X_CORNERS = 0x0042000000004200;
 
-struct BoardHashFunc {
-    size_t operator()(const Board &b) const {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-
-        return ( (hash<bitbrd>()(b.taken) << 1)
-                 ^ hash<bitbrd>()(b.black)
-                 ^ (hash<bitbrd>()(b.legal) >> 1) );
-    }
-};
-
-/* TODO more info in transposition table?
-struct TTInfo {
-    int score;
-    
-};*/
-
 class Player {
 
 private:
@@ -41,11 +22,6 @@ private:
     int sortDepth;
     int endgameDepth;
     Openings openingBook;
-
-    int added;
-    int used;
-
-    unordered_map<Board, int, BoardHashFunc> endgame_table;
 
     int turn;
 
