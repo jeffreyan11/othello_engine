@@ -128,8 +128,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             cerr << "changed" << endl;
     }
 
-    if(myMove == NULL)
-        cerr << "error" << endl;
     myMove = new Move(myMove->getX(), myMove->getY());
     deleteMoveVector(legalMoves);
 
@@ -238,6 +236,13 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
+    int temp = endgame_table[*b];
+    if(temp != 0) {
+        temp--;
+        Move *tempMove = new Move(temp%8, temp/8);
+        return tempMove;
+    }
+
     int score;
     Move *tempMove = moves[0];
 
@@ -276,11 +281,6 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         delete copy;
     }
 
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
-    cerr << time_span.count() << endl;
-
     return tempMove;
 }
 
@@ -295,45 +295,92 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
         return (side * eheuristic(b));
     }
 
-    vector<Move *> legalMoves = b->getLegalMoves(s);
-    if(legalMoves.size() <= 0) {
-        Board *copy = b->copy();
-        copy->doMove(NULL, s);
-        score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
-            depth-1, -beta, -alpha);
+    if(depth > 12) {
+        vector<Move *> legalMoves = b->getLegalMoves(s);
+        if(legalMoves.size() <= 0) {
+            Board *copy = b->copy();
+            copy->doMove(NULL, s);
+            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
+                depth-1, -beta, -alpha);
 
-        if (alpha < score)
-            alpha = score;
-        delete copy;
-        return alpha;
-    }
-
-    for (unsigned int i = 0; i < legalMoves.size(); i++) {
-        Board *copy = b->copy();
-        copy->doMove(legalMoves[i], s);
-
-        if (i != 0) {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -score);
-            }
-        }
-        else {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -alpha);
-        }
-
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta) {
+            if (alpha < score)
+                alpha = score;
             delete copy;
-            break;
+            return alpha;
         }
-        delete copy;
+
+        Move *tempMove = legalMoves[0];
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            Board *copy = b->copy();
+            copy->doMove(legalMoves[i], s);
+
+            if (i != 0) {
+                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -alpha-1, -alpha);
+                if (alpha < score && score < beta) {
+                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -beta, -score);
+                }
+            }
+            else {
+                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -beta, -alpha);
+            }
+
+            if (alpha < score) {
+                alpha = score;
+                tempMove = legalMoves[i];
+            }
+            if (alpha >= beta) {
+                delete copy;
+                break;
+            }
+            delete copy;
+        }
+        endgame_table[*b] = tempMove->getX() + 8*tempMove->getY() + 1;
+        deleteMoveVector(legalMoves);
     }
-    deleteMoveVector(legalMoves);
+    else {
+        vector<Move *> legalMoves = b->getLegalMoves(s);
+        if(legalMoves.size() <= 0) {
+            Board *copy = b->copy();
+            copy->doMove(NULL, s);
+            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
+                depth-1, -beta, -alpha);
+
+            if (alpha < score)
+                alpha = score;
+            delete copy;
+            return alpha;
+        }
+
+        for (unsigned int i = 0; i < legalMoves.size(); i++) {
+            Board *copy = b->copy();
+            copy->doMove(legalMoves[i], s);
+
+            if (i != 0) {
+                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -alpha-1, -alpha);
+                if (alpha < score && score < beta) {
+                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -beta, -score);
+                }
+            }
+            else {
+                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
+                    WHITE), depth-1, -beta, -alpha);
+            }
+
+            if (alpha < score)
+                alpha = score;
+            if (alpha >= beta) {
+                delete copy;
+                break;
+            }
+            delete copy;
+        }
+        deleteMoveVector(legalMoves);
+    }
     return alpha;
 }
 
@@ -404,12 +451,8 @@ int Player::mmheuristic (Board *b) {
     int score;
     if(turn < 30)
         score = b->count(mySide) - b->count(oppSide);
-    else if(turn < 61)
+    else
         score = 2 * (b->count(mySide) - b->count(oppSide));
-    else {
-        score = b->count(mySide) - b->count(oppSide);
-        return score;
-    }
 
     bitbrd bm = b->toBits(mySide);
 
