@@ -8,7 +8,7 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 13;
+    maxDepth = 12;
     minDepth = 10;
     sortDepth = 4;
     endgameDepth = 20;
@@ -59,7 +59,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return NULL;
     }
 
-    while(turn > (64 - endgameDepth - 1)) {
+    while(turn > (64 - endgameDepth - 1) && (msLeft > 300000 || msLeft == -1)) {
         cerr << game.numLegalMoves(mySide) << " " << game.potentialMobility(mySide) << endl;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth+1, -99999,
             99999);
@@ -128,6 +128,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             cerr << "changed" << endl;
     }
 
+    if(myMove == NULL)
+        cerr << "error" << endl;
     myMove = new Move(myMove->getX(), myMove->getY());
     deleteMoveVector(legalMoves);
 
@@ -150,7 +152,7 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, Side s, int depth,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() > 30 && i < moves.size() / 2)
+        if(time_span.count() * moves.size() > 30 * (i+1))
             return NULL;
 
         Board *copy = b->copy();
@@ -244,7 +246,7 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() > 120 && i < moves.size() / 2)
+        if(time_span.count() * moves.size() > 120 * (i+1))
             return NULL;
 
         Board *copy = b->copy();
@@ -273,6 +275,12 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         }
         delete copy;
     }
+
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(
+        end_time-start_time);
+    cerr << time_span.count() << endl;
+
     return tempMove;
 }
 
@@ -389,7 +397,7 @@ int Player::heuristic (Board *b) {
 }
 
 int Player::eheuristic(Board *b) {
-    return (b->count(mySide) - b->count(oppSide));
+    return (b->countHigh(mySide) - b->count(oppSide));
 }
 
 int Player::mmheuristic (Board *b) {

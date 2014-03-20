@@ -44,6 +44,7 @@ public:
     int count(Side side);
     int countBlack();
     int countWhite();
+    int countHigh(Side side);
     vector<Move *> getLegalMoves(Side side);
     int numLegalMoves(Side side);
     int potentialMobility(Side side);
