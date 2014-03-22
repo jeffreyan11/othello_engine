@@ -11,9 +11,6 @@ $(PLAYERNAME): $(OBJS) wrapper.o
 testgame: testgame.o
 	$(CC) -o $@ $^
 
-testminimax: $(OBJS) testminimax.o
-	$(CC) -o $@ $^
-
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) -x c++ $< -o $@
 	
