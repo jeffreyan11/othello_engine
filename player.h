@@ -40,6 +40,8 @@ private:
     Openings openingBook;
 
     int turn;
+    int totalTimePM;
+    int endgameTimeMS;
 
     unordered_map<Board, int, BoardHashFunc> endgame_table;
 

@@ -8,8 +8,8 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 12;
-    minDepth = 10;
+    maxDepth = 16;
+    minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
     if(side == WHITE)
@@ -18,6 +18,8 @@ Player::Player(Side side) {
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
     turn = 4;
+    totalTimePM = -2;
+    endgameTimeMS = 0;
 }
 
 /*
@@ -39,9 +41,27 @@ Player::~Player() {
  * return NULL.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
+    if(totalTimePM == -2) {
+        totalTimePM = msLeft;
+        endgameTimeMS = msLeft / 3;
+        if(totalTimePM != -1) {
+            if(totalTimePM > 500000)
+                totalTimePM = (totalTimePM - endgameTimeMS) / 25;
+        }
+        else {
+            totalTimePM = 1000000;
+            endgameTimeMS = 1000000;
+        }
+    }
+
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
+
     game.doMove(opponentsMove, oppSide);
     if(opponentsMove != NULL)
         turn++;
+    else if(turn >= 44)
+        endgameDepth++;
 
     // check opening book
     Move *myMove = openingBook.get(game.getTaken(), game.getBlack());
@@ -62,17 +82,21 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     vector<int> scores;
 
-    while(turn >= (64 - endgameDepth) && (msLeft > 300000 || msLeft == -1)) {
-        cerr << game.numLegalMoves(mySide) << " " << game.potentialMobility(mySide) << endl;
+    while(turn >= (64 - endgameDepth)) {
+        if(msLeft < endgameTimeMS && msLeft != -1) {
+            endgameDepth -= 2;
+            break;
+        }
+        cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth, NEG_INFTY,
             INFTY);
         if(myMove == NULL) {
-            cerr << "broken" << endl;
+            cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
             break;
         }
 
-        endgameDepth--;
+        endgameDepth -= 2;
         myMove = new Move(myMove->getX(), myMove->getY());
         deleteMoveVector(legalMoves);
 
@@ -81,6 +105,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return myMove;
     }
 
+    cerr << "Performing initial minimax search: depth " << sortDepth << endl;
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
@@ -90,41 +115,27 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         delete copy;
     }
 
-    sort(legalMoves, scores, 0, legalMoves.size()-1);
-    scores.clear();
-
-    myMove = negascout(&game, legalMoves, scores, mySide, minDepth, NEG_INFTY,
-        INFTY);
-    if(myMove == NULL) {
-        scores.clear();
-        myMove = negascout(&game, legalMoves, scores, mySide, minDepth-2,
-            NEG_INFTY, INFTY);
-    }
-
-    // if enough time, search deeper
-    if ((msLeft-300000)/(64-turn) > 16000) {
-        cerr << "here" << endl;
-        Move* bestM = myMove;
-
+    int attemptingDepth = minDepth;
+    duration<double> time_span;
+    do {
+        cerr << "Attempting NWS of depth " << attemptingDepth << endl;
         sort(legalMoves, scores, 0, legalMoves.size()-1);
-
-        vector<Move *> deeperMoves;
-        deeperMoves.push_back(bestM);
-        for(unsigned int i = 0; i < legalMoves.size() / 2; i++) {
-            if(legalMoves[i] != bestM) {
-                deeperMoves.push_back(legalMoves[i]);
-            }
-        }
-
         scores.clear();
-        myMove = negascout(&game, deeperMoves, scores, mySide, maxDepth, NEG_INFTY, INFTY);
-        if(myMove == NULL) {
-            cerr << "broken" << endl;
-            myMove = bestM;
+
+        Move *newBest = negascout(&game, legalMoves, scores, mySide,
+            attemptingDepth, NEG_INFTY, INFTY);
+        if(newBest == NULL) {
+            cerr << "Broken out of search" << endl;
+            break;
         }
-        if(myMove != bestM)
-            cerr << "changed" << endl;
-    }
+        myMove = newBest;
+        attemptingDepth += 2;
+
+        auto end_time = high_resolution_clock::now();
+        time_span = duration_cast<duration<double>>(end_time-start_time);
+    } while( (
+        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*25)
+        && attemptingDepth <= maxDepth) || msLeft == -1 );
 
     myMove = new Move(myMove->getX(), myMove->getY());
     deleteMoveVector(legalMoves);
@@ -148,7 +159,7 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scores,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * moves.size() > 30 * (i+1))
+        if(time_span.count() * moves.size() * 1000 > totalTimePM * (i+1))
             return NULL;
 
         Board *copy = b->copy();
@@ -259,7 +270,7 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int pieces,
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * moves.size() > 120 * (i+1))
+        if(time_span.count() * moves.size() * 2000 > endgameTimeMS * (i+1))
             return NULL;
 
         Board *copy = b->copy();
