@@ -48,31 +48,6 @@ Board *Board::copy() {
     newBoard->legal = legal;
     return newBoard;
 }
-
-bool Board::occupied(int x, int y) {
-    return (MOVEMASK[x + 8*y] & taken);
-}
-
-bool Board::get(Side side, int x, int y) {
-    if(side == BLACK)
-        return (MOVEMASK[x + 8*y] & black);
-    else
-        return (occupied(x,y) && (MOVEMASK[x+8*y] & (black ^ taken)));
-}
-
-void Board::set(Side side, int x, int y) {
-    taken |= MOVEMASK[x + 8*y];
-    if(side == BLACK) {
-        black |= MOVEMASK[x + 8*y];
-    }
-    else
-        black &= ~MOVEMASK[x + 8*y];
-}
-
-bool Board::onBoard(int x, int y) {
-    return(0 <= x && x < 8 && 0 <= y && y < 8);
-}
-
  
 /**
  * @brief Returns true if the game is finished; false otherwise. The game is
@@ -106,27 +81,27 @@ bool Board::checkMove(Move *m, Side side) {
  * Overloaded function taking x, y instead of a move object for internal use.
  * Passing is not an option here.
 */
-bool Board::checkMove(int X, int Y, Side side) {
+bool Board::checkMove(int index, Side side) {
     if(legal == 0xFFFF000000000000)
         getLegal(side);
 
-    return legal & MOVEMASK[X + 8 * Y];
+    return legal & MOVEMASK[index];
 }
 
 /**
  * @brief Modifies the board to reflect the specified move.
  */
-void Board::doMove(Move *m, Side side) {
+void Board::doMove(int index, Side side) {
     // A NULL move means pass.
-    if (m == NULL) {
+    if (index == 64) {
         legal = 0xFFFF000000000000;
         return;
     }
 
     // Ignore if move is invalid.
-    if (!checkMove(m, side)) return;
+    if (!checkMove(index, side)) return;
 
-    bitbrd mv = MOVEMASK[m->getX() + 8 * m->getY()];
+    bitbrd mv = MOVEMASK[index];
 
     if(side == BLACK) {
         bitbrd pos_other = taken ^ black;
@@ -210,14 +185,11 @@ int Board::countHigh(Side side) {
 /**
  * @brief Returns a vector of all legal moves.
 */
-vector<Move *> Board::getLegalMoves(Side side) {
-    vector<Move *> result;
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (checkMove(i, j, side)) {
-                Move * myMove = new Move(i, j);
-                result.push_back(myMove);
-            }
+vector<int> Board::getLegalMoves(Side side) {
+    vector<int> result;
+    for (int i = 0; i < 64; i++) {
+        if (checkMove(i, side)) {
+            result.push_back(i);
         }
     }
     return result;

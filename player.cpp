@@ -8,24 +8,37 @@
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
-    maxDepth = 16;
+    maxDepth = 14;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
     if(side == WHITE)
         endgameDepth--;
+    endgameSwitch = false;
 
     mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
     turn = 4;
     totalTimePM = -2;
     endgameTimeMS = 0;
+
+    for(int i = 0; i < 8; i++) {
+        for(int j = 0; j < 8; j++) {
+            indexToMove[i+8*j] = new Move(i,j);
+        }
+    }
+    indexToMove[64] = NULL;
 }
 
 /*
  * Destructor for the player.
  */
 Player::~Player() {
+    for(int i = 0; i < 8; i++) {
+        for(int j = 0; j < 8; j++) {
+            delete indexToMove[i+8*j];
+        }
+    }
 }
 
 /*
@@ -47,6 +60,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         if(totalTimePM != -1) {
             if(totalTimePM > 500000)
                 totalTimePM = (totalTimePM - endgameTimeMS) / 25;
+            else {
+                totalTimePM = (totalTimePM - endgameTimeMS) / 25;
+                endgameDepth = 14;
+            }
         }
         else {
             totalTimePM = 1000000;
@@ -57,63 +74,69 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    game.doMove(opponentsMove, oppSide);
-    if(opponentsMove != NULL)
+    if(opponentsMove != NULL) {
+        game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
         turn++;
-    else if(turn >= 44)
-        endgameDepth++;
+    }
+    else {
+        game.doMove(64, oppSide);
+        if(endgameSwitch)
+            endgameDepth++;
+    }
 
-    // check opening book
-    Move *myMove = openingBook.get(game.getTaken(), game.getBlack());
-    if(myMove != NULL) {
+    // check opening book TODO
+    int openMove = openingBook.get(game.getTaken(), game.getBlack());
+    if(openMove != -3) {
         cerr << "Opening book used!" << endl;
         turn++;
-        game.doMove(myMove, mySide);
-        return myMove;
+        game.doMove(openMove, mySide);
+        return indexToMove[openMove];
     }
 
     // find and test all legal moves
-    vector<Move *> legalMoves = game.getLegalMoves(mySide);
+    vector<int> legalMoves = game.getLegalMoves(mySide);
 
     if (legalMoves.size() <= 0) {
-        game.doMove(NULL, mySide);
+        game.doMove(64, mySide);
         return NULL;
     }
 
+    int myMove = -1;
     vector<int> scores;
 
-    while(turn >= (64 - endgameDepth)) {
+    while(endgameSwitch || turn >= (64 - endgameDepth)) {
         if(msLeft < endgameTimeMS && msLeft != -1) {
+            endgameSwitch = false;
             endgameDepth -= 2;
             break;
         }
         cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
+        endgameSwitch = true;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth, NEG_INFTY,
             INFTY);
-        if(myMove == NULL) {
+        if(myMove == -1) {
             cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
             break;
         }
 
         endgameDepth -= 2;
-        myMove = new Move(myMove->getX(), myMove->getY());
-        deleteMoveVector(legalMoves);
 
         game.doMove(myMove, mySide);
         turn++;
-        return myMove;
+        return indexToMove[myMove];
     }
 
-    cerr << "Performing initial minimax search: depth " << sortDepth << endl;
-    for (unsigned int i = 0; i < legalMoves.size(); i++) {
+    cerr << "Performing initial search: depth " << sortDepth << endl;
+    /*for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board *copy = game.copy();
         copy->doMove(legalMoves[i], mySide);
         // run the recursion to find scores
         int tempScore = -minimax(copy, oppSide, sortDepth);
         scores.push_back(tempScore);
         delete copy;
-    }
+    }*/
+    negascout(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
     int attemptingDepth = minDepth;
     duration<double> time_span;
@@ -122,9 +145,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         sort(legalMoves, scores, 0, legalMoves.size()-1);
         scores.clear();
 
-        Move *newBest = negascout(&game, legalMoves, scores, mySide,
+        int newBest = negascout(&game, legalMoves, scores, mySide,
             attemptingDepth, NEG_INFTY, INFTY);
-        if(newBest == NULL) {
+        if(newBest == -1) {
             cerr << "Broken out of search" << endl;
             break;
         }
@@ -134,25 +157,21 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         auto end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
     } while( (
-        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*25)
-        && attemptingDepth <= maxDepth) || msLeft == -1 );
-
-    myMove = new Move(myMove->getX(), myMove->getY());
-    deleteMoveVector(legalMoves);
+        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*25) || msLeft == -1) && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
     turn++;
-    return myMove;
+    return indexToMove[myMove];
 }
 
-Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scores,
+int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
     Side s, int depth, int alpha, int beta) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
     int score;
-    Move *tempMove = moves[0];
+    int tempMove = moves[0];
 
     for (unsigned int i = 0; i < moves.size(); i++) {
         auto end_time = high_resolution_clock::now();
@@ -160,7 +179,7 @@ Move *Player::negascout(Board *b, vector<Move *> &moves, vector<int> &scores,
             end_time-start_time);
 
         if(time_span.count() * moves.size() * 1000 > totalTimePM * (i+1))
-            return NULL;
+            return -1;
 
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
@@ -205,10 +224,10 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
         return topScore;
     }
 
-    vector<Move *> legalMoves = b->getLegalMoves(s);
+    vector<int> legalMoves = b->getLegalMoves(s);
     if(legalMoves.size() <= 0) {
         Board *copy = b->copy();
-        copy->doMove(NULL, s);
+        copy->doMove(64, s);
         int ttScore = NEG_INFTY;
         score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
@@ -245,11 +264,10 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
         }
         delete copy;
     }
-    deleteMoveVector(legalMoves);
     return alpha;
 }
 
-Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int pieces,
+int Player::endgame(Board *b, vector<int> &moves, Side s, int pieces,
     int alpha, int beta) {
 
     using namespace std::chrono;
@@ -258,12 +276,11 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int pieces,
     int temp = endgame_table[*b];
     if(temp != 0) {
         temp--;
-        Move *tempMove = new Move(temp%8, temp/8);
-        return tempMove;
+        return temp;
     }
 
     int score;
-    Move *tempMove = moves[0];
+    int tempMove = moves[0];
 
     for (unsigned int i = 0; i < moves.size(); i++) {
         auto end_time = high_resolution_clock::now();
@@ -271,7 +288,7 @@ Move *Player::endgame(Board *b, vector<Move *> &moves, Side s, int pieces,
             end_time-start_time);
 
         if(time_span.count() * moves.size() * 2000 > endgameTimeMS * (i+1))
-            return NULL;
+            return -1;
 
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
@@ -315,12 +332,12 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
     }
 
     if(depth > 12) {
-        vector<Move *> legalMoves = b->getLegalMoves(s);
+        vector<int> legalMoves = b->getLegalMoves(s);
         if(legalMoves.size() <= 0) {
             if(b->isDone())
                 return (side * eheuristic(b));
             Board *copy = b->copy();
-            copy->doMove(NULL, s);
+            copy->doMove(64, s);
             score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
                 depth, -beta, -alpha);
 
@@ -330,7 +347,7 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
             return alpha;
         }
 
-        Move *tempMove = legalMoves[0];
+        int tempMove = legalMoves[0];
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = b->copy();
             copy->doMove(legalMoves[i], s);
@@ -358,16 +375,15 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
             }
             delete copy;
         }
-        endgame_table[*b] = tempMove->getX() + 8*tempMove->getY() + 1;
-        deleteMoveVector(legalMoves);
+        endgame_table[*b] = tempMove + 1;
     }
     else {
-        vector<Move *> legalMoves = b->getLegalMoves(s);
+        vector<int> legalMoves = b->getLegalMoves(s);
         if(legalMoves.size() <= 0) {
             if(b->isDone())
                 return (side * eheuristic(b));
             Board *copy = b->copy();
-            copy->doMove(NULL, s);
+            copy->doMove(64, s);
             score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
                 depth, -beta, -alpha);
 
@@ -402,12 +418,11 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
             }
             delete copy;
         }
-        deleteMoveVector(legalMoves);
     }
     return alpha;
 }
 
-int Player::minimax(Board * b, Side side, int depth) {
+/*int Player::minimax(Board * b, Side side, int depth) {
     if (depth <= 2) { // base case
         int score = -9999;
 
@@ -440,17 +455,18 @@ int Player::minimax(Board * b, Side side, int depth) {
         deleteMoveVector(legalMoves);
         return score;
     }
-}
+}*/
 
 int Player::heuristic (Board *b) {
     int score;
-    if(b->count(mySide) == 0)
+    int myCoins = b->count(mySide);
+    if(myCoins == 0)
         return -9001;
 
     if(turn < 30)
-        score = b->count(mySide) - b->count(oppSide);
+        score = myCoins - b->count(oppSide);
     else
-        score = 2 * (b->count(mySide) - b->count(oppSide));
+        score = 2 * (myCoins - b->count(oppSide));
 
     bitbrd bm = b->toBits(mySide);
 
@@ -470,26 +486,6 @@ int Player::eheuristic(Board *b) {
     return (b->countHigh(mySide) - b->count(oppSide));
 }
 
-int Player::mmheuristic (Board *b) {
-    int score;
-    if(turn < 30)
-        score = b->count(mySide) - b->count(oppSide);
-    else
-        score = 2 * (b->count(mySide) - b->count(oppSide));
-
-    bitbrd bm = b->toBits(mySide);
-
-    score += 50 * countSetBits(bm & CORNERS);
-    if(turn > 35)
-        score += 4 * countSetBits(bm & EDGES);
-    score -= 12 * countSetBits(bm & X_CORNERS);
-    score -= 6 * countSetBits(bm & ADJ_CORNERS);
-
-    score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
-    return score;
-}
-
 int Player::countSetBits(bitbrd b) {
     int n = 0;
     // while there are 1s
@@ -500,15 +496,7 @@ int Player::countSetBits(bitbrd b) {
     return n;
 }
 
-void Player::deleteMoveVector(vector<Move *> v) {
-    while(v.size() > 0) {
-        Move *m = v.back();
-        v.pop_back();
-        delete m;
-    }
-}
-
-void Player::sort(vector<Move *> &moves, vector<int> &scores, int left, int right)
+void Player::sort(vector<int> &moves, vector<int> &scores, int left, int right)
 {
     int index = left;
 
@@ -520,9 +508,9 @@ void Player::sort(vector<Move *> &moves, vector<int> &scores, int left, int righ
     }
 }
 
-void Player::swap(vector<Move *> &moves, vector<int> &scores, int i, int j)
+void Player::swap(vector<int> &moves, vector<int> &scores, int i, int j)
 {
-    Move * less1;
+    int less1;
     int less2;
 
     less1 = moves[j];
@@ -534,7 +522,7 @@ void Player::swap(vector<Move *> &moves, vector<int> &scores, int i, int j)
     scores[i] = less2;
 }
 
-int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
+int Player::partition(vector<int> &moves, vector<int> &scores, int left,
         int right, int pindex)
 {
     int index = left;
@@ -555,13 +543,21 @@ int Player::partition(vector<Move *> &moves, vector<int> &scores, int left,
     return index;
 }
 
-// g++ -std=c++0x -o memtest player.cpp board.cpp openings.cpp
+// g++ -std=c++0x -O3 -o memtest player.cpp board.cpp openings.cpp
 /*int main(int argc, char **argv) {
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
     Player p(BLACK);
     Move m (3,5);
     p.doMove(&m, -1);
     Move m2 (2,6);
     p.doMove(&m2, -1);
+
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(
+        end_time-start_time);
+
+    cerr << time_span.count() << endl;
 
     Board b;
     char boardData[64] = {

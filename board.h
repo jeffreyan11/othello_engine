@@ -9,11 +9,7 @@ using namespace std;
 class Board {
    
 private:
-    bool occupied(int x, int y);
-    bool get(Side side, int x, int y);
-    void set(Side side, int x, int y);
-    bool onBoard(int x, int y);
-    bool checkMove(int X, int Y, Side side);
+    bool checkMove(int index, Side side);
     void getLegal(Side side);
 
     bool bitCheck(bitbrd move, bitbrd pos, bitbrd self);
@@ -40,12 +36,12 @@ public:
     bool isDone();
     bool hasMoves(Side side);
     bool checkMove(Move *m, Side side);
-    void doMove(Move *m, Side side);
+    void doMove(int index, Side side);
     int count(Side side);
     int countBlack();
     int countWhite();
     int countHigh(Side side);
-    vector<Move *> getLegalMoves(Side side);
+    vector<int> getLegalMoves(Side side);
     int numLegalMoves(Side side);
     int potentialMobility(Side side);
     bitbrd toBits(Side side);

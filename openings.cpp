@@ -7,15 +7,14 @@ Openings::Openings() {
 
 Openings::~Openings() {
     for(int i = 0; i < OPENING_BOOK_SIZE; i++) {
-        delete openings[i]->move;
         delete openings[i];
     }
 }
 
-Move *Openings::get(bitbrd pos, bitbrd black) {
+int Openings::get(bitbrd pos, bitbrd black) {
     int index = binarySearch(pos, black);
     if(index == -1) {
-        return NULL;
+        return -3;
     }
     else return openings[index]->move;
 }
@@ -57,8 +56,7 @@ bool Openings::readFile() {
             int x = std::stoi(line, &sz, 0);
             line = line.substr(sz);
             int y = std::stoi(line, &sz, 0);
-            Move *m = new Move(x, y);
-            temp->move = m;
+            temp->move = x + 8*y;
             openings[i] = temp;
             i++;
         }

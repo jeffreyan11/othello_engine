@@ -9,7 +9,7 @@
 
 struct Node {
     bitbrd taken, black;
-    Move * move;
+    int move;
 };
 
 class Openings {
@@ -24,7 +24,7 @@ public:
     Openings();
     ~Openings();
 
-    Move *get(bitbrd pos, bitbrd black);
+    int get(bitbrd pos, bitbrd black);
 };
 
 #endif
