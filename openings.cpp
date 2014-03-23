@@ -14,7 +14,7 @@ Openings::~Openings() {
 int Openings::get(bitbrd pos, bitbrd black) {
     int index = binarySearch(pos, black);
     if(index == -1) {
-        return -3;
+        return OPENING_NOT_FOUND;
     }
     else return openings[index]->move;
 }

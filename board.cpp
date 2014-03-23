@@ -93,7 +93,7 @@ bool Board::checkMove(int index, Side side) {
  */
 void Board::doMove(int index, Side side) {
     // A NULL move means pass.
-    if (index == 64) {
+    if (index == MOVE_NULL) {
         legal = 0xFFFF000000000000;
         return;
     }

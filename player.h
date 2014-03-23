@@ -10,9 +10,6 @@
 #include "openings.h"
 using namespace std;
 
-#define NEG_INFTY -99999
-#define INFTY 99999
-
 const bitbrd CORNERS = 0x8100000000000081;
 const bitbrd EDGES = 0x3C0081818181003C;
 const bitbrd ADJ_CORNERS = 0x4281000000008142;
@@ -44,7 +41,7 @@ private:
     int totalTimePM;
     int endgameTimeMS;
 
-    Move* indexToMove[65];
+    Move* indexToMove[64];
 
     unordered_map<Board, int, BoardHashFunc> endgame_table;
 
@@ -57,7 +54,6 @@ private:
     int endgame(Board *b, vector<int> &moves, Side s, int depth,
         int alpha, int beta);
     int endgame_h(Board *b, Side s, int depth, int alpha, int beta);
-    //int minimax(Board * b, Side side, int depth);
 
     int countSetBits(bitbrd b);
     void sort(vector<int> &moves, vector<int> &scores, int left, int right);

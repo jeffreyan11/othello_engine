@@ -27,17 +27,14 @@ Player::Player(Side side) {
             indexToMove[i+8*j] = new Move(i,j);
         }
     }
-    indexToMove[64] = NULL;
 }
 
 /*
  * Destructor for the player.
  */
 Player::~Player() {
-    for(int i = 0; i < 8; i++) {
-        for(int j = 0; j < 8; j++) {
-            delete indexToMove[i+8*j];
-        }
+    for(int i = 0; i < 64; i++) {
+        delete indexToMove[i];
     }
 }
 
@@ -59,7 +56,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         endgameTimeMS = msLeft / 3;
         if(totalTimePM != -1) {
             if(totalTimePM > 500000)
-                totalTimePM = (totalTimePM - endgameTimeMS) / 25;
+                totalTimePM = (totalTimePM - endgameTimeMS) / 22;
             else {
                 totalTimePM = (totalTimePM - endgameTimeMS) / 25;
                 endgameDepth = 14;
@@ -79,14 +76,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         turn++;
     }
     else {
-        game.doMove(64, oppSide);
+        game.doMove(MOVE_NULL, oppSide);
         if(endgameSwitch)
             endgameDepth++;
     }
 
-    // check opening book TODO
+    // check opening book
     int openMove = openingBook.get(game.getTaken(), game.getBlack());
-    if(openMove != -3) {
+    if(openMove != OPENING_NOT_FOUND) {
         cerr << "Opening book used!" << endl;
         turn++;
         game.doMove(openMove, mySide);
@@ -97,7 +94,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     vector<int> legalMoves = game.getLegalMoves(mySide);
 
     if (legalMoves.size() <= 0) {
-        game.doMove(64, mySide);
+        game.doMove(MOVE_NULL, mySide);
         return NULL;
     }
 
@@ -114,7 +111,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         endgameSwitch = true;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth, NEG_INFTY,
             INFTY);
-        if(myMove == -1) {
+        if(myMove == MOVE_BROKEN) {
             cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
             break;
@@ -147,7 +144,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         int newBest = negascout(&game, legalMoves, scores, mySide,
             attemptingDepth, NEG_INFTY, INFTY);
-        if(newBest == -1) {
+        if(newBest == MOVE_BROKEN) {
             cerr << "Broken out of search" << endl;
             break;
         }
@@ -157,7 +154,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         auto end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
     } while( (
-        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*25) || msLeft == -1) && attemptingDepth <= maxDepth );
+        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*20) || msLeft == -1) && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
     turn++;
@@ -179,7 +176,7 @@ int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
             end_time-start_time);
 
         if(time_span.count() * moves.size() * 1000 > totalTimePM * (i+1))
-            return -1;
+            return MOVE_BROKEN;
 
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
@@ -227,7 +224,7 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
     vector<int> legalMoves = b->getLegalMoves(s);
     if(legalMoves.size() <= 0) {
         Board *copy = b->copy();
-        copy->doMove(64, s);
+        copy->doMove(MOVE_NULL, s);
         int ttScore = NEG_INFTY;
         score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
@@ -288,7 +285,7 @@ int Player::endgame(Board *b, vector<int> &moves, Side s, int pieces,
             end_time-start_time);
 
         if(time_span.count() * moves.size() * 2000 > endgameTimeMS * (i+1))
-            return -1;
+            return MOVE_BROKEN;
 
         Board *copy = b->copy();
         copy->doMove(moves[i], s);
@@ -337,7 +334,7 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
             if(b->isDone())
                 return (side * eheuristic(b));
             Board *copy = b->copy();
-            copy->doMove(64, s);
+            copy->doMove(MOVE_NULL, s);
             score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
                 depth, -beta, -alpha);
 
@@ -383,7 +380,7 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
             if(b->isDone())
                 return (side * eheuristic(b));
             Board *copy = b->copy();
-            copy->doMove(64, s);
+            copy->doMove(MOVE_NULL, s);
             score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
                 depth, -beta, -alpha);
 
@@ -421,41 +418,6 @@ int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
     }
     return alpha;
 }
-
-/*int Player::minimax(Board * b, Side side, int depth) {
-    if (depth <= 2) { // base case
-        int score = -9999;
-
-        // get all legal moves, create boards to test with, find best move
-        vector <Move *> legalMoves = b->getLegalMoves(side);
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = b->copy();
-            copy->doMove(legalMoves[i], side);
-            int tempScore = mmheuristic(copy) * ((side == mySide) ? 1 : -1);
-            delete copy;
-            if (tempScore > score)
-                score = tempScore;
-        }
-        deleteMoveVector(legalMoves);
-        return score;
-    }
-    else { // recursive step
-        int score = -9999;
-        // recurse for each legal move from current board position
-        vector <Move *> legalMoves = b->getLegalMoves(side);
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = b->copy();
-            copy->doMove(legalMoves[i], side);
-            int tempScore = -minimax(copy, ((side == WHITE) ? (BLACK) :
-                WHITE), depth-1);
-            delete copy;
-            if (tempScore > score)
-                score = tempScore;
-        }
-        deleteMoveVector(legalMoves);
-        return score;
-    }
-}*/
 
 int Player::heuristic (Board *b) {
     int score;
