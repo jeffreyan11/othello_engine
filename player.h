@@ -10,6 +10,9 @@
 #include "openings.h"
 using namespace std;
 
+#define NEG_INFTY -99999
+#define INFTY 99999
+
 const bitbrd CORNERS = 0x8100000000000081;
 const bitbrd EDGES = 0x3C0081818181003C;
 const bitbrd ADJ_CORNERS = 0x4281000000008142;
@@ -43,9 +46,10 @@ private:
     int heuristic(Board *b);
     int eheuristic(Board *b);
     int mmheuristic(Board *b);
-    Move *negascout(Board *b, vector<Move *> &moves, Side side, int depth,
+    Move *negascout(Board *b, vector<Move *> &moves, vector<int> &scores,
+        Side side, int depth, int alpha, int beta);
+    int negascout_h(Board *b, int &topScore, Side side, int depth,
         int alpha, int beta);
-    int negascout_h(Board *b, Side side, int depth, int alpha, int beta);
     Move *endgame(Board *b, vector<Move *> &moves, Side s, int depth,
         int alpha, int beta);
     int endgame_h(Board *b, Side s, int depth, int alpha, int beta);
