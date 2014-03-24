@@ -28,16 +28,16 @@ int endgame(Board *b, vector<int> &moves, Side s, int pieces, int alpha,
         copy->doMove(moves[i], s);
 
         if (i != 0) {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), s, pieces-1, -alpha-1, -alpha, endgame_table);
+            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
+                pieces-1, -alpha-1, -alpha, endgame_table);
             if (alpha < score && score < beta) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), s, pieces-1, -beta, -score, endgame_table);
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
+                    pieces-1, -beta, -score, endgame_table);
             }
         }
         else {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), s, pieces-1, -beta, -alpha, endgame_table);
+            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
+                pieces-1, -beta, -alpha, endgame_table);
         }
 
         if (score > alpha) {
@@ -67,38 +67,39 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
         return (side * eheuristic(b, mine));
     }
 
+    vector<int> legalMoves = b->getLegalMoves(s);
+
+    if(legalMoves.size() <= 0) {
+        if(b->isDone())
+            return (side * eheuristic(b, mine));
+        Board *copy = b->copy();
+        copy->doMove(MOVE_NULL, s);
+        score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), mine,
+            depth, -beta, -alpha, endgame_table);
+
+        if (alpha < score)
+            alpha = score;
+        delete copy;
+        return alpha;
+    }
+
     if(depth > 12) {
-        vector<int> legalMoves = b->getLegalMoves(s);
-        if(legalMoves.size() <= 0) {
-            if(b->isDone())
-                return (side * eheuristic(b, mine));
-            Board *copy = b->copy();
-            copy->doMove(MOVE_NULL, s);
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE), mine,
-                depth, -beta, -alpha, endgame_table);
-
-            if (alpha < score)
-                alpha = score;
-            delete copy;
-            return alpha;
-        }
-
         int tempMove = legalMoves[0];
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = b->copy();
             copy->doMove(legalMoves[i], s);
 
             if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -alpha-1, -alpha, endgame_table);
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                    mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -beta, -score, endgame_table);
+                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                        mine, depth-1, -beta, -score, endgame_table);
                 }
             }
             else {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -beta, -alpha, endgame_table);
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                    mine, depth-1, -beta, -alpha, endgame_table);
             }
 
             if (alpha < score) {
@@ -114,36 +115,21 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
         endgame_table[*b] = tempMove + 1;
     }
     else {
-        vector<int> legalMoves = b->getLegalMoves(s);
-        if(legalMoves.size() <= 0) {
-            if(b->isDone())
-                return (side * eheuristic(b, mine));
-            Board *copy = b->copy();
-            copy->doMove(MOVE_NULL, s);
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE), mine,
-                depth, -beta, -alpha, endgame_table);
-
-            if (alpha < score)
-                alpha = score;
-            delete copy;
-            return alpha;
-        }
-
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board *copy = b->copy();
             copy->doMove(legalMoves[i], s);
 
             if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -alpha-1, -alpha, endgame_table);
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                    mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -beta, -score, endgame_table);
+                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                        mine, depth-1, -beta, -score, endgame_table);
                 }
             }
             else {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), mine, depth-1, -beta, -alpha, endgame_table);
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+                    mine, depth-1, -beta, -alpha, endgame_table);
             }
 
             if (alpha < score)
@@ -161,4 +147,3 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
 int eheuristic(Board *b, Side mine) {
     return b->count(mine) - b->count((mine == WHITE) ? BLACK : WHITE);
 }
-

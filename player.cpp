@@ -125,14 +125,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     cerr << "Performing initial search: depth " << sortDepth << endl;
-    /*for (unsigned int i = 0; i < legalMoves.size(); i++) {
-        Board *copy = game.copy();
-        copy->doMove(legalMoves[i], mySide);
-        // run the recursion to find scores
-        int tempScore = -minimax(copy, oppSide, sortDepth);
-        scores.push_back(tempScore);
-        delete copy;
-    }*/
     negascout(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
     int attemptingDepth = minDepth;
@@ -351,14 +343,14 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
-    //Move m (3,5);
-    //p.doMove(&m, -1);
-    vector<int> legalMoves = p.game.getLegalMoves(BLACK);
-    int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
-            INFTY, 1000000, p.endgame_table);
-    cerr << r << endl;
-    //Move m2 (2,6);
-    //p.doMove(&m2, -1);
+    Move m (3,5);
+    p.doMove(&m, -1);
+    //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
+    //int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
+    //        INFTY, 1000000, p.endgame_table);
+    //cerr << r << endl;
+    Move m2 (2,6);
+    p.doMove(&m2, -1);
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(

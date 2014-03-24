@@ -26,10 +26,7 @@ Board::~Board() {
  * @brief Returns a copy of this board.
  */
 Board *Board::copy() {
-    Board *newBoard = new Board();
-    newBoard->black = black;
-    newBoard->taken = taken;
-    newBoard->legal = legal;
+    Board *newBoard = new Board(taken, black, legal);
     return newBoard;
 }
  
@@ -90,14 +87,14 @@ void Board::doMove(int index, Side side) {
     if(side == BLACK) {
         bitbrd pos_other = taken ^ black;
 
-        bitbrd filled = northFill(mv, pos_other, black);
-        filled |= southFill(mv, pos_other, black);
-        filled |= eastFill(mv, pos_other, black);
-        filled |= westFill(mv, pos_other, black);
-        filled |= neFill(mv, pos_other, black);
-        filled |= nwFill(mv, pos_other, black);
-        filled |= swFill(mv, pos_other, black);
-        filled |= seFill(mv, pos_other, black);
+        bitbrd filled = northFill(mv, pos_other);
+        filled |= southFill(mv, pos_other);
+        filled |= eastFill(mv, pos_other);
+        filled |= westFill(mv, pos_other);
+        filled |= neFill(mv, pos_other);
+        filled |= nwFill(mv, pos_other);
+        filled |= swFill(mv, pos_other);
+        filled |= seFill(mv, pos_other);
 
         taken |= filled;
         black |= filled;
@@ -105,16 +102,14 @@ void Board::doMove(int index, Side side) {
         legal = 0xFFFF000000000000;
     }
     else {
-        bitbrd pos_self = taken ^ black;
-
-        bitbrd filled = northFill(mv, black, pos_self);
-        filled |= southFill(mv, black, pos_self);
-        filled |= eastFill(mv, black, pos_self);
-        filled |= westFill(mv, black, pos_self);
-        filled |= neFill(mv, black, pos_self);
-        filled |= nwFill(mv, black, pos_self);
-        filled |= swFill(mv, black, pos_self);
-        filled |= seFill(mv, black, pos_self);
+        bitbrd filled = northFill(mv, black);
+        filled |= southFill(mv, black);
+        filled |= eastFill(mv, black);
+        filled |= westFill(mv, black);
+        filled |= neFill(mv, black);
+        filled |= nwFill(mv, black);
+        filled |= swFill(mv, black);
+        filled |= seFill(mv, black);
 
         taken |= filled;
         black &= ~filled;
@@ -479,8 +474,9 @@ bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
 }
 
 // -------------Helper functions to perform a move on the bitboard-------------
-bitbrd Board::northFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::northFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move >>= 8;
     while(move & pos) {
         result |= move;
@@ -491,8 +487,9 @@ bitbrd Board::northFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::southFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::southFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move <<= 8;
     while(move & pos) {
         result |= move;
@@ -503,8 +500,9 @@ bitbrd Board::southFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::eastFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::eastFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
     while(move & pos) {
         result |= move;
@@ -515,8 +513,9 @@ bitbrd Board::eastFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::westFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::westFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
     while(move & pos) {
         result |= move;
@@ -527,8 +526,9 @@ bitbrd Board::westFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::neFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::neFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
     while(move & pos) {
         result |= move;
@@ -539,8 +539,9 @@ bitbrd Board::neFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::nwFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::nwFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
     while(move & pos) {
         result |= move;
@@ -551,8 +552,9 @@ bitbrd Board::nwFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::swFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::swFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
     while(move & pos) {
         result |= move;
@@ -563,8 +565,9 @@ bitbrd Board::swFill(bitbrd move, bitbrd pos, bitbrd self) {
         return result;
     else return 0;
 }
-bitbrd Board::seFill(bitbrd move, bitbrd pos, bitbrd self) {
+bitbrd Board::seFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
+    bitbrd self = taken ^ pos;
     move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
     while(move & pos) {
         result |= move;
