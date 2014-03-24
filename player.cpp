@@ -110,7 +110,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
         endgameSwitch = true;
         myMove = endgame(&game, legalMoves, mySide, endgameDepth, NEG_INFTY,
-            INFTY);
+            INFTY, endgameTimeMS, endgame_table);
         if(myMove == MOVE_BROKEN) {
             cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
@@ -264,161 +264,6 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
     return alpha;
 }
 
-int Player::endgame(Board *b, vector<int> &moves, Side s, int pieces,
-    int alpha, int beta) {
-
-    using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-
-    int temp = endgame_table[*b];
-    if(temp != 0) {
-        temp--;
-        return temp;
-    }
-
-    int score;
-    int tempMove = moves[0];
-
-    for (unsigned int i = 0; i < moves.size(); i++) {
-        auto end_time = high_resolution_clock::now();
-        duration<double> time_span = duration_cast<duration<double>>(
-            end_time-start_time);
-
-        if(time_span.count() * moves.size() * 2000 > endgameTimeMS * (i+1))
-            return MOVE_BROKEN;
-
-        Board *copy = b->copy();
-        copy->doMove(moves[i], s);
-
-        if (i != 0) {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), pieces-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), pieces-1, -beta, -score);
-            }
-        }
-        else {
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                WHITE), pieces-1, -beta, -alpha);
-        }
-
-        if (score > alpha) {
-            alpha = score;
-            tempMove = moves[i];
-        }
-        if (alpha >= beta) {
-            delete copy;
-            break;
-        }
-        delete copy;
-    }
-
-    return tempMove;
-}
-
-int Player::endgame_h(Board *b, Side s, int depth, int alpha, int beta) {
-    int side, score;
-    if (s == mySide)
-        side = 1;
-    else
-        side = -1;
-
-    if (depth <= 0) {
-        return (side * eheuristic(b));
-    }
-
-    if(depth > 12) {
-        vector<int> legalMoves = b->getLegalMoves(s);
-        if(legalMoves.size() <= 0) {
-            if(b->isDone())
-                return (side * eheuristic(b));
-            Board *copy = b->copy();
-            copy->doMove(MOVE_NULL, s);
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
-                depth, -beta, -alpha);
-
-            if (alpha < score)
-                alpha = score;
-            delete copy;
-            return alpha;
-        }
-
-        int tempMove = legalMoves[0];
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = b->copy();
-            copy->doMove(legalMoves[i], s);
-
-            if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -alpha-1, -alpha);
-                if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -beta, -score);
-                }
-            }
-            else {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -beta, -alpha);
-            }
-
-            if (alpha < score) {
-                alpha = score;
-                tempMove = legalMoves[i];
-            }
-            if (alpha >= beta) {
-                delete copy;
-                break;
-            }
-            delete copy;
-        }
-        endgame_table[*b] = tempMove + 1;
-    }
-    else {
-        vector<int> legalMoves = b->getLegalMoves(s);
-        if(legalMoves.size() <= 0) {
-            if(b->isDone())
-                return (side * eheuristic(b));
-            Board *copy = b->copy();
-            copy->doMove(MOVE_NULL, s);
-            score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE),
-                depth, -beta, -alpha);
-
-            if (alpha < score)
-                alpha = score;
-            delete copy;
-            return alpha;
-        }
-
-        for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board *copy = b->copy();
-            copy->doMove(legalMoves[i], s);
-
-            if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -alpha-1, -alpha);
-                if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -beta, -score);
-                }
-            }
-            else {
-                score = -endgame_h(copy, ((s == WHITE) ? (BLACK) :
-                    WHITE), depth-1, -beta, -alpha);
-            }
-
-            if (alpha < score)
-                alpha = score;
-            if (alpha >= beta) {
-                delete copy;
-                break;
-            }
-            delete copy;
-        }
-    }
-    return alpha;
-}
-
 int Player::heuristic (Board *b) {
     int score;
     int myCoins = b->count(mySide);
@@ -442,10 +287,6 @@ int Player::heuristic (Board *b) {
     score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
-}
-
-int Player::eheuristic(Board *b) {
-    return (b->countHigh(mySide) - b->count(oppSide));
 }
 
 int Player::countSetBits(bitbrd b) {
@@ -505,15 +346,19 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     return index;
 }
 
-// g++ -std=c++0x -O3 -o memtest player.cpp board.cpp openings.cpp
+// g++ -std=c++0x -O3 -o memtest player.cpp board.cpp openings.cpp endgame.cpp
 /*int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
-    Move m (3,5);
-    p.doMove(&m, -1);
-    Move m2 (2,6);
-    p.doMove(&m2, -1);
+    //Move m (3,5);
+    //p.doMove(&m, -1);
+    vector<int> legalMoves = p.game.getLegalMoves(BLACK);
+    int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
+            INFTY, 1000000, p.endgame_table);
+    cerr << r << endl;
+    //Move m2 (2,6);
+    //p.doMove(&m2, -1);
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
@@ -521,6 +366,7 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
 
     cerr << time_span.count() << endl;
 
+    
     Board b;
     char boardData[64] = {
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
