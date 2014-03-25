@@ -58,7 +58,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         endgameTimeMS = msLeft / 3;
         if(totalTimePM != -1) {
             if(totalTimePM > 600000)
-                totalTimePM = (totalTimePM - endgameTimeMS) / 22;
+                totalTimePM = (totalTimePM - endgameTimeMS) / 21;
             else if(totalTimePM > 300000) {
                 totalTimePM = (totalTimePM - endgameTimeMS) / 24;
                 endgameDepth = 16;
@@ -115,7 +115,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
         cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
         endgameSwitch = true;
-        myMove = endgame(&game, legalMoves, mySide, endgameDepth, NEG_INFTY,
+        myMove = endgame(game, legalMoves, mySide, endgameDepth, NEG_INFTY,
             INFTY, endgameTimeMS, endgame_table);
         if(myMove == MOVE_BROKEN) {
             cerr << "Broken out of endgame solver." << endl;
@@ -372,7 +372,7 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     //Move m2 (2,6);
     //p.doMove(&m2, -1);
     vector<int> legalMoves = p.game.getLegalMoves(BLACK);
-    int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
+    int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
             INFTY, 1000000, p.endgame_table);
     cerr << r << endl;
 
@@ -381,8 +381,9 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
         end_time-start_time);
 
     cerr << time_span.count() << endl;
+}*/
 
-    Board b;
+    /*Board b;
     char boardData[64] = {
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
@@ -398,5 +399,4 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     for(int i = 0; i < 200000000; i++) {
         b.checkMove(&m, BLACK);
     }
-    cout << "done" << endl;
-}*/
+    cout << "done" << endl;*/

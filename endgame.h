@@ -18,10 +18,9 @@ struct BoardHashFunc {
     }
 };
 
-int endgame(Board *b, vector<int> &moves, Side s, int depth,
+int endgame(Board &b, vector<int> &moves, Side s, int depth,
     int alpha, int beta, int endgameTimeMS, unordered_map<Board, int, BoardHashFunc> &endgame_table);
-int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
+int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
     unordered_map<Board, int, BoardHashFunc> &endgame_table);
-int eheuristic(Board *b, Side mine);
 
 #endif

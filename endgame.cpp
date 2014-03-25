@@ -1,13 +1,13 @@
 #include "endgame.h"
 
-int endgame(Board *b, vector<int> &moves, Side s, int pieces, int alpha,
+int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
     int beta, int endgameTimeMS,
     unordered_map<Board, int, BoardHashFunc> &endgame_table) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    int temp = endgame_table[*b];
+    int temp = endgame_table[b];
     if(temp != 0) {
         temp--;
         return temp;
@@ -24,19 +24,19 @@ int endgame(Board *b, vector<int> &moves, Side s, int pieces, int alpha,
         if(time_span.count() * moves.size() * 2000 > endgameTimeMS * (i+1))
             return MOVE_BROKEN;
 
-        Board copy = Board(b->taken, b->black, b->legal);
+        Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(moves[i], s);
 
         if (i != 0) {
-            score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE), s,
+            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
                 pieces-1, -alpha-1, -alpha, endgame_table);
             if (alpha < score && score < beta) {
-                score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE), s,
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
                     pieces-1, -beta, -score, endgame_table);
             }
         }
         else {
-            score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE), s,
+            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
                 pieces-1, -beta, -alpha, endgame_table);
         }
 
@@ -51,27 +51,23 @@ int endgame(Board *b, vector<int> &moves, Side s, int pieces, int alpha,
     return tempMove;
 }
 
-int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
+int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
     unordered_map<Board, int, BoardHashFunc> &endgame_table) {
 
-    int side, score;
-    if (s == mine)
-        side = 1;
-    else
-        side = -1;
+    int score;
 
     if (depth <= 0) {
-        return (side * eheuristic(b, mine));
+        return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
     }
 
-    vector<int> legalMoves = b->getLegalMoves(s);
+    vector<int> legalMoves = b.getLegalMoves(s);
 
     if(legalMoves.size() <= 0) {
-        if(b->isDone())
-            return (side * eheuristic(b, mine));
-        Board copy = Board(b->taken, b->black, b->legal);
+        if(b.isDone())
+            return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
+        Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(MOVE_NULL, s);
-        score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE), mine,
+        score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), mine,
             depth, -beta, -alpha, endgame_table);
 
         if (alpha < score)
@@ -82,19 +78,19 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
     if(depth > 12) {
         int tempMove = legalMoves[0];
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board copy = Board(b->taken, b->black, b->legal);
+            Board copy = Board(b.taken, b.black, b.legal);
             copy.doMove(legalMoves[i], s);
 
             if (i != 0) {
-                score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                     mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                         mine, depth-1, -beta, -score, endgame_table);
                 }
             }
             else {
-                score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                     mine, depth-1, -beta, -alpha, endgame_table);
             }
 
@@ -105,23 +101,23 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
             if (alpha >= beta)
                 break;
         }
-        endgame_table[*b] = tempMove + 1;
+        endgame_table[b] = tempMove + 1;
     }
     else {
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
-            Board copy = Board(b->taken, b->black, b->legal);
+            Board copy = Board(b.taken, b.black, b.legal);
             copy.doMove(legalMoves[i], s);
 
             if (i != 0) {
-                score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                     mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                         mine, depth-1, -beta, -score, endgame_table);
                 }
             }
             else {
-                score = -endgame_h(&copy, ((s == WHITE) ? BLACK : WHITE),
+                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
                     mine, depth-1, -beta, -alpha, endgame_table);
             }
 
@@ -132,8 +128,4 @@ int endgame_h(Board *b, Side s, Side mine, int depth, int alpha, int beta,
         }
     }
     return alpha;
-}
-
-int eheuristic(Board *b, Side mine) {
-    return b->count(mine) - b->count((mine == WHITE) ? BLACK : WHITE);
 }
