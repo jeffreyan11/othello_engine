@@ -83,6 +83,119 @@ void Board::doMove(int index, Side side) {
     if (!checkMove(index, side)) return;
 
     bitbrd mv = MOVEMASK[index];
+    bitbrd changeMask = 0;
+    bitbrd pos = (side == WHITE) ? black : taken^black;
+    bitbrd self = (side == BLACK) ? black : taken^black;
+
+    // north fills
+    bitbrd move = mv;
+    bitbrd result = move;
+    move >>= 8;
+    while(move & pos) {
+        result |= move;
+        move >>= 8;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // south fills
+    move = mv;
+    result = move;
+    move <<= 8;
+    while(move & pos) {
+        result |= move;
+        move <<= 8;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // east fills
+    move = mv;
+    result = move;
+    move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
+        result |= move;
+        move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // west fills
+    move = mv;
+    result = move;
+    move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
+        result |= move;
+        move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // ne fills
+    move = mv;
+    result = move;
+    move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
+        result |= move;
+        move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // nw fills
+    move = mv;
+    result = move;
+    move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
+        result |= move;
+        move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // sw fills
+    move = mv;
+    result = move;
+    move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
+    while(move & pos) {
+        result |= move;
+        move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // se fills
+    move = mv;
+    result = move;
+    move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
+    while(move & pos) {
+        result |= move;
+        move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
+    }
+    if(move & self)
+        changeMask |= result;
+
+    // update taken, black, legal
+    taken |= changeMask;
+    if(side == BLACK)
+        black |= changeMask;
+    else
+        black &= ~changeMask;
+
+    legal = 0xFFFF000000000000;
+}
+
+/*void Board::doMove(int index, Side side) {
+    // A NULL move means pass.
+    if (index == MOVE_NULL) {
+        legal = 0xFFFF000000000000;
+        return;
+    }
+
+    // Ignore if move is invalid.
+    if (!checkMove(index, side)) return;
+
+    bitbrd mv = MOVEMASK[index];
 
     if(side == BLACK) {
         bitbrd pos_other = taken ^ black;
@@ -116,39 +229,17 @@ void Board::doMove(int index, Side side) {
 
         legal = 0xFFFF000000000000;
     }
-}
+}*/
 
 /*
  * Current count of given side's stones.
  */
 int Board::count(Side side) {
-    return (side == BLACK) ? countBlack() : countWhite();
-}
-
-/*
- * Current count of black stones.
- */
-int Board::countBlack() {
     int n = 0;
-    bitbrd b = black;
-    // while there are 1s
+    bitbrd b = (side == BLACK) ? black : taken^black;
     while(b) {
         n++;
-        b &= b - 1; // flip least significant 1
-    }
-    return n;
-}
-
-/*
- * Current count of white stones.
- */
-int Board::countWhite() {
-    int n = 0;
-    bitbrd b = black ^ taken;
-    // while there are 1s
-    while(b) {
-        n++;
-        b &= b - 1; // flip least significant 1
+        b &= b - 1;
     }
     return n;
 }
@@ -399,8 +490,7 @@ bitbrd Board::getBlack() {
     return black;
 }
 
-// -------------Helper functions to check if a move is legal-------------
-bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
+/*bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
     bool result = false;
     bitbrd mtemp;
     // check north
@@ -471,10 +561,10 @@ bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
     result |= (bool)(mtemp & self);
 
     return result;
-}
+}*/
 
 // -------------Helper functions to perform a move on the bitboard-------------
-bitbrd Board::northFill(bitbrd move, bitbrd pos) {
+/*bitbrd Board::northFill(bitbrd move, bitbrd pos) {
     bitbrd result = move;
     bitbrd self = taken ^ pos;
     move >>= 8;
@@ -577,4 +667,4 @@ bitbrd Board::seFill(bitbrd move, bitbrd pos) {
     if(move & self)
         return result;
     else return 0;
-}
+}*/

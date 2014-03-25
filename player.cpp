@@ -55,10 +55,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         totalTimePM = msLeft;
         endgameTimeMS = msLeft / 3;
         if(totalTimePM != -1) {
-            if(totalTimePM > 500000)
+            if(totalTimePM > 600000)
                 totalTimePM = (totalTimePM - endgameTimeMS) / 22;
+            else if(totalTimePM > 300000) {
+                totalTimePM = (totalTimePM - endgameTimeMS) / 24;
+                endgameDepth = 16;
+            }
             else {
-                totalTimePM = (totalTimePM - endgameTimeMS) / 25;
+                totalTimePM = (totalTimePM - endgameTimeMS) / 26;
                 endgameDepth = 14;
             }
         }
@@ -82,7 +86,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     // check opening book
-    int openMove = openingBook.get(game.getTaken(), game.getBlack());
+    int openMove = -3;//openingBook.get(game.getTaken(), game.getBlack());
     if(openMove != OPENING_NOT_FOUND) {
         cerr << "Opening book used!" << endl;
         turn++;
@@ -358,7 +362,6 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
 
     cerr << time_span.count() << endl;
 
-    
     Board b;
     char boardData[64] = {
         ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
