@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * @brief Make a standard 8x8 othello board and initialize it to the standard setup.
+ * @brief Make a 8x8 othello board and initialize it to the standard setup.
  */
 Board::Board() {
     taken = 0x0000001818000000;
@@ -10,6 +10,9 @@ Board::Board() {
     legal = 0x0000102004080000;
 }
 
+/**
+ * @brief A constructor allowing specification of taken, black, legal.
+*/
 Board::Board(bitbrd t, bitbrd b, bitbrd l) {
     taken = t;
     black = b;
@@ -47,6 +50,7 @@ bool Board::hasMoves(Side side) {
 
 /**
  * @brief Returns true if a move is legal for the given side; false otherwise.
+ * For debugging only, not used anywhere in this program.
  */
 bool Board::checkMove(Move *m, Side side) {
     // Passing is only legal if you have no moves.
@@ -71,6 +75,11 @@ bool Board::checkMove(int index, Side side) {
 
 /**
  * @brief Modifies the board to reflect the specified move.
+ * 
+ * This algorithm modifies the bitboards by performing the Dumb7Fill in all
+ * eight directions, with the move as the generator and the opponent's piece
+ * set as the propagator, checking for the anchor at the end and discarding the
+ * result if the anchor is not present.
  */
 void Board::doMove(int index, Side side) {
     // A NULL move means pass.

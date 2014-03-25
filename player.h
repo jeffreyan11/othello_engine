@@ -39,6 +39,9 @@ private:
         int alpha, int beta);
 
     int countSetBits(bitbrd b);
+    int boardToPV(Board *b);
+    int bitsToPI(int w, int b);
+
     void sort(vector<int> &moves, vector<int> &scores, int left, int right);
     void swap(vector<int> &moves, vector<int> &scores, int i, int j);
     int partition(vector<int> &moves, vector<int> &scores, int left, int

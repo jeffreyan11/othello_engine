@@ -1,5 +1,7 @@
 #include "player.h"
 
+const int POW3[8] = {1, 3, 9, 27, 81, 243, 729, 2187};
+
 /*
  * Constructor for the player; initialize everything here. The side your AI is
  * on (BLACK or WHITE) is passed in as "side". The constructor must finish 
@@ -293,6 +295,31 @@ int Player::countSetBits(bitbrd b) {
         b &= b - 1; // reset least significant 1
     }
     return n;
+}
+
+int Player::boardToPV(Board *b) {
+    // TODO
+    return 0;
+}
+
+int Player::bitsToPI(int w, int b) {
+    int result = 0;
+    int i = 0;
+    while(w) {
+        if(w>>1 != w)
+            result += POW3[i];
+        w >>= 1;
+        i++;
+    }
+    i = 0;
+    while(b) {
+        if(b>>1 != b)
+            result += POW3[i];
+        b >>= 1;
+        i++;
+    }
+
+    return result;
 }
 
 void Player::sort(vector<int> &moves, vector<int> &scores, int left, int right)
