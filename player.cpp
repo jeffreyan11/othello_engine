@@ -176,19 +176,19 @@ int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
         if(time_span.count() * moves.size() * 1000 > totalTimePM * (i+1))
             return MOVE_BROKEN;
 
-        Board *copy = b->copy();
-        copy->doMove(moves[i], s);
+        Board copy = Board(b->taken, b->black, b->legal);
+        copy.doMove(moves[i], s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
-            score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+                score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -score);
             }
         }
         else {
-            score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
         scores.push_back(ttScore);
@@ -196,11 +196,8 @@ int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
             alpha = score;
             tempMove = moves[i];
         }
-        if (alpha >= beta) {
-            delete copy;
+        if (alpha >= beta)
             break;
-        }
-        delete copy;
     }
     return tempMove;
 }
@@ -221,43 +218,39 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
 
     vector<int> legalMoves = b->getLegalMoves(s);
     if(legalMoves.size() <= 0) {
-        Board *copy = b->copy();
-        copy->doMove(MOVE_NULL, s);
+        Board copy = Board(b->taken, b->black, b->legal);
+        copy.doMove(MOVE_NULL, s);
         int ttScore = NEG_INFTY;
-        score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
+        score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
-        delete copy;
         topScore = ttScore;
         return alpha;
     }
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
-        Board *copy = b->copy();
-        copy->doMove(legalMoves[i], s);
+        Board copy = Board(b->taken, b->black, b->legal);
+        copy.doMove(legalMoves[i], s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
-            score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+                score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -score);
             }
         }
         else {
-            score = -negascout_h(copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
         if (alpha < score)
             alpha = score;
         if(ttScore > topScore)
             topScore = ttScore;
-        if (alpha >= beta) {
-            delete copy;
+        if (alpha >= beta)
             break;
-        }
-        delete copy;
     }
     return alpha;
 }
@@ -374,14 +367,14 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
-    Move m (3,5);
-    p.doMove(&m, -1);
-    //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
-    //int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
-    //        INFTY, 1000000, p.endgame_table);
-    //cerr << r << endl;
-    Move m2 (2,6);
-    p.doMove(&m2, -1);
+    //Move m (3,5);
+    //p.doMove(&m, -1);
+    //Move m2 (2,6);
+    //p.doMove(&m2, -1);
+    vector<int> legalMoves = p.game.getLegalMoves(BLACK);
+    int r = endgame(&(p.game), legalMoves, BLACK, 16, NEG_INFTY,
+            INFTY, 1000000, p.endgame_table);
+    cerr << r << endl;
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
