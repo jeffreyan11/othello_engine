@@ -131,7 +131,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     cerr << "Performing initial search: depth " << sortDepth << endl;
-    negascout(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
+    pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
     int attemptingDepth = minDepth;
     duration<double> time_span;
@@ -140,7 +140,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         sort(legalMoves, scores, 0, legalMoves.size()-1);
         scores.clear();
 
-        int newBest = negascout(&game, legalMoves, scores, mySide,
+        int newBest = pvs(&game, legalMoves, scores, mySide,
             attemptingDepth, NEG_INFTY, INFTY);
         if(newBest == MOVE_BROKEN) {
             cerr << "Broken out of search" << endl;
@@ -159,7 +159,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return indexToMove[myMove];
 }
 
-int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
+int Player::pvs(Board *b, vector<int> &moves, vector<int> &scores,
     Side s, int depth, int alpha, int beta) {
 
     using namespace std::chrono;
@@ -180,15 +180,15 @@ int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
         copy.doMove(moves[i], s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
-            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+                score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -score);
             }
         }
         else {
-            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
         scores.push_back(ttScore);
@@ -202,7 +202,7 @@ int Player::negascout(Board *b, vector<int> &moves, vector<int> &scores,
     return tempMove;
 }
 
-int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
+int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int alpha, int beta) {
 
     int side, score;
@@ -221,7 +221,7 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(MOVE_NULL, s);
         int ttScore = NEG_INFTY;
-        score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
+        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
 
         if (alpha < score)
@@ -234,15 +234,15 @@ int Player::negascout_h(Board *b, int &topScore, Side s, int depth,
         copy.doMove(legalMoves[i], s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
-            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -score);
+                score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+                WHITE), depth-1, -beta, -alpha);
             }
         }
         else {
-            score = -negascout_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
+            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
         if (alpha < score)
@@ -361,42 +361,3 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
 
     return index;
 }
-
-// g++ -std=c++0x -O3 -o memtest player.cpp board.cpp openings.cpp endgame.cpp
-/*int main(int argc, char **argv) {
-    using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-    Player p(BLACK);
-    //Move m (3,5);
-    //p.doMove(&m, -1);
-    //Move m2 (2,6);
-    //p.doMove(&m2, -1);
-    vector<int> legalMoves = p.game.getLegalMoves(BLACK);
-    int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
-            INFTY, 1000000, p.endgame_table);
-    cerr << r << endl;
-
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
-
-    cerr << time_span.count() << endl;
-}*/
-
-    /*Board b;
-    char boardData[64] = {
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
-        ' ', ' ', 'b', 'b', 'b', ' ', ' ', ' ', 
-        ' ', ' ', ' ', 'b', 'w', 'b', 'w', ' ', 
-        ' ', ' ', ' ', ' ', ' ', 'w', 'w', 'w', 
-        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w', 
-        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w'
-    };
-    b.setBoard(boardData);
-    Move m (4,5);
-    for(int i = 0; i < 200000000; i++) {
-        b.checkMove(&m, BLACK);
-    }
-    cout << "done" << endl;*/

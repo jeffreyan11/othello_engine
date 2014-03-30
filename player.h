@@ -33,9 +33,9 @@ private:
     Move* indexToMove[64];
 
     int heuristic(Board *b);
-    int negascout(Board *b, vector<int> &moves, vector<int> &scores,
+    int pvs(Board *b, vector<int> &moves, vector<int> &scores,
         Side side, int depth, int alpha, int beta);
-    int negascout_h(Board *b, int &topScore, Side side, int depth,
+    int pvs_h(Board *b, int &topScore, Side side, int depth,
         int alpha, int beta);
 
     int countSetBits(bitbrd b);
