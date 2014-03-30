@@ -32,7 +32,7 @@ int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
                 pieces-1, -alpha-1, -alpha, endgame_table);
             if (alpha < score && score < beta) {
                 score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
-                    pieces-1, -beta, -score, endgame_table);
+                    pieces-1, -beta, -alpha, endgame_table);
             }
         }
         else {
@@ -86,7 +86,7 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
                     mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
                     score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        mine, depth-1, -beta, -score, endgame_table);
+                        mine, depth-1, -beta, -alpha, endgame_table);
                 }
             }
             else {
@@ -113,7 +113,7 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
                     mine, depth-1, -alpha-1, -alpha, endgame_table);
                 if (alpha < score && score < beta) {
                     score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        mine, depth-1, -beta, -score, endgame_table);
+                        mine, depth-1, -beta, -alpha, endgame_table);
                 }
             }
             else {

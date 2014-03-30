@@ -11,14 +11,14 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
-    Move m (3,5);
-    p.doMove(&m, -1);
-    Move m2 (2,6);
-    p.doMove(&m2, -1);
-    //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
-    //int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
-    //        INFTY, 1000000, p.endgame_table);
-    //cerr << r << endl;
+    //Move m (3,5);
+    //p.doMove(&m, -1);
+    //Move m2 (2,6);
+    //p.doMove(&m2, -1);
+    vector<int> legalMoves = p.game.getLegalMoves(BLACK);
+    int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
+            INFTY, 1000000, p.endgame_table);
+    cerr << r << endl;
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
