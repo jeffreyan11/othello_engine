@@ -40,6 +40,7 @@ private:
 
     int countSetBits(bitbrd b);
     int boardToPV(Board *b);
+    int mobilityEstimate(Board *b);
     int bitsToPI(int w, int b);
 
     void sort(vector<int> &moves, vector<int> &scores, int left, int right);
@@ -58,9 +59,6 @@ public:
     ~Player();
     
     Move *doMove(Move *opponentsMove, int msLeft);
-
-    // Flag to tell if the player is running within the test_minimax context
-    bool testingMinimax;
 };
 
 #endif

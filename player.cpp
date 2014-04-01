@@ -1,15 +1,16 @@
 #include "player.h"
 
-const int POW3[8] = {1, 3, 9, 27, 81, 243, 729, 2187};
+const int POW3[9] = {1, 3, 9, 27, 81, 243, 729, 2187, 6561};
 
-/*
- * Constructor for the player; initialize everything here. The side your AI is
- * on (BLACK or WHITE) is passed in as "side". The constructor must finish 
- * within 30 seconds.
+/**
+ * @brief Constructor for the player.
+ * 
+ * This constructor initializes the depths, timing variables, and the array
+ * used to convert move indices to move objects.
+ * 
+ * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    // Will be set to true in test_minimax.cpp.
-    testingMinimax = false;
     maxDepth = 14;
     minDepth = 6;
     sortDepth = 4;
@@ -31,8 +32,8 @@ Player::Player(Side side) {
     }
 }
 
-/*
- * Destructor for the player.
+/**
+ * @brief Destructor for the player.
  */
 Player::~Player() {
     for(int i = 0; i < 64; i++) {
@@ -40,19 +41,20 @@ Player::~Player() {
     }
 }
 
-/*
- * Compute the next move given the opponent's last move. Your AI is
- * expected to keep track of the board on its own. If this is the first move,
- * or if the opponent passed on the last move, then opponentsMove will be NULL.
- *
- * msLeft represents the time your AI has left for the total game, in
- * milliseconds. doMove() must take no longer than msLeft, or your AI will
- * be disqualified! An msLeft value of -1 indicates no time limit.
- *
- * The move returned must be legal; if there are no valid moves for your side,
- * return NULL.
+/**
+ * @brief Processes opponent's last move and selects a best move to play.
+ * 
+ * This function delegates all necessary tasks to the appropriate helper
+ * functions. It first processes the opponent's move. It then checks the opening
+ * book for a move, then the endgame solver, and finally begins an iterative
+ * deepening principal variation null window search.
+ * 
+ * @param opponentsMove The last move the opponent made.
+ * @param msLeft Total milliseconds left for the game, -1 if untimed.
+ * @return The move the AI chose to play.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
+    // timing
     if(totalTimePM == -2) {
         totalTimePM = msLeft;
         endgameTimeMS = msLeft / 3;
@@ -107,6 +109,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int myMove = -1;
     vector<int> scores;
 
+    // endgame solver
     while(endgameSwitch || turn >= (64 - endgameDepth)) {
         if(msLeft < endgameTimeMS && msLeft != -1) {
             endgameSwitch = false;
@@ -130,9 +133,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return indexToMove[myMove];
     }
 
+    // sort search
     cerr << "Performing initial search: depth " << sortDepth << endl;
     pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
+    // iterative deepening
     int attemptingDepth = minDepth;
     duration<double> time_span;
     do {
@@ -293,6 +298,10 @@ int Player::countSetBits(bitbrd b) {
 int Player::boardToPV(Board *b) {
     // TODO
     return 0;
+}
+
+int Player::mobilityEstimate(Board *b) {
+    // TODO
 }
 
 int Player::bitsToPI(int w, int b) {
