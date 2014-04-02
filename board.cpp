@@ -790,7 +790,7 @@ bitbrd Board::getBlack() {
 }
 
 int Board::bitScanForward(bitbrd bb) {
-    return index64[(int)(((bb & -bb) * 0x03f79d71b4cb0a89) >> 58)];
+    return index64[(int)(((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58)];
 }
 
 int Board::bitScanReverse(bitbrd bb) {
