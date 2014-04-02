@@ -430,23 +430,22 @@ void Board::doMove(int index, Side side) {
 
     bitbrd changeMask = 0;
     bitbrd pos = (side == WHITE) ? black : taken^black;
+    pos = ~pos;
     bitbrd self = (side == BLACK) ? black : taken^black;
     bitbrd block, result;
 
     // north fills
     result = NORTHRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= NORTHRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
+        if(self & MOVEMASK[anchor])
+            changeMask |= (result ^ NORTHRAYI[anchor]) | MOVEMASK[index];
     }
 
     // south fills
     result = SOUTHRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanForward(block);
         if(self & MOVEMASK[anchor]) {
@@ -457,7 +456,7 @@ void Board::doMove(int index, Side side) {
 
     // east fills
     result = EASTRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanForward(block);
         if(self & MOVEMASK[anchor]) {
@@ -468,7 +467,7 @@ void Board::doMove(int index, Side side) {
 
     // west fills
     result = WESTRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor]) {
@@ -479,7 +478,7 @@ void Board::doMove(int index, Side side) {
 
     // ne fills
     result = NERAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor]) {
@@ -490,7 +489,7 @@ void Board::doMove(int index, Side side) {
 
     // nw fills
     result = NWRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor]) {
@@ -501,7 +500,7 @@ void Board::doMove(int index, Side side) {
 
     // sw fills
     result = SWRAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanForward(block);
         if(self & MOVEMASK[anchor]) {
@@ -512,7 +511,7 @@ void Board::doMove(int index, Side side) {
 
     // se fills
     result = SERAY[index];
-    block = result & ~pos;
+    block = result & pos;
     if(block) {
         int anchor = bitScanForward(block);
         if(self & MOVEMASK[anchor]) {
@@ -530,52 +529,6 @@ void Board::doMove(int index, Side side) {
 
     legal = 0xFFFF000000000000;
 }
-
-/*void Board::doMove(int index, Side side) {
-    // A NULL move means pass.
-    if (index == MOVE_NULL) {
-        legal = 0xFFFF000000000000;
-        return;
-    }
-
-    // Ignore if move is invalid.
-    if (!checkMove(index, side)) return;
-
-    bitbrd mv = MOVEMASK[index];
-
-    if(side == BLACK) {
-        bitbrd pos_other = taken ^ black;
-
-        bitbrd filled = northFill(mv, pos_other);
-        filled |= southFill(mv, pos_other);
-        filled |= eastFill(mv, pos_other);
-        filled |= westFill(mv, pos_other);
-        filled |= neFill(mv, pos_other);
-        filled |= nwFill(mv, pos_other);
-        filled |= swFill(mv, pos_other);
-        filled |= seFill(mv, pos_other);
-
-        taken |= filled;
-        black |= filled;
-
-        legal = 0xFFFF000000000000;
-    }
-    else {
-        bitbrd filled = northFill(mv, black);
-        filled |= southFill(mv, black);
-        filled |= eastFill(mv, black);
-        filled |= westFill(mv, black);
-        filled |= neFill(mv, black);
-        filled |= nwFill(mv, black);
-        filled |= swFill(mv, black);
-        filled |= seFill(mv, black);
-
-        taken |= filled;
-        black &= ~filled;
-
-        legal = 0xFFFF000000000000;
-    }
-}*/
 
 /*
  * Current count of given side's stones.
@@ -837,196 +790,21 @@ bitbrd Board::getBlack() {
 }
 
 int Board::bitScanForward(bitbrd bb) {
-    const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
-    return index64[(int)(((bb ^ (bb-1)) * debruijn64) >> 58)];
+    return index64[(int)(((bb & -bb) * 0x03f79d71b4cb0a89) >> 58)];
 }
 
 int Board::bitScanReverse(bitbrd bb) {
-    const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
-    bb |= bb >> 1;
-    bb |= bb >> 2;
-    bb |= bb >> 4;
-    bb |= bb >> 8;
-    bb |= bb >> 16;
-    bb |= bb >> 32;
-    return index64[(int)((bb * debruijn64) >> 58)];
+    #if defined(__x86_64__)
+        asm ("bsr %1, %0" : "=r" (bb) : "r" (bb));
+        return (int) bb;
+    #else
+        const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
+        bb |= bb >> 1;
+        bb |= bb >> 2;
+        bb |= bb >> 4;
+        bb |= bb >> 8;
+        bb |= bb >> 16;
+        bb |= bb >> 32;
+        return index64[(int)((bb * debruijn64) >> 58)];
+    #endif
 }
-
-/*bool Board::bitCheck(bitbrd move, bitbrd pos, bitbrd self) {
-    bool result = false;
-    bitbrd mtemp;
-    // check north
-    // Check for pieces to capture
-    mtemp = (move >> 8) & pos;
-    while(mtemp & pos) {
-        mtemp >>= 8;
-    }
-    // Check for anchor
-    result |= (bool)(mtemp & self);
-
-    // check south
-    mtemp = (move << 8) & pos;
-    while(mtemp & pos) {
-        mtemp <<= 8;
-    }
-    result |= (bool)(mtemp & self);
-
-    if(result)
-        return result;
-
-    // check east
-    mtemp = (move << 1) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(mtemp & pos) {
-        mtemp = (mtemp << 1) & 0xFEFEFEFEFEFEFEFE;
-    }
-    result |= (bool)(mtemp & self);
-
-    // check west
-    mtemp = (move >> 1) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(mtemp & pos) {
-        mtemp = (mtemp >> 1) & 0x7F7F7F7F7F7F7F7F;
-    }
-    result |= (bool)(mtemp & self);
-
-    if(result)
-        return result;
-
-    // check ne
-    mtemp = (move >> 7) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(mtemp & pos) {
-        mtemp = (mtemp >> 7) & 0xFEFEFEFEFEFEFEFE;
-    }
-    result |= (bool)(mtemp & self);
-
-    // check nw
-    mtemp = (move >> 9) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(mtemp & pos) {
-        mtemp = (mtemp >> 9) & 0x7F7F7F7F7F7F7F7F;
-    }
-    result |= (bool)(mtemp & self);
-
-    if(result)
-        return result;
-
-    // check sw
-    mtemp = (move << 7) & pos & 0x7F7F7F7F7F7F7F7F;
-    while(mtemp & pos) {
-        mtemp = (mtemp << 7) & 0x7F7F7F7F7F7F7F7F;
-    }
-    result |= (bool)(mtemp & self);
-
-    // check se
-    mtemp = (move << 9) & pos & 0xFEFEFEFEFEFEFEFE;
-    while(mtemp & pos) {
-        mtemp = (mtemp << 9) & 0xFEFEFEFEFEFEFEFE;
-    }
-    result |= (bool)(mtemp & self);
-
-    return result;
-}*/
-
-// -------------Helper functions to perform a move on the bitboard-------------
-/*bitbrd Board::northFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move >>= 8;
-    while(move & pos) {
-        result |= move;
-        move >>= 8;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::southFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move <<= 8;
-    while(move & pos) {
-        result |= move;
-        move <<= 8;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::eastFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        result |= move;
-        move = (move << 1) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::westFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        result |= move;
-        move = (move >> 1) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::neFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        result |= move;
-        move = (move >> 7) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::nwFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        result |= move;
-        move = (move >> 9) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::swFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
-    while(move & pos) {
-        result |= move;
-        move = (move << 7) & 0x7F7F7F7F7F7F7F7F;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}
-bitbrd Board::seFill(bitbrd move, bitbrd pos) {
-    bitbrd result = move;
-    bitbrd self = taken ^ pos;
-    move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
-    while(move & pos) {
-        result |= move;
-        move = (move << 9) & 0xFEFEFEFEFEFEFEFE;
-    }
-
-    if(move & self)
-        return result;
-    else return 0;
-}*/
