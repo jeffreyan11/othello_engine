@@ -276,11 +276,11 @@ int Player::heuristic (Board *b) {
     score += 50 * countSetBits(bm & CORNERS);
     if(turn > 35)
         score += 4 * countSetBits(bm & EDGES);
-    score -= 12 * countSetBits(bm & X_CORNERS);
-    score -= 6 * countSetBits(bm & ADJ_CORNERS);
+    score -= 15 * countSetBits(bm & X_CORNERS);
+    score -= 10 * countSetBits(bm & ADJ_CORNERS);
 
     score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    score += 2 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }
@@ -302,6 +302,7 @@ int Player::boardToPV(Board *b) {
 
 int Player::mobilityEstimate(Board *b) {
     // TODO
+    return 0;
 }
 
 int Player::bitsToPI(int w, int b) {

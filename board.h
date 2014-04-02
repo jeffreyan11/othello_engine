@@ -48,6 +48,8 @@ public:
     void setBoard(char data[]);
     bitbrd getTaken();
     bitbrd getBlack();
+    int bitScanForward(bitbrd bb);
+    int bitScanReverse(bitbrd bb);
 
     inline bool operator==(const Board &other) const {
         return (taken == other.taken) && (black == other.black) &&

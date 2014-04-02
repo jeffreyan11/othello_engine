@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
+
     Move m (3,5);
     p.doMove(&m, -1);
     Move m2 (2,6);
