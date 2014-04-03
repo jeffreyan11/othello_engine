@@ -762,6 +762,12 @@ int Board::count(Side side) {
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
+    #elif defined(__i386)
+        int a = (int) (i & 0xFFFFFFFF);
+        int b = (int) ((i>>32) & 0xFFFFFFFF);
+        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
+        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
+        return a+b;
     #else
         i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
@@ -779,6 +785,12 @@ int Board::bitScanReverse(bitbrd bb) {
     #if defined(__x86_64__)
         asm ("bsr %1, %0" : "=r" (bb) : "r" (bb));
         return (int) bb;
+    //#elif defined(__i386)
+    //    int a = (int) (bb & 0xFFFFFFFF);
+    //    int b = (int) ((bb>>32) & 0xFFFFFFFF);
+    //    asm ("bsrl %1, %0" : "=r" (a) : "r" (a));
+    //    asm ("bsrl %1, %0" : "=r" (b) : "r" (b));
+    //    return a+b;
     #else
         const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
         bb |= bb >> 1;
@@ -795,6 +807,12 @@ int Board::countSetBits(bitbrd i) {
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
+    #elif defined(__i386)
+        int a = (int) (i & 0xFFFFFFFF);
+        int b = (int) ((i>>32) & 0xFFFFFFFF);
+        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
+        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
+        return a+b;
     #else
         i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);

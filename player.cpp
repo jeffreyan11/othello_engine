@@ -291,6 +291,9 @@ int Player::countSetBits(bitbrd i) {
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
+    #elif defined(__i386)
+        asm ("popcntl %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
     #else
         i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);

@@ -8,24 +8,33 @@
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp
 int main(int argc, char **argv) {
+    #if defined(__x86_64__)
+        cerr << "x86-64" << endl;
+    #elif defined(__i386)
+        cerr << "x86" << endl;
+    #else
+        cerr << "not x86" << endl;
+    #endif
+
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
 
-    Move m (3,5);
+    /*Move m (3,5);
     p.doMove(&m, -1);
     Move m2 (2,6);
-    p.doMove(&m2, -1);
+    p.doMove(&m2, -1);*/
     //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
     //int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
     //        INFTY, 1000000, p.endgame_table);
     //cerr << r << endl;
-    /*Board b;
-    for(int i = 0; i < 100000000; i++)
+    Board b;
+    for(bitbrd i = 0; i < 100000000; i++)
+        b.bitScanReverse(i);
         //b.numLegalMoves(WHITE);
-        p.mobilityEstimate(&b);
-    cerr << p.mobilityEstimate(&b) << endl;
-    cerr << b.numLegalMoves(BLACK) << endl;*/
+        //p.mobilityEstimate(&b);
+    //cerr << p.mobilityEstimate(&b) << endl;
+    //cerr << b.numLegalMoves(BLACK) << endl;
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
