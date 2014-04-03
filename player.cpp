@@ -285,14 +285,17 @@ int Player::heuristic (Board *b) {
     return score;
 }
 
-int Player::countSetBits(bitbrd b) {
-    int n = 0;
-    // while there are 1s
-    while(b) {
-        n++;
-        b &= b - 1; // reset least significant 1
-    }
-    return n;
+int Player::countSetBits(bitbrd i) {
+    #if defined(__x86_64__)
+        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
+    #else
+        i = i - ((i >> 1) & 0x5555555555555555);
+        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+              0x0101010101010101) >> 56;
+        return (int) i;
+    #endif
 }
 
 int Player::boardToPV(Board *b) {
@@ -309,14 +312,14 @@ int Player::bitsToPI(int w, int b) {
     int result = 0;
     int i = 0;
     while(w) {
-        if(w>>1 != w)
+        if(w & 1)
             result += POW3[i];
         w >>= 1;
         i++;
     }
     i = 0;
     while(b) {
-        if(b>>1 != b)
+        if(b & 1)
             result += POW3[i];
         b >>= 1;
         i++;

@@ -20,6 +20,9 @@ int main(int argc, char **argv) {
     //int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
     //        INFTY, 1000000, p.endgame_table);
     //cerr << r << endl;
+    //Board b;
+    //for(int i = 0; i < 1000000000; i++)
+    //    b.count(WHITE);
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(

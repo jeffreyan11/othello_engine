@@ -429,8 +429,7 @@ void Board::doMove(int index, Side side) {
     if (!checkMove(index, side)) return;
 
     bitbrd changeMask = 0;
-    bitbrd pos = (side == WHITE) ? black : taken^black;
-    pos = ~pos;
+    bitbrd pos = (side == WHITE) ? ~black : ~(taken^black);
     bitbrd self = (side == BLACK) ? black : taken^black;
     bitbrd block, result;
 
@@ -528,29 +527,6 @@ void Board::doMove(int index, Side side) {
         black &= ~changeMask;
 
     legal = 0xFFFF000000000000;
-}
-
-/*
- * Current count of given side's stones.
- */
-int Board::count(Side side) {
-    int n = 0;
-    bitbrd b = (side == BLACK) ? black : taken^black;
-    while(b) {
-        n++;
-        b &= b - 1;
-    }
-    return n;
-}
-
-int Board::countHigh(Side side) {
-    bitbrd i = (side == BLACK) ? (black) : (black^taken);
-
-    i = i - ((i >> 1) & 0x5555555555555555);
-    i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
-    i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
-          0x0101010101010101) >> 56;
-    return (int) i;
 }
 
 /**
@@ -702,13 +678,7 @@ int Board::numLegalMoves(Side side) {
         tempM = temp & other;
     }
 
-    int n = 0;
-    // while there are 1s
-    while(result) {
-        n++;
-        result &= result - 1; // flip least significant 1
-    }
-    return n;
+    return countSetBits(result);
 }
 
 int Board::potentialMobility(Side side) {
@@ -749,13 +719,7 @@ int Board::potentialMobility(Side side) {
     temp >>= 9;
     result |= temp;
 
-    int n = 0;
-    // while there are 1s
-    while(result) {
-        n++;
-        result &= result - 1; // flip least significant 1
-    }
-    return n;
+    return countSetBits(result);
 }
 
 bitbrd Board::toBits(Side side) {
@@ -789,6 +753,24 @@ bitbrd Board::getBlack() {
     return black;
 }
 
+/*
+ * Current count of given side's stones.
+ */
+int Board::count(Side side) {
+    bitbrd i = (side == BLACK) ? (black) : (black^taken);
+
+    #if defined(__x86_64__)
+        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
+    #else
+        i = i - ((i >> 1) & 0x5555555555555555);
+        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+              0x0101010101010101) >> 56;
+        return (int) i;
+    #endif
+}
+
 int Board::bitScanForward(bitbrd bb) {
     return index64[(int)(((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58)];
 }
@@ -806,5 +788,18 @@ int Board::bitScanReverse(bitbrd bb) {
         bb |= bb >> 16;
         bb |= bb >> 32;
         return index64[(int)((bb * debruijn64) >> 58)];
+    #endif
+}
+
+int Board::countSetBits(bitbrd i) {
+    #if defined(__x86_64__)
+        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
+    #else
+        i = i - ((i >> 1) & 0x5555555555555555);
+        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+              0x0101010101010101) >> 56;
+        return (int) i;
     #endif
 }

@@ -12,17 +12,7 @@ private:
     bool checkMove(int index, Side side);
     void getLegal(Side side);
 
-    //bool bitCheck(bitbrd move, bitbrd pos, bitbrd self);
-
-    // performing move
-    /*bitbrd northFill(bitbrd move, bitbrd pos);
-    bitbrd southFill(bitbrd move, bitbrd pos);
-    bitbrd eastFill(bitbrd move, bitbrd pos);
-    bitbrd westFill(bitbrd move, bitbrd pos);
-    bitbrd neFill(bitbrd move, bitbrd pos);
-    bitbrd nwFill(bitbrd move, bitbrd pos);
-    bitbrd swFill(bitbrd move, bitbrd pos);
-    bitbrd seFill(bitbrd move, bitbrd pos);*/
+    int countSetBits(bitbrd i);
       
 public:
     bitbrd taken;
@@ -39,7 +29,6 @@ public:
     bool checkMove(Move *m, Side side);
     void doMove(int index, Side side);
     int count(Side side);
-    int countHigh(Side side);
     vector<int> getLegalMoves(Side side);
     int numLegalMoves(Side side);
     int potentialMobility(Side side);
