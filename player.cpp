@@ -30,6 +30,8 @@ Player::Player(Side side) {
             indexToMove[i+8*j] = new Move(i,j);
         }
     }
+
+    //TODO readMobilities();
 }
 
 /**
@@ -304,44 +306,123 @@ int Player::boardToPV(Board *b) {
 }
 
 int Player::mobilityEstimate(Board *b) {
-    // TODO
-    return 0;
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int r1 = bitsToPI( black & 0xFF, white & 0xFF );
+    int r2 = bitsToPI( (black>>8) & 0xFF, (white>>8) & 0xFF );
+    int r3 = bitsToPI( (black>>16) & 0xFF, (white>>16) & 0xFF );
+    int r4 = bitsToPI( (black>>24) & 0xFF, (white>>24) & 0xFF );
+    int r5 = bitsToPI( (black>>32) & 0xFF, (white>>32) & 0xFF );
+    int r6 = bitsToPI( (black>>40) & 0xFF, (white>>40) & 0xFF );
+    int r7 = bitsToPI( (black>>48) & 0xFF, (white>>48) & 0xFF );
+    int r8 = bitsToPI( (black>>56) & 0xFF, (white>>56) & 0xFF );
+    int c1 = bitsToPI(
+        ((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56,
+        ((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56 );
+    int c2 = bitsToPI(
+        ((black & 0x0202020202020202ULL) * 0x0081020408102040ULL) >> 56,
+        ((white & 0x0202020202020202ULL) * 0x0081020408102040ULL) >> 56 );
+    int c3 = bitsToPI(
+        ((black & 0x0404040404040404ULL) * 0x0040810204081020ULL) >> 56,
+        ((white & 0x0404040404040404ULL) * 0x0040810204081020ULL) >> 56 );
+    int c4 = bitsToPI(
+        ((black & 0x0808080808080808ULL) * 0x0020408102040810ULL) >> 56,
+        ((white & 0x0808080808080808ULL) * 0x0020408102040810ULL) >> 56 );
+    int c5 = bitsToPI(
+        ((black & 0x1010101010101010ULL) * 0x0010204081020408ULL) >> 56,
+        ((white & 0x1010101010101010ULL) * 0x0010204081020408ULL) >> 56 );
+    int c6 = bitsToPI(
+        ((black & 0x2020202020202020ULL) * 0x0008102040810204ULL) >> 56,
+        ((white & 0x2020202020202020ULL) * 0x0008102040810204ULL) >> 56 );
+    int c7 = bitsToPI(
+        ((black & 0x4040404040404040ULL) * 0x0004081020408102ULL) >> 56,
+        ((white & 0x4040404040404040ULL) * 0x0004081020408102ULL) >> 56 );
+    int c8 = bitsToPI(
+        ((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56,
+        ((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56 );
+    int d81 = bitsToPI(
+        ((black & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56 );
+    int d82 = bitsToPI(
+        ((black & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56 );
+    int d71 = bitsToPI(
+        ((black & 0x0080402010080402ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0080402010080402ULL) * 0x0101010101010101ULL) >> 56 );
+    int d72 = bitsToPI(
+        ((black & 0x0001020408102040ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0001020408102040ULL) * 0x0101010101010101ULL) >> 56 );
+    int d73 = bitsToPI(
+        ((black & 0x4020100804020100ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x4020100804020100ULL) * 0x0101010101010101ULL) >> 56 );
+    int d74 = bitsToPI(
+        ((black & 0x0204081020408000ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0204081020408000ULL) * 0x0101010101010101ULL) >> 56 );
+    // TODO may need fixing
+    int d61 = bitsToPI(
+        ((black & 0x0000804020110a04ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0000804020110a04ULL) * 0x0101010101010101ULL) >> 56 );
+    int d62 = bitsToPI(
+        ((black & 0x0000010204885020ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0000010204885020ULL) * 0x0101010101010101ULL) >> 56 );
+    int d63 = bitsToPI(
+        (((black & 0x2010080402010204ULL) + 0x6070787c7e7f7e7cULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56,
+        (((white & 0x2010080402010204ULL) + 0x6070787c7e7f7e7cULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56 );
+    int d64 = bitsToPI(
+        (((black & 0x0408102040804020ULL) + 0x7c78706040004060ULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56,
+        (((white & 0x0408102040804020ULL) + 0x7c78706040004060ULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56 );
+    int d51 = bitsToPI(
+        ((black & 0x0000008041221408ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0000008041221408ULL) * 0x0101010101010101ULL) >> 56 );
+    int d52 = bitsToPI(
+        ((black & 0x0000000182442810ULL) * 0x0101010101010101ULL) >> 56,
+        ((white & 0x0000000182442810ULL) * 0x0101010101010101ULL) >> 56 );
+
+    int result =
+        mobilities[r1] + mobilities[r2] + mobilities[r3] + mobilities[r4] +
+        mobilities[r5] + mobilities[r6] + mobilities[r7] + mobilities[r8] +
+        mobilities[c1] + mobilities[c2] + mobilities[c3] + mobilities[c4] +
+        mobilities[c5] + mobilities[c6] + mobilities[c7] + mobilities[c8] +
+        mobilities[d81] + mobilities[d82] +
+        mobilities[d71] + mobilities[d72] + mobilities[d73] + mobilities[d74] +
+        mobilities[d61] + mobilities[d62] + mobilities[d63] + mobilities[d64] +
+        mobilities[d51] + mobilities[d52];// + mobilities[d53] + mobilities[d54] +
+    return result;
 }
 
-int Player::bitsToPI(int w, int b) {
+int Player::bitsToPI(bitbrd b, bitbrd w) {
     int result = 0;
     int i = 0;
-    while(w) {
-        if(w & 1)
-            result += POW3[i];
-        w >>= 1;
-        i++;
-    }
-    i = 0;
     while(b) {
         if(b & 1)
             result += POW3[i];
         b >>= 1;
         i++;
     }
+    i = 0;
+    while(w) {
+        if(w & 1)
+            result += POW3[i];
+        w >>= 1;
+        i++;
+    }
 
     return result;
 }
 
-void Player::sort(vector<int> &moves, vector<int> &scores, int left, int right)
-{
+void Player::sort(vector<int> &moves, vector<int> &scores, int left,
+    int right) {
+
     int index = left;
 
-    if (left < right)
-    {
+    if (left < right) {
         index = partition(moves, scores, left, right, index);
         sort(moves, scores, left, index-1);
         sort(moves, scores, index+1, right);
     }
 }
 
-void Player::swap(vector<int> &moves, vector<int> &scores, int i, int j)
-{
+void Player::swap(vector<int> &moves, vector<int> &scores, int i, int j) {
     int less1;
     int less2;
 
@@ -355,17 +436,15 @@ void Player::swap(vector<int> &moves, vector<int> &scores, int i, int j)
 }
 
 int Player::partition(vector<int> &moves, vector<int> &scores, int left,
-        int right, int pindex)
-{
+    int right, int pindex) {
+
     int index = left;
     int pivot = scores[pindex];
 
     swap(moves, scores, pindex, right);
 
-    for (int i = left; i < right; i++)
-    {
-        if (scores[i] >= pivot)
-        {
+    for (int i = left; i < right; i++) {
+        if (scores[i] >= pivot) {
             swap(moves, scores, i, index);
             index++;
         }
@@ -373,4 +452,23 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     swap(moves, scores, index, right);
 
     return index;
+}
+
+void Player::readMobilities() {
+    std::string line;
+    std::ifstream openingbk("mobility.txt");
+
+    if(openingbk.is_open()) {
+        int i = 0;
+        while(getline(openingbk, line)) {
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                mobilities[9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+
+            i++;
+        }
+        openingbk.close();
+    }
 }
