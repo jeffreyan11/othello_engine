@@ -534,10 +534,17 @@ void Board::doMove(int index, Side side) {
 */
 vector<int> Board::getLegalMoves(Side side) {
     vector<int> result;
-    for (int i = 0; i < 64; i++) {
-        if (checkMove(i, side)) {
-            result.push_back(i);
-        }
+    getLegal(side);
+    bitbrd temp = legal;
+    bitbrd c = temp & 0x8100000000000081;
+    temp &= ~0x8100000000000081;
+    while(c) {
+        result.push_back(bitScanForward(c));
+        c &= c-1;
+    }
+    while(temp) {
+        result.push_back(bitScanForward(temp));
+        temp &= temp-1;
     }
     return result;
 }

@@ -11,7 +11,7 @@ const int POW3[9] = {1, 3, 9, 27, 81, 243, 729, 2187, 6561};
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 14;
+    maxDepth = 16;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -30,6 +30,14 @@ Player::Player(Side side) {
             indexToMove[i+8*j] = new Move(i,j);
         }
     }
+
+    #if defined(__x86_64__)
+        cerr << "x86-64 processor detected." << endl;
+    #elif defined(__i386)
+        cerr << "x86 processor detected." << endl;
+    #else
+        cerr << "non-x86 processor detected." << endl;
+    #endif
 
     //TODO readMobilities();
 }
@@ -212,22 +220,18 @@ int Player::pvs(Board *b, vector<int> &moves, vector<int> &scores,
 int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int alpha, int beta) {
 
-    int side, score;
-    if (s == mySide)
-        side = 1;
-    else
-        side = -1;
-
     if (depth <= 0) {
-        topScore = side * heuristic(b);
+        topScore = (s == mySide) ? heuristic(b) : -heuristic(b);
         return topScore;
     }
+
+    int score;
+    int ttScore = NEG_INFTY;
 
     vector<int> legalMoves = b->getLegalMoves(s);
     if(legalMoves.size() <= 0) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(MOVE_NULL, s);
-        int ttScore = NEG_INFTY;
         score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
 
@@ -236,10 +240,26 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         topScore = ttScore;
         return alpha;
     }
+
+    int killerMove = killer_table[*b];
+    if(!killerMove) {
+        killerMove--;
+        Board copy = Board(b->taken, b->black, b->legal);
+        copy.doMove(killerMove, s);
+        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
+            depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+        if(ttScore > topScore)
+            topScore = ttScore;
+        if (alpha >= beta)
+            return alpha;
+    }
+
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(legalMoves[i], s);
-        int ttScore = NEG_INFTY;
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
@@ -256,8 +276,10 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
             alpha = score;
         if(ttScore > topScore)
             topScore = ttScore;
-        if (alpha >= beta)
+        if (alpha >= beta) {
+            killer_table[*b] = legalMoves[i] + 1;
             break;
+        }
     }
     return alpha;
 }

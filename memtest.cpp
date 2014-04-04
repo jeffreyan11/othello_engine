@@ -8,14 +8,6 @@
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp
 int main(int argc, char **argv) {
-    #if defined(__x86_64__)
-        cerr << "x86-64" << endl;
-    #elif defined(__i386)
-        cerr << "x86" << endl;
-    #else
-        cerr << "not x86" << endl;
-    #endif
-
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
@@ -29,8 +21,8 @@ int main(int argc, char **argv) {
     //        INFTY, 1000000, p.endgame_table);
     //cerr << r << endl;
     //Board b;
-    //for(bitbrd i = 0; i < 100000000; i++)
-    //    b.bitScanReverse(i);
+    //for(int i = 0; i < 100000000; i++)
+        //b.getLegalMoves(BLACK);
         //b.numLegalMoves(WHITE);
         //p.mobilityEstimate(&b);
     //cerr << p.mobilityEstimate(&b) << endl;

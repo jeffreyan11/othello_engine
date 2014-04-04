@@ -57,6 +57,7 @@ public:
     Side mySide;
     Side oppSide;
 
+    unordered_map<Board, int, BoardHashFunc> killer_table;
     unordered_map<Board, int, BoardHashFunc> endgame_table;
 
     Player(Side side);
