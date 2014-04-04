@@ -237,15 +237,20 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
 
         if (alpha < score)
             alpha = score;
-        topScore = ttScore;
+        if(ttScore > topScore)
+            topScore = ttScore;
         return alpha;
     }
 
-    int killerMove = killer_table[*b];
-    if(!killerMove) {
-        killerMove--;
+    //bool hashHit = true;
+    //int killerMove;
+    //try {
+    //    killerMove = killer_table[*b];
+    //}
+    //catch (const out_of_range& oor) {hashHit = false;}
+    /*if(!killerMove) {
         Board copy = Board(b->taken, b->black, b->legal);
-        copy.doMove(killerMove, s);
+        copy.doMove(killerMove-1, s);
         score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
             depth-1, -beta, -alpha);
 
@@ -255,7 +260,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
             topScore = ttScore;
         if (alpha >= beta)
             return alpha;
-    }
+    }*/
 
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board copy = Board(b->taken, b->black, b->legal);
@@ -277,7 +282,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            killer_table[*b] = legalMoves[i] + 1;
+            //killer_table[*b] = legalMoves[i] + 1;
             break;
         }
     }

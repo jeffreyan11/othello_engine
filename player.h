@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <unordered_map>
 #include "common.h"
 #include "board.h"

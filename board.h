@@ -46,4 +46,16 @@ public:
     }
 };
 
+struct BoardHashFunc {
+    size_t operator()(const Board &b) const {
+    using std::size_t;
+    using std::hash;
+    using std::string;
+
+    return ( (hash<bitbrd>()(b.taken) << 1)
+        ^ hash<bitbrd>()(b.black)
+        ^ (hash<bitbrd>()(b.legal) >> 1) );
+    }
+};
+
 #endif
