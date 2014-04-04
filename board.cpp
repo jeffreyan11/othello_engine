@@ -785,12 +785,17 @@ int Board::bitScanReverse(bitbrd bb) {
     #if defined(__x86_64__)
         asm ("bsr %1, %0" : "=r" (bb) : "r" (bb));
         return (int) bb;
-    //#elif defined(__i386)
-    //    int a = (int) (bb & 0xFFFFFFFF);
-    //    int b = (int) ((bb>>32) & 0xFFFFFFFF);
-    //    asm ("bsrl %1, %0" : "=r" (a) : "r" (a));
-    //    asm ("bsrl %1, %0" : "=r" (b) : "r" (b));
-    //    return a+b;
+    #elif defined(__i386)
+        int b = (int) ((bb>>32) & 0xFFFFFFFF);
+        if(b) {
+            asm ("bsrl %1, %0" : "=r" (b) : "r" (b));
+            return b+32;
+        }
+        else {
+            int a = (int) (bb & 0xFFFFFFFF);
+            asm ("bsrl %1, %0" : "=r" (a) : "r" (a));
+            return a;
+        }
     #else
         const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
         bb |= bb >> 1;
