@@ -4,18 +4,17 @@
 #include "player.h"
 #include "board.h"
 #include "endgame.h"
-#include "openings.h"
 
-// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp
+// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
 int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
     Player p(BLACK);
+    Player p2(WHITE);
 
     Move m (3,5);
-    p.doMove(&m, -1);
-    Move m2 (2,6);
-    p.doMove(&m2, -1);
+    Move *m2 = p.doMove(&m, -1);
+    p2.doMove(m2, -1);
     //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
     //int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
     //        INFTY, 1000000, p.endgame_table);

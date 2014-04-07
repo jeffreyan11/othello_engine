@@ -11,7 +11,7 @@ const int POW3[9] = {1, 3, 9, 27, 81, 243, 729, 2187, 6561};
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 16;
+    maxDepth = 14;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -171,6 +171,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     game.doMove(myMove, mySide);
     turn++;
+    cerr << killer_table.keys << endl;
     return indexToMove[myMove];
 }
 
@@ -228,6 +229,21 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int score;
     int ttScore = NEG_INFTY;
 
+    int killerMove = killer_table.get(b);
+    if(killerMove != -1) {
+        Board copy = Board(b->taken, b->black, b->legal);
+        copy.doMove(killerMove, s);
+        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
+            depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+        if(ttScore > topScore)
+            topScore = ttScore;
+        if (alpha >= beta)
+            return alpha;
+    }
+
     vector<int> legalMoves = b->getLegalMoves(s);
     if(legalMoves.size() <= 0) {
         Board copy = Board(b->taken, b->black, b->legal);
@@ -241,26 +257,6 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
             topScore = ttScore;
         return alpha;
     }
-
-    //bool hashHit = true;
-    //int killerMove;
-    //try {
-    //    killerMove = killer_table[*b];
-    //}
-    //catch (const out_of_range& oor) {hashHit = false;}
-    /*if(!killerMove) {
-        Board copy = Board(b->taken, b->black, b->legal);
-        copy.doMove(killerMove-1, s);
-        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
-            depth-1, -beta, -alpha);
-
-        if (alpha < score)
-            alpha = score;
-        if(ttScore > topScore)
-            topScore = ttScore;
-        if (alpha >= beta)
-            return alpha;
-    }*/
 
     for (unsigned int i = 0; i < legalMoves.size(); i++) {
         Board copy = Board(b->taken, b->black, b->legal);
@@ -282,7 +278,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            //killer_table[*b] = legalMoves[i] + 1;
+            killer_table.add(b, legalMoves[i]);
             break;
         }
     }

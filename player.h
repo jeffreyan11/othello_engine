@@ -11,6 +11,7 @@
 #include "board.h"
 #include "openings.h"
 #include "endgame.h"
+#include "hash.h"
 using namespace std;
 
 const bitbrd CORNERS = 0x8100000000000081;
@@ -58,7 +59,7 @@ public:
     Side mySide;
     Side oppSide;
 
-    unordered_map<Board, int, BoardHashFunc> killer_table;
+    Hash killer_table;
     unordered_map<Board, int, BoardHashFunc> endgame_table;
 
     Player(Side side);
