@@ -1,3 +1,6 @@
+#ifndef __HASH_H__
+#define __HASH_H__
+
 #include "board.h"
 #include "common.h"
 #include <iostream>
@@ -55,6 +58,8 @@ public:
     ~Hash();
 
     void add(const Board *b, int move, int turn);
-    int get(const Board *b, int turn);
+    int get(const Board *b);
     void clean(int turn);
 };
+
+#endif

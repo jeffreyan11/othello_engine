@@ -46,7 +46,7 @@ void Hash::add(const Board *b, int move, int turn) {
     }
     node->next = new HashLL(b->taken, b->black, move, turn);
 }
-int Hash::get(const Board *b, int turn) {
+int Hash::get(const Board *b) {
     uint32_t h = hash(b);
     unsigned int index = h%size;
     HashLL *node = table[index];

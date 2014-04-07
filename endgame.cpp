@@ -1,15 +1,13 @@
 #include "endgame.h"
 
 int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
-    int beta, int endgameTimeMS,
-    unordered_map<Board, int, BoardHashFunc> &endgame_table) {
+    int beta, int endgameTimeMS, Hash &endgame_table) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    int temp = endgame_table[b];
-    if(temp != 0) {
-        temp--;
+    int temp = endgame_table.get(&b);
+    if(temp != -1) {
         return temp;
     }
 
@@ -52,12 +50,25 @@ int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
 }
 
 int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
-    unordered_map<Board, int, BoardHashFunc> &endgame_table) {
+    Hash &endgame_table) {
 
     int score;
 
     if (depth <= 0) {
         return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
+    }
+
+    int killer = endgame_table.get(&b);
+    if(killer != -1) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(killer, s);
+        score = -endgame_h(copy, ((s == WHITE) ? (BLACK) : WHITE), mine,
+            depth-1, -beta, -alpha, endgame_table);
+
+        if (alpha < score)
+            alpha = score;
+        if (alpha >= beta)
+            return alpha;
     }
 
     vector<int> legalMoves = b.getLegalMoves(s);
@@ -101,7 +112,7 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
             if (alpha >= beta)
                 break;
         }
-        endgame_table[b] = tempMove + 1;
+        endgame_table.add(&b, tempMove, 65);
     }
     else {
         for (unsigned int i = 0; i < legalMoves.size(); i++) {

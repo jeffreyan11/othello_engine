@@ -5,8 +5,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
-#include <unordered_map>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -61,7 +59,7 @@ public:
     Side oppSide;
 
     Hash killer_table;
-    unordered_map<Board, int, BoardHashFunc> endgame_table;
+    Hash endgame_table;
 
     Player(Side side);
     ~Player();

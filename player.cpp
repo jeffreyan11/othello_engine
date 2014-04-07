@@ -230,7 +230,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int score;
     int ttScore = NEG_INFTY;
 
-    int killerMove = killer_table.get(b, turn);
+    int killerMove = killer_table.get(b);
     if(killerMove != -1) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(killerMove, s);
