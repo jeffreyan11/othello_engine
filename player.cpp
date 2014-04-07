@@ -11,7 +11,7 @@ const int POW3[9] = {1, 3, 9, 27, 81, 243, 729, 2187, 6561};
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 14;
+    maxDepth = 12;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -127,6 +127,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             break;
         }
         cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
+        //pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
+        //sort(legalMoves, scores, 0, legalMoves.size()-1);
+        //scores.clear();
+
         endgameSwitch = true;
         myMove = endgame(game, legalMoves, mySide, endgameDepth, NEG_INFTY,
             INFTY, endgameTimeMS, endgame_table);
@@ -140,6 +144,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         game.doMove(myMove, mySide);
         turn++;
+        auto end_time = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(end_time-start_time);
+        cerr << "Endgame took: " << time_span.count() << endl;
         return indexToMove[myMove];
     }
 
@@ -170,9 +177,15 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*20) || msLeft == -1) && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
-    killer_table.clean(turn);
     turn++;
-    cerr << killer_table.keys << endl;
+
+    start_time = high_resolution_clock::now();
+    killer_table.clean(turn);
+    auto end_time = high_resolution_clock::now();
+    time_span = duration_cast<duration<double>>(end_time-start_time);
+    cerr << "Table contains " << killer_table.keys << " keys." << endl;
+    cerr << "Clean took: " << time_span.count() << "s" << endl;
+
     return indexToMove[myMove];
 }
 

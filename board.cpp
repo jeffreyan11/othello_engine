@@ -536,15 +536,25 @@ vector<int> Board::getLegalMoves(Side side) {
     vector<int> result;
     getLegal(side);
     bitbrd temp = legal;
-    bitbrd c = temp & 0x8100000000000081;
-    temp &= ~0x8100000000000081;
-    while(c) {
-        result.push_back(bitScanForward(c));
-        c &= c-1;
+    bitbrd corner = temp & 0x8100000000000081;
+    bitbrd csq = temp & 0x2400810000810024;
+    bitbrd adj = temp & 0x42C300000000C342;
+    temp &= 0x183C7EFFFF7E3C18;
+    while(corner) {
+        result.push_back(bitScanForward(corner));
+        corner &= corner-1;
+    }
+    while(csq) {
+        result.push_back(bitScanForward(csq));
+        csq &= csq-1;
     }
     while(temp) {
         result.push_back(bitScanForward(temp));
         temp &= temp-1;
+    }
+    while(adj) {
+        result.push_back(bitScanForward(adj));
+        adj &= adj-1;
     }
     return result;
 }

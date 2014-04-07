@@ -52,13 +52,13 @@ int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
 int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
     Hash &endgame_table) {
 
-    int score;
-
     if (depth <= 0) {
         return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
     }
 
-    int killer = endgame_table.get(&b);
+    int score;
+
+    /*int killer = endgame_table.get(&b);
     if(killer != -1) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(killer, s);
@@ -69,7 +69,7 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
             alpha = score;
         if (alpha >= beta)
             return alpha;
-    }
+    }*/
 
     vector<int> legalMoves = b.getLegalMoves(s);
 
@@ -86,7 +86,7 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
         return alpha;
     }
 
-    if(depth > 12) {
+    if(depth > 10) {
         int tempMove = legalMoves[0];
         for (unsigned int i = 0; i < legalMoves.size(); i++) {
             Board copy = Board(b.taken, b.black, b.legal);
