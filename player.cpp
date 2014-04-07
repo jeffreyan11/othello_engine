@@ -148,7 +148,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
     // iterative deepening
-    int attemptingDepth = minDepth;
+    attemptingDepth = minDepth;
     duration<double> time_span;
     do {
         cerr << "Attempting NWS of depth " << attemptingDepth << endl;
@@ -170,6 +170,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*20) || msLeft == -1) && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
+    killer_table.clean(turn);
     turn++;
     cerr << killer_table.keys << endl;
     return indexToMove[myMove];
@@ -229,7 +230,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int score;
     int ttScore = NEG_INFTY;
 
-    int killerMove = killer_table.get(b);
+    int killerMove = killer_table.get(b, turn);
     if(killerMove != -1) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(killerMove, s);
@@ -278,7 +279,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            killer_table.add(b, legalMoves[i]);
+            killer_table.add(b, legalMoves[i], turn+attemptingDepth-depth);
             break;
         }
     }

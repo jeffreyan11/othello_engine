@@ -29,13 +29,13 @@ Hash::~Hash() {
  * @brief Adds key b and item move into the hashtable.
  * Assumes that no hash with key is in the table.
 */
-void Hash::add(const Board *b, int move) {
+void Hash::add(const Board *b, int move, int turn) {
     keys++;
     uint32_t h = hash(b);
     unsigned int index = h%size;
     HashLL *node = table[index];
     if(node == NULL) {
-        table[index] = new HashLL(b->taken, b->black, move);
+        table[index] = new HashLL(b->taken, b->black, move, turn);
         return;
     }
 
@@ -44,15 +44,24 @@ void Hash::add(const Board *b, int move) {
     while(node->next != NULL) {
         node = node->next;
     }
-    node->next = new HashLL(b->taken, b->black, move);
+    node->next = new HashLL(b->taken, b->black, move, turn);
 }
-int Hash::get(const Board *b) {
+int Hash::get(const Board *b, int turn) {
     uint32_t h = hash(b);
     unsigned int index = h%size;
     HashLL *node = table[index];
 
     if(node == NULL)
         return -1;
+
+    /*while(node->cargo.turn <= turn) {
+        keys--;
+        table[index] = node->next;
+        delete node;
+        node = table[index];
+        if(node == NULL)
+            return -1;
+    }*/
 
     do {
         if(node->cargo.taken == b->taken && node->cargo.black == b->black)
@@ -62,6 +71,20 @@ int Hash::get(const Board *b) {
     while(node != NULL);
 
     return -1;
+}
+
+void Hash::clean(int turn) {
+    for(int i = 0; i < size; i++) {
+        HashLL *node = table[i];
+        while(node != NULL && node->cargo.turn <= turn) {
+            keys--;
+            table[i] = node->next;
+            delete node;
+            node = table[i];
+            //if(node == NULL)
+            //    break;
+        }
+    }
 }
 
 /**

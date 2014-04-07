@@ -26,6 +26,7 @@ private:
     int minDepth;
     int sortDepth;
     int endgameDepth;
+    int attemptingDepth;
     bool endgameSwitch;
     Openings openingBook;
 
