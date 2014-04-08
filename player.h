@@ -27,6 +27,7 @@ private:
     int attemptingDepth;
     bool endgameSwitch;
     Openings openingBook;
+    Endgame endgameSolver;
 
     int turn;
     int totalTimePM;
@@ -59,7 +60,6 @@ public:
     Side oppSide;
 
     Hash killer_table;
-    Hash endgame_table;
 
     Player(Side side);
     ~Player();

@@ -20,6 +20,7 @@ Player::Player(Side side) {
     endgameSwitch = false;
 
     mySide = side;
+    endgameSolver.mySide = side;
     oppSide = (side == WHITE) ? (BLACK) : (WHITE);
     turn = 4;
     totalTimePM = -2;
@@ -68,6 +69,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(totalTimePM == -2) {
         totalTimePM = msLeft;
         endgameTimeMS = msLeft / 3;
+        endgameSolver.endgameTimeMS = endgameTimeMS;
         if(totalTimePM != -1) {
             if(totalTimePM > 600000)
                 totalTimePM = (totalTimePM - endgameTimeMS) / 21;
@@ -83,6 +85,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         else {
             totalTimePM = 1000000;
             endgameTimeMS = 1000000;
+            endgameSolver.endgameTimeMS = endgameTimeMS;
         }
     }
 
@@ -132,8 +135,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         //scores.clear();
 
         endgameSwitch = true;
-        myMove = endgame(game, legalMoves, mySide, endgameDepth, NEG_INFTY,
-            INFTY, endgameTimeMS, endgame_table);
+        myMove = endgameSolver.endgame(game, legalMoves, endgameDepth);
         if(myMove == MOVE_BROKEN) {
             cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
@@ -179,12 +181,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(myMove, mySide);
     turn++;
 
-    start_time = high_resolution_clock::now();
+    //start_time = high_resolution_clock::now();
     killer_table.clean(turn);
-    auto end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(end_time-start_time);
+    //auto end_time = high_resolution_clock::now();
+    //time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "Table contains " << killer_table.keys << " keys." << endl;
-    cerr << "Clean took: " << time_span.count() << "s" << endl;
+    //cerr << "Clean took: " << time_span.count() << "s" << endl;
 
     return indexToMove[myMove];
 }

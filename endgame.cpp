@@ -1,17 +1,23 @@
 #include "endgame.h"
 
-int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
-    int beta, int endgameTimeMS, Hash &endgame_table) {
+Endgame::Endgame() {
+}
 
-    using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
+Endgame::~Endgame() {
+}
 
+int Endgame::endgame(Board &b, vector<int> &moves, int depth) {
     int temp = endgame_table.get(&b);
     if(temp != -1) {
         return temp;
     }
 
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
+
     int score;
+    int alpha = NEG_INFTY;
+    int beta = INFTY;
     int tempMove = moves[0];
 
     for (unsigned int i = 0; i < moves.size(); i++) {
@@ -23,19 +29,19 @@ int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
             return MOVE_BROKEN;
 
         Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(moves[i], s);
+        copy.doMove(moves[i], mySide);
 
         if (i != 0) {
-            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
-                pieces-1, -alpha-1, -alpha, endgame_table);
+            score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
+                depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
-                    pieces-1, -beta, -alpha, endgame_table);
+                score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
+                    depth-1, -beta, -alpha);
             }
         }
         else {
-            score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), s,
-                pieces-1, -beta, -alpha, endgame_table);
+            score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
+                depth-1, -beta, -alpha);
         }
 
         if (score > alpha) {
@@ -46,15 +52,13 @@ int endgame(Board &b, vector<int> &moves, Side s, int pieces, int alpha,
             break;
     }
 
+    cerr << "Endgame table contains " << endgame_table.keys << " keys." << endl;
     return tempMove;
 }
 
-int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
-    Hash &endgame_table) {
-
-    if (depth <= 0) {
+int Endgame::endgame_h(Board &b, Side s, int depth, int alpha, int beta) {
+    if (depth <= 0)
         return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
-    }
 
     int score;
 
@@ -78,8 +82,8 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
             return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(MOVE_NULL, s);
-        score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE), mine,
-            depth, -beta, -alpha, endgame_table);
+        score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
+            depth, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -94,15 +98,15 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
 
             if (i != 0) {
                 score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    mine, depth-1, -alpha-1, -alpha, endgame_table);
+                    depth-1, -alpha-1, -alpha);
                 if (alpha < score && score < beta) {
                     score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        mine, depth-1, -beta, -alpha, endgame_table);
+                        depth-1, -beta, -alpha);
                 }
             }
             else {
                 score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    mine, depth-1, -beta, -alpha, endgame_table);
+                    depth-1, -beta, -alpha);
             }
 
             if (alpha < score) {
@@ -121,15 +125,15 @@ int endgame_h(Board &b, Side s, Side mine, int depth, int alpha, int beta,
 
             if (i != 0) {
                 score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    mine, depth-1, -alpha-1, -alpha, endgame_table);
+                    depth-1, -alpha-1, -alpha);
                 if (alpha < score && score < beta) {
                     score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        mine, depth-1, -beta, -alpha, endgame_table);
+                        depth-1, -beta, -alpha);
                 }
             }
             else {
                 score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    mine, depth-1, -beta, -alpha, endgame_table);
+                    depth-1, -beta, -alpha);
             }
 
             if (alpha < score)
