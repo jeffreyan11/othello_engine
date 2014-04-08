@@ -292,7 +292,8 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            killer_table.add(b, legalMoves[i], turn+attemptingDepth-depth);
+            if(depth >= 2 && depth <= minDepth+4)
+                killer_table.add(b, legalMoves[i], turn+attemptingDepth-depth);
             break;
         }
     }
@@ -305,20 +306,21 @@ int Player::heuristic (Board *b) {
     if(myCoins == 0)
         return -9001;
 
-    if(turn < 30)
+    if(turn < 40)
         score = myCoins - b->count(oppSide);
     else
         score = 2 * (myCoins - b->count(oppSide));
 
     bitbrd bm = b->toBits(mySide);
+    bitbrd bo = b->toBits(oppSide);
 
-    score += 50 * countSetBits(bm & CORNERS);
+    score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
     if(turn > 35)
-        score += 4 * countSetBits(bm & EDGES);
-    score -= 15 * countSetBits(bm & X_CORNERS);
-    score -= 10 * countSetBits(bm & ADJ_CORNERS);
+        score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+    score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
 
-    score += 2 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    score += 3 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
@@ -499,11 +501,11 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
 
 void Player::readMobilities() {
     std::string line;
-    std::ifstream openingbk("mobility.txt");
+    std::ifstream mobtable("mobility.txt");
 
-    if(openingbk.is_open()) {
+    if(mobtable.is_open()) {
         int i = 0;
-        while(getline(openingbk, line)) {
+        while(getline(mobtable, line)) {
             for(int j = 0; j < 9; j++) {
                 std::string::size_type sz = 0;
                 mobilities[9*i+j] = std::stoi(line, &sz, 0);
@@ -512,6 +514,6 @@ void Player::readMobilities() {
 
             i++;
         }
-        openingbk.close();
+        mobtable.close();
     }
 }
