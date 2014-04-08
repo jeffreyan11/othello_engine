@@ -19,8 +19,12 @@ Hash::Hash(int isize) {
 
 Hash::~Hash() {
     for(int i = 0; i < size; i++) {
-        if(table[i] != NULL)
-            delete table[i];
+        HashLL* temp = table[i];
+        while(temp != NULL) {
+            HashLL *temp2 = temp->next;
+            delete temp;
+            temp = temp2;
+        }
     }
     delete table;
 }
@@ -81,8 +85,6 @@ void Hash::clean(int turn) {
             table[i] = node->next;
             delete node;
             node = table[i];
-            //if(node == NULL)
-            //    break;
         }
     }
 }

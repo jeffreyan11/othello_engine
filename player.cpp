@@ -1,7 +1,5 @@
 #include "player.h"
 
-const int POW3[9] = {1, 3, 9, 27, 81, 243, 729, 2187, 6561};
-
 /**
  * @brief Constructor for the player.
  * 
@@ -317,12 +315,12 @@ int Player::heuristic (Board *b) {
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
-        score += (mySide == BLACK) ? 3*boardToPV(b) : -3*boardToPV(b);
+        score += (mySide == BLACK) ? 5*boardToPV(b) : -5*boardToPV(b);
         score -= 10 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     #else
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-        if(turn > 35)
-            score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+        //if(turn > 35)
+        //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
         score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
         score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
             countSetBits(bo&ADJ_CORNERS));
@@ -356,14 +354,14 @@ int Player::countSetBits(bitbrd i) {
 int Player::boardToPV(Board *b) {
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
-    int r1 = bitsToPI( black & 0xFF, white & 0xFF );
-    int r8 = bitsToPI( (black>>56) & 0xFF, (white>>56) & 0xFF );
+    int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
+    int r8 = bitsToPI( (int)(black>>56), (int)(white>>56) );
     int c1 = bitsToPI(
-        ((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56,
-        ((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56 );
+      (int)(((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)(((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
     int c8 = bitsToPI(
-        ((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56,
-        ((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56 );
+      (int)(((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
+      (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
     int result = edgeTable[r1] + edgeTable[r8] + edgeTable[c1] + edgeTable[c8];
     return result;
 }
@@ -453,24 +451,8 @@ int Player::boardToPV(Board *b) {
     return result;
 }*/
 
-int Player::bitsToPI(bitbrd b, bitbrd w) {
-    int result = 0;
-    int i = 0;
-    while(b) {
-        if(b & 1)
-            result += POW3[i];
-        b >>= 1;
-        i++;
-    }
-    i = 0;
-    while(w) {
-        if(w & 1)
-            result += 2*POW3[i];
-        w >>= 1;
-        i++;
-    }
-
-    return result;
+int Player::bitsToPI(int b, int w) {
+    return PIECES_TO_INDEX[(int)b] + 2*PIECES_TO_INDEX[(int)w];
 }
 
 void Player::sort(vector<int> &moves, vector<int> &scores, int left,
