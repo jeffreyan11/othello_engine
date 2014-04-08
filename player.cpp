@@ -314,12 +314,12 @@ int Player::heuristic (Board *b) {
     else
         score = 2 * (myCoins - b->count(oppSide));
 
+    bitbrd bm = b->toBits(mySide);
+    bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
-        score += (mySide == BLACK) ? 4*boardToPV(b) : -4*boardToPV(b);
+        score += (mySide == BLACK) ? 3*boardToPV(b) : -3*boardToPV(b);
+        score -= 10 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     #else
-        bitbrd bm = b->toBits(mySide);
-        bitbrd bo = b->toBits(oppSide);
-
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
         if(turn > 35)
             score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
@@ -364,9 +364,7 @@ int Player::boardToPV(Board *b) {
     int c8 = bitsToPI(
         ((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56,
         ((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56 );
-    //cerr << r1 << " " << r8 << " " << c1 << " " << c8 << endl;
     int result = edgeTable[r1] + edgeTable[r8] + edgeTable[c1] + edgeTable[c8];
-    //cerr << result << endl;
     return result;
 }
 
@@ -540,7 +538,9 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
 
 void Player::readEdgeTable() {
     std::string line;
-    std::ifstream edgetable("edgetable.txt");
+    std::string file;
+        file = "edgetable.txt";
+    std::ifstream edgetable(file);
 
     if(edgetable.is_open()) {
         int i = 0;
