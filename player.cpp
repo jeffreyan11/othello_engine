@@ -41,6 +41,7 @@ Player::Player(Side side) {
     #endif
 
     //TODO readMobilities();
+    readEdgeTable();
 }
 
 /**
@@ -313,14 +314,19 @@ int Player::heuristic (Board *b) {
     else
         score = 2 * (myCoins - b->count(oppSide));
 
-    bitbrd bm = b->toBits(mySide);
-    bitbrd bo = b->toBits(oppSide);
+    #if USE_EDGE_TABLE
+        score += (mySide == BLACK) ? 4*boardToPV(b) : -4*boardToPV(b);
+    #else
+        bitbrd bm = b->toBits(mySide);
+        bitbrd bo = b->toBits(oppSide);
 
-    score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-    if(turn > 35)
-        score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
-    score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-    score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
+        score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+        if(turn > 35)
+            score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+        score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
+            countSetBits(bo&ADJ_CORNERS));
+    #endif
 
     score += 3 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
@@ -348,11 +354,23 @@ int Player::countSetBits(bitbrd i) {
 }
 
 int Player::boardToPV(Board *b) {
-    // TODO
-    return 0;
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int r1 = bitsToPI( black & 0xFF, white & 0xFF );
+    int r8 = bitsToPI( (black>>56) & 0xFF, (white>>56) & 0xFF );
+    int c1 = bitsToPI(
+        ((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56,
+        ((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56 );
+    int c8 = bitsToPI(
+        ((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56,
+        ((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56 );
+    //cerr << r1 << " " << r8 << " " << c1 << " " << c8 << endl;
+    int result = edgeTable[r1] + edgeTable[r8] + edgeTable[c1] + edgeTable[c8];
+    //cerr << result << endl;
+    return result;
 }
 
-int Player::mobilityEstimate(Board *b) {
+/*int Player::mobilityEstimate(Board *b) {
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1 = bitsToPI( black & 0xFF, white & 0xFF );
@@ -435,7 +453,7 @@ int Player::mobilityEstimate(Board *b) {
         mobilities[d61] + mobilities[d62] + mobilities[d63] + mobilities[d64] +
         mobilities[d51] + mobilities[d52];// + mobilities[d53] + mobilities[d54] +
     return result;
-}
+}*/
 
 int Player::bitsToPI(bitbrd b, bitbrd w) {
     int result = 0;
@@ -449,7 +467,7 @@ int Player::bitsToPI(bitbrd b, bitbrd w) {
     i = 0;
     while(w) {
         if(w & 1)
-            result += POW3[i];
+            result += 2*POW3[i];
         w >>= 1;
         i++;
     }
@@ -501,7 +519,7 @@ int Player::partition(vector<int> &moves, vector<int> &scores, int left,
     return index;
 }
 
-void Player::readMobilities() {
+/*void Player::readMobilities() {
     std::string line;
     std::ifstream mobtable("mobility.txt");
 
@@ -517,5 +535,24 @@ void Player::readMobilities() {
             i++;
         }
         mobtable.close();
+    }
+}*/
+
+void Player::readEdgeTable() {
+    std::string line;
+    std::ifstream edgetable("edgetable.txt");
+
+    if(edgetable.is_open()) {
+        int i = 0;
+        while(getline(edgetable, line)) {
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                edgeTable[9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+
+            i++;
+        }
+        edgetable.close();
     }
 }

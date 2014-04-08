@@ -1,5 +1,4 @@
 #include "board.h"
-#include <iostream>
 
 /**
  * @brief For converting a move number 0-63 to a bitmask.
@@ -399,9 +398,8 @@ bool Board::checkMove(Move *m, Side side) {
     return legal & MOVEMASK[m->getX() + 8 * m->getY()];
 }
 
-/*
- * Overloaded function taking x, y instead of a move object for internal use.
- * Passing is not an option here.
+/**
+ * @brief Overloaded function for internal use with getLegalMoves().
 */
 bool Board::checkMove(int index, Side side) {
     if(legal == 0xFFFF000000000000)
@@ -413,10 +411,8 @@ bool Board::checkMove(int index, Side side) {
 /**
  * @brief Modifies the board to reflect the specified move.
  * 
- * This algorithm modifies the bitboards by performing the Dumb7Fill in all
- * eight directions, with the move as the generator and the opponent's piece
- * set as the propagator, checking for the anchor at the end and discarding the
- * result if the anchor is not present.
+ * This algorithm modifies the bitboards by lookup with precalculated tables in
+ * each of the eight directions.
  */
 void Board::doMove(int index, Side side) {
     // A NULL move means pass.

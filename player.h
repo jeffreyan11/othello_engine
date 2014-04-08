@@ -12,6 +12,8 @@
 #include "hash.h"
 using namespace std;
 
+#define USE_EDGE_TABLE true
+
 const bitbrd CORNERS = 0x8100000000000081;
 const bitbrd EDGES = 0x3C0081818181003C;
 const bitbrd ADJ_CORNERS = 0x4281000000008142;
@@ -35,7 +37,8 @@ private:
 
     Move* indexToMove[64];
 
-    int mobilities[6561];
+    //int mobilities[6561];
+    int edgeTable[6561];
 
     int heuristic(Board *b);
     int pvs(Board *b, vector<int> &moves, vector<int> &scores,
@@ -45,14 +48,15 @@ private:
 
     int countSetBits(bitbrd b);
     int boardToPV(Board *b);
-    int mobilityEstimate(Board *b);
+    //int mobilityEstimate(Board *b);
     int bitsToPI(bitbrd b, bitbrd w);
 
     void sort(vector<int> &moves, vector<int> &scores, int left, int right);
     void swap(vector<int> &moves, vector<int> &scores, int i, int j);
     int partition(vector<int> &moves, vector<int> &scores, int left, int
         right, int pindex);
-    void readMobilities();
+    //void readMobilities();
+    void readEdgeTable();
 
 public:
     Board game;
