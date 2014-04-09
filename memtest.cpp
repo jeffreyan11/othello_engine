@@ -12,16 +12,20 @@ int main(int argc, char **argv) {
     Player p(BLACK);
     Player p2(WHITE);
 
-    Move m (3,5);
-    Move *m2 = p.doMove(&m, -1);
-    p2.doMove(m2, -1);
+    Move *m = p.doMove(NULL, -1);
+    for(int i = 0; i < 18; i++) {
+        m = p2.doMove(m, -1);
+        m = p.doMove(m, -1);
+    }
     //vector<int> legalMoves = p.game.getLegalMoves(BLACK);
     //int r = endgame(p.game, legalMoves, BLACK, 16, NEG_INFTY,
     //        INFTY, 1000000, p.endgame_table);
     //cerr << r << endl;
     //Board b;
-    //for(int i = 0; i < 100000000; i++)
-        //b.getLegalMoves(BLACK);
+    //for(int i = 0; i < 100000000; i++) {
+    //    Board *copy = b.copy();
+    //    copy->doMove(19, BLACK);
+    //}
         //b.numLegalMoves(WHITE);
         //p.mobilityEstimate(&b);
     //cerr << p.mobilityEstimate(&b) << endl;

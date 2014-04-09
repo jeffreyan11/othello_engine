@@ -15,6 +15,7 @@ Hash::Hash(int isize) {
     for(int i = 0; i < size; i++) {
         table[i] = NULL;
     }
+    keys = 0;
 }
 
 Hash::~Hash() {
@@ -26,7 +27,7 @@ Hash::~Hash() {
             temp = temp2;
         }
     }
-    delete table;
+    delete[] table;
 }
 
 /**
@@ -58,15 +59,6 @@ int Hash::get(const Board *b) {
     if(node == NULL)
         return -1;
 
-    /*while(node->cargo.turn <= turn) {
-        keys--;
-        table[index] = node->next;
-        delete node;
-        node = table[index];
-        if(node == NULL)
-            return -1;
-    }*/
-
     do {
         if(node->cargo.taken == b->taken && node->cargo.black == b->black)
             return node->cargo.move;
@@ -80,11 +72,15 @@ int Hash::get(const Board *b) {
 void Hash::clean(int turn) {
     for(int i = 0; i < size; i++) {
         HashLL *node = table[i];
-        while(node != NULL && node->cargo.turn <= turn) {
+        if(node == NULL)
+            continue;
+        while(node->cargo.turn <= turn) {
             keys--;
             table[i] = node->next;
             delete node;
             node = table[i];
+            if(node == NULL)
+                break;
         }
     }
 }

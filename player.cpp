@@ -316,7 +316,7 @@ int Player::heuristic (Board *b) {
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
         score += (mySide == BLACK) ? 5*boardToPV(b) : -5*boardToPV(b);
-        score -= 10 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        score -= 22 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     #else
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
         //if(turn > 35)
@@ -326,8 +326,8 @@ int Player::heuristic (Board *b) {
             countSetBits(bo&ADJ_CORNERS));
     #endif
 
-    score += 3 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }

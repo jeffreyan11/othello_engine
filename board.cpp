@@ -90,93 +90,77 @@ void Board::doMove(int index, Side side) {
     bitbrd changeMask = 0;
     bitbrd pos = (side == WHITE) ? ~black : ~(taken^black);
     bitbrd self = (side == BLACK) ? black : taken^black;
-    bitbrd block, result;
+    //bitbrd block, result;
 
-    // north fills
-    result = NORTHRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor])
-            changeMask |= (result ^ NORTHRAYI[anchor]) | MOVEMASK[index];
+    switch(BOARD_REGIONS[index]) {
+    case 1:
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 2:
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 3:
+        changeMask |= southFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        break;
+    case 4:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 5:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 6:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        break;
+    case 7:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        break;
+    case 8:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        break;
+    case 9:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        break;
     }
 
-    // south fills
-    result = SOUTHRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanForward(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= SOUTHRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // east fills
-    result = EASTRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanForward(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= EASTRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // west fills
-    result = WESTRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= WESTRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // ne fills
-    result = NERAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= NERAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // nw fills
-    result = NWRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= NWRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // sw fills
-    result = SWRAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanForward(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= SWRAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
-
-    // se fills
-    result = SERAY[index];
-    block = result & pos;
-    if(block) {
-        int anchor = bitScanForward(block);
-        if(self & MOVEMASK[anchor]) {
-            result ^= SERAYI[anchor];
-            changeMask |= result | MOVEMASK[index];
-        }
-    }
+    /*changeMask |= northFill(index, self, pos);
+    changeMask |= southFill(index, self, pos);
+    changeMask |= eastFill(index, self, pos);
+    changeMask |= westFill(index, self, pos);
+    changeMask |= neFill(index, self, pos);
+    changeMask |= nwFill(index, self, pos);
+    changeMask |= swFill(index, self, pos);
+    changeMask |= seFill(index, self, pos);*/
 
     // update taken, black, legal
     taken |= changeMask;
@@ -501,4 +485,92 @@ int Board::countSetBits(bitbrd i) {
               0x0101010101010101) >> 56;
         return (int) i;
     #endif
+}
+
+bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = NORTHRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanReverse(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ NORTHRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = SOUTHRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanForward(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ SOUTHRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = EASTRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanForward(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ EASTRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = WESTRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanReverse(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ WESTRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = NERAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanReverse(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ NERAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = NWRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanReverse(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ NWRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::swFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = SWRAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanForward(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ SWRAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
+}
+
+bitbrd Board::seFill(int index, bitbrd self, bitbrd pos) {
+    bitbrd result = SERAY[index];
+    bitbrd block = result & pos;
+    if(block) {
+        int anchor = bitScanForward(block);
+        if(self & MOVEMASK[anchor])
+            return (result ^ SERAYI[anchor]) | MOVEMASK[index];
+    }
+    return 0;
 }

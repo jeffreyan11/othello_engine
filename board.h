@@ -343,6 +343,17 @@ const bitbrd SWRAYI[64] = {
 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000
 };
 
+const int BOARD_REGIONS[64] = {
+1, 1, 2, 2, 2, 2, 3, 3,
+1, 1, 2, 2, 2, 2, 3, 3,
+4, 4, 5, 5, 5, 5, 6, 6,
+4, 4, 5, 5, 5, 5, 6, 6,
+4, 4, 5, 5, 5, 5, 6, 6,
+4, 4, 5, 5, 5, 5, 6, 6,
+7, 7, 8, 8, 8, 8, 9, 9,
+7, 7, 8, 8, 8, 8, 9, 9
+};
+
 class Board {
    
 private:
@@ -350,6 +361,15 @@ private:
     void getLegal(Side side);
 
     int countSetBits(bitbrd i);
+
+    bitbrd northFill(int index, bitbrd self, bitbrd pos);
+    bitbrd southFill(int index, bitbrd self, bitbrd pos);
+    bitbrd eastFill(int index, bitbrd self, bitbrd pos);
+    bitbrd westFill(int index, bitbrd self, bitbrd pos);
+    bitbrd neFill(int index, bitbrd self, bitbrd pos);
+    bitbrd nwFill(int index, bitbrd self, bitbrd pos);
+    bitbrd swFill(int index, bitbrd self, bitbrd pos);
+    bitbrd seFill(int index, bitbrd self, bitbrd pos);
       
 public:
     bitbrd taken;
@@ -377,22 +397,10 @@ public:
     int bitScanForward(bitbrd bb);
     int bitScanReverse(bitbrd bb);
 
-    inline bool operator==(const Board &other) const {
+    /*inline bool operator==(const Board &other) const {
         return (taken == other.taken) && (black == other.black) &&
             (legal == other.legal);
-    }
-};
-
-struct BoardHashFunc {
-    size_t operator()(const Board &b) const {
-    using std::size_t;
-    using std::hash;
-    using std::string;
-
-    return ( (hash<bitbrd>()(b.taken) << 1)
-        ^ hash<bitbrd>()(b.black)
-        ^ (hash<bitbrd>()(b.legal) >> 1) );
-    }
+    }*/
 };
 
 #endif
