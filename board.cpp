@@ -173,10 +173,10 @@ void Board::doMove(int index, Side side) {
 }
 
 /**
- * @brief Returns a vector of all legal moves.
+ * @brief Returns a list of all legal moves.
 */
-vector<int> Board::getLegalMoves(Side side) {
-    vector<int> result;
+MoveList Board::getLegalMoves(Side side) {
+    MoveList result;
     getLegal(side);
     bitbrd temp = legal;
     bitbrd corner = temp & 0x8100000000000081;
@@ -184,29 +184,29 @@ vector<int> Board::getLegalMoves(Side side) {
     bitbrd adj = temp & 0x42C300000000C342;
     temp &= 0x183C7EFFFF7E3C18;
     if(corner) {
-        result.push_back(bitScanForward(corner));
+        result.add(bitScanForward(corner));
         corner &= corner-1;
       if(corner) {
-        result.push_back(bitScanForward(corner));
+        result.add(bitScanForward(corner));
         corner &= corner-1;
         if(corner) {
-          result.push_back(bitScanForward(corner));
+          result.add(bitScanForward(corner));
           corner &= corner-1;
           if(corner)
-            result.push_back(bitScanForward(corner));
+            result.add(bitScanForward(corner));
         }
       }
     }
     while(csq) {
-        result.push_back(bitScanForward(csq));
+        result.add(bitScanForward(csq));
         csq &= csq-1;
     }
     while(temp) {
-        result.push_back(bitScanForward(temp));
+        result.add(bitScanForward(temp));
         temp &= temp-1;
     }
     while(adj) {
-        result.push_back(bitScanForward(adj));
+        result.add(bitScanForward(adj));
         adj &= adj-1;
     }
     return result;

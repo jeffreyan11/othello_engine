@@ -111,15 +111,15 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     // find and test all legal moves
-    vector<int> legalMoves = game.getLegalMoves(mySide);
+    MoveList legalMoves = game.getLegalMoves(mySide);
 
-    if (legalMoves.size() <= 0) {
+    if (legalMoves.size <= 0) {
         game.doMove(MOVE_NULL, mySide);
         return NULL;
     }
 
     int myMove = -1;
-    vector<int> scores;
+    MoveList scores;
 
     // endgame solver
     while(endgameSwitch || turn >= (64 - endgameDepth)) {
@@ -160,7 +160,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     duration<double> time_span;
     do {
         cerr << "Attempting NWS of depth " << attemptingDepth << endl;
-        sort(legalMoves, scores, 0, legalMoves.size()-1);
+        sort(legalMoves, scores, 0, legalMoves.size-1);
         scores.clear();
 
         int newBest = pvs(&game, legalMoves, scores, mySide,
@@ -190,25 +190,25 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     return indexToMove[myMove];
 }
 
-int Player::pvs(Board *b, vector<int> &moves, vector<int> &scores,
+int Player::pvs(Board *b, MoveList &moves, MoveList &scores,
     Side s, int depth, int alpha, int beta) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
     int score;
-    int tempMove = moves[0];
+    int tempMove = moves.get(0);
 
-    for (unsigned int i = 0; i < moves.size(); i++) {
+    for (unsigned int i = 0; i < moves.size; i++) {
         auto end_time = high_resolution_clock::now();
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * moves.size() * 1000 > totalTimePM * (i+1))
+        if(time_span.count() * moves.size * 1000 > totalTimePM * (i+1))
             return MOVE_BROKEN;
 
         Board copy = Board(b->taken, b->black, b->legal);
-        copy.doMove(moves[i], s);
+        copy.doMove(moves.get(i), s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
@@ -222,10 +222,10 @@ int Player::pvs(Board *b, vector<int> &moves, vector<int> &scores,
             score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -beta, -alpha);
         }
-        scores.push_back(ttScore);
+        scores.add(ttScore);
         if (score > alpha) {
             alpha = score;
-            tempMove = moves[i];
+            tempMove = moves.get(i);
         }
         if (alpha >= beta)
             break;
@@ -259,8 +259,8 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
             return alpha;
     }
 
-    vector<int> legalMoves = b->getLegalMoves(s);
-    if(legalMoves.size() <= 0) {
+    MoveList legalMoves = b->getLegalMoves(s);
+    if(legalMoves.size <= 0) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(MOVE_NULL, s);
         score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
@@ -273,9 +273,9 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         return alpha;
     }
 
-    for (unsigned int i = 0; i < legalMoves.size(); i++) {
+    for (unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b->taken, b->black, b->legal);
-        copy.doMove(legalMoves[i], s);
+        copy.doMove(legalMoves.get(i), s);
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
                 WHITE), depth-1, -alpha-1, -alpha);
@@ -294,7 +294,8 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
             topScore = ttScore;
         if (alpha >= beta) {
             if(depth >= 2 && depth <= minDepth+4)
-                killer_table.add(b, legalMoves[i], turn+attemptingDepth-depth);
+                killer_table.add(b, legalMoves.get(i),
+                    turn+attemptingDepth-depth);
             break;
         }
     }
@@ -455,8 +456,7 @@ int Player::bitsToPI(int b, int w) {
     return PIECES_TO_INDEX[(int)b] + 2*PIECES_TO_INDEX[(int)w];
 }
 
-void Player::sort(vector<int> &moves, vector<int> &scores, int left,
-    int right) {
+void Player::sort(MoveList &moves, MoveList &scores, int left, int right) {
 
     int index = left;
 
@@ -467,29 +467,26 @@ void Player::sort(vector<int> &moves, vector<int> &scores, int left,
     }
 }
 
-void Player::swap(vector<int> &moves, vector<int> &scores, int i, int j) {
-    int less1;
-    int less2;
+void Player::swap(MoveList &moves, MoveList &scores, int i, int j) {
+    int less1 = moves.get(j);
+    moves.set(j, moves.get(i));
+    moves.set(i, less1);
 
-    less1 = moves[j];
-    moves[j] = moves[i];
-    moves[i] = less1;
-
-    less2 = scores[j];
-    scores[j] = scores[i];
-    scores[i] = less2;
+    int less2 = scores.get(j);
+    scores.set(j, scores.get(i));
+    scores.set(i, less2);
 }
 
-int Player::partition(vector<int> &moves, vector<int> &scores, int left,
+int Player::partition(MoveList &moves, MoveList &scores, int left,
     int right, int pindex) {
 
     int index = left;
-    int pivot = scores[pindex];
+    int pivot = scores.get(pindex);
 
     swap(moves, scores, pindex, right);
 
     for (int i = left; i < right; i++) {
-        if (scores[i] >= pivot) {
+        if (scores.get(i) >= pivot) {
             swap(moves, scores, i, index);
             index++;
         }

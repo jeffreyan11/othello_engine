@@ -1,6 +1,9 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <cstdint>
+#include <cstdlib>
+
 #define bitbrd uint64_t
 #define NEG_INFTY -99999
 #define INFTY 99999
@@ -32,7 +35,7 @@ public:
 class MoveList {
 public:
     int *moves;
-    int size;
+    unsigned int size;
 
     MoveList() {
         moves = new int[40];
@@ -45,6 +48,12 @@ public:
         size++;
     }
     int get(int i) { return moves[i]; }
+    void set(int i, int val) { moves[i] = val; }
+    void clear() {
+        delete[] moves;
+        moves = new int[40];
+        size = 0;
+    }
 };
 
 #endif

@@ -1,8 +1,6 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
-#include <bitset>
-#include <vector>
 #include "common.h"
 using namespace std;
 
@@ -386,7 +384,7 @@ public:
     bool checkMove(Move *m, Side side);
     void doMove(int index, Side side);
     int count(Side side);
-    vector<int> getLegalMoves(Side side);
+    MoveList getLegalMoves(Side side);
     int numLegalMoves(Side side);
     int potentialMobility(Side side);
     bitbrd toBits(Side side);

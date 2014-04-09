@@ -18,7 +18,7 @@ public:
     Endgame();
     ~Endgame();
 
-    int endgame(Board &b, vector<int> &moves, int depth);
+    int endgame(Board &b, MoveList &moves, int depth);
     int endgame_h(Board &b, Side s, int depth, int alpha, int beta);
 };
 

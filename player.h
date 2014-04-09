@@ -2,7 +2,6 @@
 #define __PLAYER_H__
 
 #include <chrono>
-#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include "common.h"
@@ -70,7 +69,7 @@ private:
     int edgeTable[6561];
 
 
-    int pvs(Board *b, vector<int> &moves, vector<int> &scores,
+    int pvs(Board *b, MoveList &moves, MoveList &scores,
         Side side, int depth, int alpha, int beta);
     int pvs_h(Board *b, int &topScore, Side side, int depth,
         int alpha, int beta);
@@ -80,9 +79,9 @@ private:
     //int mobilityEstimate(Board *b);
     int bitsToPI(int b, int w);
 
-    void sort(vector<int> &moves, vector<int> &scores, int left, int right);
-    void swap(vector<int> &moves, vector<int> &scores, int i, int j);
-    int partition(vector<int> &moves, vector<int> &scores, int left, int
+    void sort(MoveList &moves, MoveList &scores, int left, int right);
+    void swap(MoveList &moves, MoveList &scores, int i, int j);
+    int partition(MoveList &moves, MoveList &scores, int left, int
         right, int pindex);
     //void readMobilities();
     void readEdgeTable();
