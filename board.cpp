@@ -117,16 +117,6 @@ void Board::doMove(int index, Side side) {
         changeMask |= neFill(index, self, pos);
         changeMask |= seFill(index, self, pos);
         break;
-    case 5:
-        changeMask |= northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
     case 6:
         changeMask |= northFill(index, self, pos);
         changeMask |= southFill(index, self, pos);
@@ -150,6 +140,16 @@ void Board::doMove(int index, Side side) {
         changeMask |= northFill(index, self, pos);
         changeMask |= westFill(index, self, pos);
         changeMask |= nwFill(index, self, pos);
+        break;
+    case 5:
+        changeMask |= northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
         break;
     }
 
@@ -183,9 +183,19 @@ vector<int> Board::getLegalMoves(Side side) {
     bitbrd csq = temp & 0x2400810000810024;
     bitbrd adj = temp & 0x42C300000000C342;
     temp &= 0x183C7EFFFF7E3C18;
-    while(corner) {
+    if(corner) {
         result.push_back(bitScanForward(corner));
         corner &= corner-1;
+      if(corner) {
+        result.push_back(bitScanForward(corner));
+        corner &= corner-1;
+        if(corner) {
+          result.push_back(bitScanForward(corner));
+          corner &= corner-1;
+          if(corner)
+            result.push_back(bitScanForward(corner));
+        }
+      }
     }
     while(csq) {
         result.push_back(bitScanForward(csq));

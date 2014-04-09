@@ -29,4 +29,22 @@ public:
     void setY(int y) { this->y = y; }
 };
 
+class MoveList {
+public:
+    int *moves;
+    int size;
+
+    MoveList() {
+        moves = new int[40];
+        size = 0;
+    }
+    ~MoveList() { delete[] moves; }
+
+    void add(int m) {
+        moves[size] = m;
+        size++;
+    }
+    int get(int i) { return moves[i]; }
+};
+
 #endif
