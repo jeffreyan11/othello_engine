@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 10;
+    maxDepth = 12;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -102,13 +102,15 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
 
     // check opening book
-    int openMove = -3;//openingBook.get(game.getTaken(), game.getBlack());
+    #if USE_OPENING_BOOK
+    int openMove = openingBook.get(game.getTaken(), game.getBlack());
     if(openMove != OPENING_NOT_FOUND) {
         cerr << "Opening book used!" << endl;
         turn++;
         game.doMove(openMove, mySide);
         return indexToMove[openMove];
     }
+    #endif
 
     // find and test all legal moves
     MoveList legalMoves = game.getLegalMoves(mySide);

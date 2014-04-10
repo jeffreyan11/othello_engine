@@ -53,10 +53,8 @@ bool Openings::readFile() {
             line = line.substr(sz);
             temp->black = std::stoull(line, &sz, 0);
             line = line.substr(sz);
-            int x = std::stoi(line, &sz, 0);
-            line = line.substr(sz);
-            int y = std::stoi(line, &sz, 0);
-            temp->move = x + 8*y;
+            int move = std::stoi(line, &sz, 0);
+            temp->move = move;
             openings[i] = temp;
             i++;
         }

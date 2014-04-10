@@ -12,6 +12,7 @@
 using namespace std;
 
 #define USE_EDGE_TABLE true
+#define USE_OPENING_BOOK true
 
 const bitbrd CORNERS = 0x8100000000000081;
 const bitbrd EDGES = 0x3C0081818181003C;
@@ -68,7 +69,7 @@ private:
     //int mobilities[6561];
     int edgeTable[6561];
 
-
+    int heuristic(Board *b);
     int pvs(Board *b, MoveList &moves, MoveList &scores,
         Side side, int depth, int alpha, int beta);
     int pvs_h(Board *b, int &topScore, Side side, int depth,
@@ -92,7 +93,6 @@ public:
     Side oppSide;
 
     Hash killer_table;
-    int heuristic(Board *b);
 
     Player(Side side);
     ~Player();
