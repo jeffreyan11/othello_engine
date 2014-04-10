@@ -38,7 +38,6 @@ Player::Player(Side side) {
         cerr << "non-x86 processor detected." << endl;
     #endif
 
-    //TODO readMobilities();
     readEdgeTable();
 }
 
@@ -90,6 +89,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span;
 
     if(opponentsMove != NULL) {
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
@@ -105,7 +106,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     #if USE_OPENING_BOOK
     int openMove = openingBook.get(game.getTaken(), game.getBlack());
     if(openMove != OPENING_NOT_FOUND) {
-        cerr << "Opening book used!" << endl;
+        cerr << "Opening book used! Played " << openMove << endl;
         turn++;
         game.doMove(openMove, mySide);
         return indexToMove[openMove];
@@ -117,6 +118,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     if (legalMoves.size <= 0) {
         game.doMove(MOVE_NULL, mySide);
+        cerr << "No legal moves. Passing." << endl;
         return NULL;
     }
 
@@ -130,7 +132,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             endgameDepth -= 2;
             break;
         }
-        cerr << "Endgame solver: attempting depth " << endgameDepth << endl;
+        cerr << "Endgame solver: depth " << endgameDepth << endl;
         //pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
         //sort(legalMoves, scores, 0, legalMoves.size()-1);
         //scores.clear();
@@ -144,24 +146,24 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
 
         endgameDepth -= 2;
-
         game.doMove(myMove, mySide);
         turn++;
-        auto end_time = high_resolution_clock::now();
-        duration<double> time_span = duration_cast<duration<double>>(end_time-start_time);
+
+        end_time = high_resolution_clock::now();
+        time_span = duration_cast<duration<double>>(end_time-start_time);
         cerr << "Endgame took: " << time_span.count() << endl;
+
         return indexToMove[myMove];
     }
 
     // sort search
-    cerr << "Performing initial search: depth " << sortDepth << endl;
+    cerr << "Performing sort search: depth " << sortDepth << endl;
     pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
 
     // iterative deepening
     attemptingDepth = minDepth;
-    duration<double> time_span;
     do {
-        cerr << "Attempting NWS of depth " << attemptingDepth << endl;
+        cerr << "Searching depth " << attemptingDepth << endl;
         sort(legalMoves, scores, 0, legalMoves.size-1);
         scores.clear();
 
@@ -174,7 +176,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         myMove = newBest;
         attemptingDepth += 2;
 
-        auto end_time = high_resolution_clock::now();
+        end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
     } while( (
         ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*20) || msLeft == -1) && attemptingDepth <= maxDepth );
@@ -182,18 +184,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(myMove, mySide);
     turn++;
 
-    //start_time = high_resolution_clock::now();
     killer_table.clean(turn);
-    //auto end_time = high_resolution_clock::now();
-    //time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "Table contains " << killer_table.keys << " keys." << endl;
-    //cerr << "Clean took: " << time_span.count() << "s" << endl;
 
     return indexToMove[myMove];
 }
 
-int Player::pvs(Board *b, MoveList &moves, MoveList &scores,
-    Side s, int depth, int alpha, int beta) {
+/**
+ * @brief Performs a principal variation null-window search.
+*/
+int Player::pvs(Board *b, MoveList &moves, MoveList &scores, Side s, int depth,
+    int alpha, int beta) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -235,6 +236,9 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores,
     return tempMove;
 }
 
+/**
+ * @brief Helper function for the principal variation search.
+*/
 int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     int alpha, int beta) {
 
@@ -369,97 +373,11 @@ int Player::boardToPV(Board *b) {
     return result;
 }
 
-/*int Player::mobilityEstimate(Board *b) {
-    bitbrd black = b->toBits(BLACK);
-    bitbrd white = b->toBits(WHITE);
-    int r1 = bitsToPI( black & 0xFF, white & 0xFF );
-    int r2 = bitsToPI( (black>>8) & 0xFF, (white>>8) & 0xFF );
-    int r3 = bitsToPI( (black>>16) & 0xFF, (white>>16) & 0xFF );
-    int r4 = bitsToPI( (black>>24) & 0xFF, (white>>24) & 0xFF );
-    int r5 = bitsToPI( (black>>32) & 0xFF, (white>>32) & 0xFF );
-    int r6 = bitsToPI( (black>>40) & 0xFF, (white>>40) & 0xFF );
-    int r7 = bitsToPI( (black>>48) & 0xFF, (white>>48) & 0xFF );
-    int r8 = bitsToPI( (black>>56) & 0xFF, (white>>56) & 0xFF );
-    int c1 = bitsToPI(
-        ((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56,
-        ((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56 );
-    int c2 = bitsToPI(
-        ((black & 0x0202020202020202ULL) * 0x0081020408102040ULL) >> 56,
-        ((white & 0x0202020202020202ULL) * 0x0081020408102040ULL) >> 56 );
-    int c3 = bitsToPI(
-        ((black & 0x0404040404040404ULL) * 0x0040810204081020ULL) >> 56,
-        ((white & 0x0404040404040404ULL) * 0x0040810204081020ULL) >> 56 );
-    int c4 = bitsToPI(
-        ((black & 0x0808080808080808ULL) * 0x0020408102040810ULL) >> 56,
-        ((white & 0x0808080808080808ULL) * 0x0020408102040810ULL) >> 56 );
-    int c5 = bitsToPI(
-        ((black & 0x1010101010101010ULL) * 0x0010204081020408ULL) >> 56,
-        ((white & 0x1010101010101010ULL) * 0x0010204081020408ULL) >> 56 );
-    int c6 = bitsToPI(
-        ((black & 0x2020202020202020ULL) * 0x0008102040810204ULL) >> 56,
-        ((white & 0x2020202020202020ULL) * 0x0008102040810204ULL) >> 56 );
-    int c7 = bitsToPI(
-        ((black & 0x4040404040404040ULL) * 0x0004081020408102ULL) >> 56,
-        ((white & 0x4040404040404040ULL) * 0x0004081020408102ULL) >> 56 );
-    int c8 = bitsToPI(
-        ((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56,
-        ((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56 );
-    int d81 = bitsToPI(
-        ((black & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56 );
-    int d82 = bitsToPI(
-        ((black & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56 );
-    int d71 = bitsToPI(
-        ((black & 0x0080402010080402ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0080402010080402ULL) * 0x0101010101010101ULL) >> 56 );
-    int d72 = bitsToPI(
-        ((black & 0x0001020408102040ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0001020408102040ULL) * 0x0101010101010101ULL) >> 56 );
-    int d73 = bitsToPI(
-        ((black & 0x4020100804020100ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x4020100804020100ULL) * 0x0101010101010101ULL) >> 56 );
-    int d74 = bitsToPI(
-        ((black & 0x0204081020408000ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0204081020408000ULL) * 0x0101010101010101ULL) >> 56 );
-    // TODO may need fixing
-    int d61 = bitsToPI(
-        ((black & 0x0000804020110a04ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0000804020110a04ULL) * 0x0101010101010101ULL) >> 56 );
-    int d62 = bitsToPI(
-        ((black & 0x0000010204885020ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0000010204885020ULL) * 0x0101010101010101ULL) >> 56 );
-    int d63 = bitsToPI(
-        (((black & 0x2010080402010204ULL) + 0x6070787c7e7f7e7cULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56,
-        (((white & 0x2010080402010204ULL) + 0x6070787c7e7f7e7cULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56 );
-    int d64 = bitsToPI(
-        (((black & 0x0408102040804020ULL) + 0x7c78706040004060ULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56,
-        (((white & 0x0408102040804020ULL) + 0x7c78706040004060ULL) & 0x8080808080808080ULL) * 0x0002040810204081ULL >> 56 );
-    int d51 = bitsToPI(
-        ((black & 0x0000008041221408ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0000008041221408ULL) * 0x0101010101010101ULL) >> 56 );
-    int d52 = bitsToPI(
-        ((black & 0x0000000182442810ULL) * 0x0101010101010101ULL) >> 56,
-        ((white & 0x0000000182442810ULL) * 0x0101010101010101ULL) >> 56 );
-
-    int result =
-        mobilities[r1] + mobilities[r2] + mobilities[r3] + mobilities[r4] +
-        mobilities[r5] + mobilities[r6] + mobilities[r7] + mobilities[r8] +
-        mobilities[c1] + mobilities[c2] + mobilities[c3] + mobilities[c4] +
-        mobilities[c5] + mobilities[c6] + mobilities[c7] + mobilities[c8] +
-        mobilities[d81] + mobilities[d82] +
-        mobilities[d71] + mobilities[d72] + mobilities[d73] + mobilities[d74] +
-        mobilities[d61] + mobilities[d62] + mobilities[d63] + mobilities[d64] +
-        mobilities[d51] + mobilities[d52];// + mobilities[d53] + mobilities[d54] +
-    return result;
-}*/
-
 int Player::bitsToPI(int b, int w) {
     return PIECES_TO_INDEX[(int)b] + 2*PIECES_TO_INDEX[(int)w];
 }
 
 void Player::sort(MoveList &moves, MoveList &scores, int left, int right) {
-
     int index = left;
 
     if (left < right) {
@@ -479,8 +397,8 @@ void Player::swap(MoveList &moves, MoveList &scores, int i, int j) {
     scores.set(i, less2);
 }
 
-int Player::partition(MoveList &moves, MoveList &scores, int left,
-    int right, int pindex) {
+int Player::partition(MoveList &moves, MoveList &scores, int left, int right,
+    int pindex) {
 
     int index = left;
     int pivot = scores.get(pindex);
@@ -497,25 +415,6 @@ int Player::partition(MoveList &moves, MoveList &scores, int left,
 
     return index;
 }
-
-/*void Player::readMobilities() {
-    std::string line;
-    std::ifstream mobtable("mobility.txt");
-
-    if(mobtable.is_open()) {
-        int i = 0;
-        while(getline(mobtable, line)) {
-            for(int j = 0; j < 9; j++) {
-                std::string::size_type sz = 0;
-                mobilities[9*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
-            }
-
-            i++;
-        }
-        mobtable.close();
-    }
-}*/
 
 void Player::readEdgeTable() {
     std::string line;

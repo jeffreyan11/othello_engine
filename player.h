@@ -57,8 +57,11 @@ private:
     int endgameDepth;
     int attemptingDepth;
     bool endgameSwitch;
-    Openings openingBook;
     Endgame endgameSolver;
+
+    #if USE_OPENING_BOOK
+    Openings openingBook;
+    #endif
 
     int turn;
     int totalTimePM;
@@ -66,7 +69,6 @@ private:
 
     Move* indexToMove[64];
 
-    //int mobilities[6561];
     int edgeTable[6561];
 
     int heuristic(Board *b);
@@ -77,14 +79,12 @@ private:
 
     int countSetBits(bitbrd b);
     int boardToPV(Board *b);
-    //int mobilityEstimate(Board *b);
     int bitsToPI(int b, int w);
 
     void sort(MoveList &moves, MoveList &scores, int left, int right);
     void swap(MoveList &moves, MoveList &scores, int i, int j);
     int partition(MoveList &moves, MoveList &scores, int left, int
         right, int pindex);
-    //void readMobilities();
     void readEdgeTable();
 
 public:
