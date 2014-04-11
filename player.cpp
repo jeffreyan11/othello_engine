@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 12;
+    maxDepth = 10;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -333,7 +333,10 @@ int Player::heuristic (Board *b) {
             countSetBits(bo&ADJ_CORNERS));
     #endif
 
-    score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    //score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    int myLM = b->numLegalMoves(mySide);
+    int oppLM = b->numLegalMoves(oppSide);
+    score += 100 * (myLM - oppLM) / (myLM + oppLM + 1);
     score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;

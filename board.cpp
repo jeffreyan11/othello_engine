@@ -1,4 +1,5 @@
 #include "board.h"
+#include <iostream>
 
 /**
  * @brief Make a 8x8 othello board and initialize it to the standard setup.
@@ -228,58 +229,58 @@ void Board::getLegal(Side side) {
     // check north captures
     tempM = (self >> 8) & other;
     while(tempM) {
-        bitbrd temp = (tempM >> 8);
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM >>= 8;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // south
     tempM = (self << 8) & other;
     while(tempM) {
-        bitbrd temp = (tempM << 8);
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM <<= 8;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // east
     tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // west
     tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // ne
     tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // nw
     tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // sw
     tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // se
     tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
 
     legal = result;
@@ -294,58 +295,58 @@ int Board::numLegalMoves(Side side) {
     // check north captures
     tempM = (self >> 8) & other;
     while(tempM) {
-        bitbrd temp = (tempM >> 8);
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM >>= 8;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // south
     tempM = (self << 8) & other;
     while(tempM) {
-        bitbrd temp = (tempM << 8);
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM <<= 8;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // east
     tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // west
     tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // ne
     tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // nw
     tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // sw
     tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
     while(tempM) {
-        bitbrd temp = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
+        result |= tempM & empty;
+        tempM &= other;
     }
     // se
     tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
     while(tempM) {
-        bitbrd temp = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
-        result |= temp & empty;
-        tempM = temp & other;
+        tempM = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
+        result |= tempM & empty;
+        tempM &= other;
     }
 
     return countSetBits(result);
@@ -358,36 +359,28 @@ int Board::potentialMobility(Side side) {
     bitbrd empty = ~taken;
     // check north
     temp = (other >> 8) & empty;
-    temp <<= 8;
-    result |= temp;
+    result |= (temp << 8);
     // south
     temp = (other << 8) & empty;
-    temp >>= 8;
-    result |= temp;
+    result |= (temp >> 8);
     // east
     temp = (other << 1) & empty & 0xFEFEFEFEFEFEFEFE;
-    temp >>= 1;
-    result |= temp;
+    result |= (temp >> 1);
     // west
     temp = (other >> 1) & empty & 0x7F7F7F7F7F7F7F7F;
-    temp <<= 1;
-    result |= temp;
+    result |= (temp << 1);
     // ne
     temp = (other >> 7) & empty & 0xFEFEFEFEFEFEFEFE;
-    temp <<= 7;
-    result |= temp;
+    result |= (temp << 7);
     // nw
     temp = (other >> 9) & empty & 0x7F7F7F7F7F7F7F7F;
-    temp <<= 9;
-    result |= temp;
+    result |= (temp << 9);
     // sw
     temp = (other << 7) & empty & 0x7F7F7F7F7F7F7F7F;
-    temp >>= 7;
-    result |= temp;
+    result |= (temp >> 7);
     // se
     temp = (other << 9) & empty & 0xFEFEFEFEFEFEFEFE;
-    temp >>= 9;
-    result |= temp;
+    result |= (temp >> 9);
 
     return countSetBits(result);
 }

@@ -12,7 +12,7 @@
 using namespace std;
 
 #define USE_EDGE_TABLE true
-#define USE_OPENING_BOOK true
+#define USE_OPENING_BOOK false
 
 const bitbrd CORNERS = 0x8100000000000081;
 const bitbrd EDGES = 0x3C0081818181003C;
