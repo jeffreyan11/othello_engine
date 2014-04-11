@@ -20,6 +20,9 @@ public:
 
     int endgame(Board &b, MoveList &moves, int depth);
     int endgame_h(Board &b, int s, int depth, int alpha, int beta);
+
+    int result_solve(Board &b, MoveList &moves, int depth);
+    int rs_h(Board &b, int s, int depth, int alpha, int beta);
 };
 
 #endif

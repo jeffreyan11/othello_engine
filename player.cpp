@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 10;
+    maxDepth = 14;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -19,7 +19,7 @@ Player::Player(Side side) {
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     endgameSolver.mySide = mySide;
-    oppSide = (side == WHITE) ? (CBLACK) : (CWHITE);
+    oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
     totalTimePM = -2;
     endgameTimeMS = 0;
@@ -125,6 +125,29 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int myMove = -1;
     MoveList scores;
 
+    // solve for game result
+    /*while(turn >= (64 - endgameDepth - 2) && turn < (64 - endgameDepth)) {
+        if(msLeft < endgameTimeMS && msLeft != -1)
+            break;
+
+        cerr << "Game result solver: depth " << endgameDepth+2 << endl;
+
+        myMove = endgameSolver.result_solve(game, legalMoves, endgameDepth+2);
+        if(myMove == MOVE_BROKEN) {
+            cerr << "Broken out of result solver." << endl;
+            break;
+        }
+
+        game.doMove(myMove, mySide);
+        turn++;
+
+        end_time = high_resolution_clock::now();
+        time_span = duration_cast<duration<double>>(end_time-start_time);
+        cerr << "Result solver took: " << time_span.count() << endl;
+
+        return indexToMove[myMove];
+    }*/
+
     // endgame solver
     while(endgameSwitch || turn >= (64 - endgameDepth)) {
         if(msLeft < endgameTimeMS && msLeft != -1) {
@@ -159,13 +182,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // sort search
     cerr << "Performing sort search: depth " << sortDepth << endl;
     pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
+    sort(legalMoves, scores, 0, legalMoves.size-1);
+    scores.clear();
 
     // iterative deepening
     attemptingDepth = minDepth;
+    int chosenScore = 0;
     do {
         cerr << "Searching depth " << attemptingDepth << endl;
-        sort(legalMoves, scores, 0, legalMoves.size-1);
-        scores.clear();
 
         int newBest = pvs(&game, legalMoves, scores, mySide,
             attemptingDepth, NEG_INFTY, INFTY);
@@ -176,6 +200,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         myMove = newBest;
         attemptingDepth += 2;
 
+        sort(legalMoves, scores, 0, legalMoves.size-1);
+        chosenScore = scores.get(0);
+        scores.clear();
+
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
     } while( (
@@ -184,8 +212,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     game.doMove(myMove, mySide);
     turn++;
 
+    cerr << "Playing " << myMove << ". Score: " << chosenScore << endl;
     killer_table.clean(turn);
     cerr << "Table contains " << killer_table.keys << " keys." << endl;
+    cerr << endl;
 
     return indexToMove[myMove];
 }
@@ -291,7 +321,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            if(depth >= 2 && depth <= minDepth+4)
+            if(depth >= 3)
                 killer_table.add(b, legalMoves.get(i),
                     turn+attemptingDepth-depth);
             break;
