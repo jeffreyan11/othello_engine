@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     auto start_time = high_resolution_clock::now();
 
     Board b;
-    cerr << perft(b, 11, CBLACK, false) << endl;
+    cerr << perft(b, 10, CBLACK, false) << endl;
 
     /*Player p(BLACK);
     Player p2(WHITE);

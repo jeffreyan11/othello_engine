@@ -224,7 +224,6 @@ MoveList Board::getLegalMoves(int side) {
 */
 void Board::getLegal(int side) {
     bitbrd result = 0;
-    bitbrd tempM;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
 
@@ -291,7 +290,7 @@ void Board::getLegal(int side) {
 
     #else
     // north and south
-    tempM = (((self << 8) | (self >> 8)) & other);
+    bitbrd tempM = (((self << 8) | (self >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
