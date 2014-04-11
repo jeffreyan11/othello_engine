@@ -355,8 +355,8 @@ const int BOARD_REGIONS[64] = {
 class Board {
    
 private:
-    bool checkMove(int index, Side side);
-    void getLegal(Side side);
+    bool checkMove(int index, int side);
+    void getLegal(int side);
 
     int countSetBits(bitbrd i);
 
@@ -380,14 +380,14 @@ public:
     Board *copy();
         
     bool isDone();
-    bool hasMoves(Side side);
+    bool hasMoves(int side);
     bool checkMove(Move *m, Side side);
-    void doMove(int index, Side side);
-    int count(Side side);
-    MoveList getLegalMoves(Side side);
-    int numLegalMoves(Side side);
-    int potentialMobility(Side side);
-    bitbrd toBits(Side side);
+    void doMove(int index, int side);
+    int count(int side);
+    MoveList getLegalMoves(int side);
+    int numLegalMoves(int side);
+    int potentialMobility(int side);
+    bitbrd toBits(int side);
 
     void setBoard(char data[]);
     bitbrd getTaken();

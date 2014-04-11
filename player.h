@@ -73,8 +73,8 @@ private:
 
     int heuristic(Board *b);
     int pvs(Board *b, MoveList &moves, MoveList &scores,
-        Side side, int depth, int alpha, int beta);
-    int pvs_h(Board *b, int &topScore, Side side, int depth,
+        int side, int depth, int alpha, int beta);
+    int pvs_h(Board *b, int &topScore, int side, int depth,
         int alpha, int beta);
 
     int countSetBits(bitbrd b);
@@ -89,8 +89,8 @@ private:
 
 public:
     Board game;
-    Side mySide;
-    Side oppSide;
+    int mySide;
+    int oppSide;
 
     Hash killer_table;
 

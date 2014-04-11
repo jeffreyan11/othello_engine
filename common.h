@@ -10,6 +10,8 @@
 #define MOVE_NULL 64
 #define MOVE_BROKEN -1
 #define OPENING_NOT_FOUND -3
+#define CBLACK 1
+#define CWHITE -1
 
 enum Side { 
     WHITE, BLACK

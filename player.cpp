@@ -17,9 +17,9 @@ Player::Player(Side side) {
         endgameDepth--;
     endgameSwitch = false;
 
-    mySide = side;
-    endgameSolver.mySide = side;
-    oppSide = (side == WHITE) ? (BLACK) : (WHITE);
+    mySide = (side == BLACK) ? CBLACK : CWHITE;
+    endgameSolver.mySide = mySide;
+    oppSide = (side == WHITE) ? (CBLACK) : (CWHITE);
     turn = 4;
     totalTimePM = -2;
     endgameTimeMS = 0;
@@ -193,8 +193,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 /**
  * @brief Performs a principal variation null-window search.
 */
-int Player::pvs(Board *b, MoveList &moves, MoveList &scores, Side s, int depth,
-    int alpha, int beta) {
+int Player::pvs(Board *b, MoveList &moves, MoveList &scores, int s,
+    int depth, int alpha, int beta) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -214,16 +214,13 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, Side s, int depth,
         copy.doMove(moves.get(i), s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
-            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -alpha-1, -alpha);
+            score = -pvs_h(&copy, ttScore, -s, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -score);
+                score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -score);
             }
         }
         else {
-            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -alpha);
+            score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
         }
         scores.add(ttScore);
         if (score > alpha) {
@@ -239,7 +236,7 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, Side s, int depth,
 /**
  * @brief Helper function for the principal variation search.
 */
-int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
+int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     int alpha, int beta) {
 
     if (depth <= 0) {
@@ -254,8 +251,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     if(killerMove != -1) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(killerMove, s);
-        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
-            depth-1, -beta, -alpha);
+        score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -269,8 +265,7 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
     if(legalMoves.size <= 0) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(MOVE_NULL, s);
-        score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) : WHITE),
-            depth-1, -beta, -alpha);
+        score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -283,16 +278,13 @@ int Player::pvs_h(Board *b, int &topScore, Side s, int depth,
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(legalMoves.get(i), s);
         if (i != 0) {
-            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -alpha-1, -alpha);
+            score = -pvs_h(&copy, ttScore, -s, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -alpha);
+                score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
             }
         }
         else {
-            score = -pvs_h(&copy, ttScore, ((s == WHITE) ? (BLACK) :
-                WHITE), depth-1, -beta, -alpha);
+            score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
         }
         if (alpha < score)
             alpha = score;

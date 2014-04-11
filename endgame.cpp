@@ -32,16 +32,13 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
         copy.doMove(moves.get(i), mySide);
 
         if (i != 0) {
-            score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
-                depth-1, -alpha-1, -alpha);
+            score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta) {
-                score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
-                    depth-1, -beta, -alpha);
+                score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha);
             }
         }
         else {
-            score = -endgame_h(copy, ((mySide == WHITE) ? BLACK : WHITE),
-                depth-1, -beta, -alpha);
+            score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha);
         }
 
         if (score > alpha) {
@@ -56,9 +53,9 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
     return tempMove;
 }
 
-int Endgame::endgame_h(Board &b, Side s, int depth, int alpha, int beta) {
+int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0)
-        return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
+        return (b.count(s) - b.count(-s));
 
     int score;
 
@@ -79,12 +76,11 @@ int Endgame::endgame_h(Board &b, Side s, int depth, int alpha, int beta) {
 
     if(legalMoves.size <= 0) {
         if(b.isDone())
-            return (b.count(s) - b.count((s == WHITE) ? BLACK : WHITE));
+            return (b.count(s) - b.count(-s));
 
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(MOVE_NULL, s);
-        score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-            depth, -beta, -alpha);
+        score = -endgame_h(copy, -s, depth, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -98,16 +94,13 @@ int Endgame::endgame_h(Board &b, Side s, int depth, int alpha, int beta) {
             copy.doMove(legalMoves.get(i), s);
 
             if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    depth-1, -alpha-1, -alpha);
+                score = -endgame_h(copy, -s, depth-1, -alpha-1, -alpha);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        depth-1, -beta, -alpha);
+                    score = -endgame_h(copy, -s, depth-1, -beta, -alpha);
                 }
             }
             else {
-                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    depth-1, -beta, -alpha);
+                score = -endgame_h(copy, -s, depth-1, -beta, -alpha);
             }
 
             if (alpha < score) {
@@ -125,16 +118,13 @@ int Endgame::endgame_h(Board &b, Side s, int depth, int alpha, int beta) {
             copy.doMove(legalMoves.get(i), s);
 
             if (i != 0) {
-                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    depth-1, -alpha-1, -alpha);
+                score = -endgame_h(copy, -s, depth-1, -alpha-1, -alpha);
                 if (alpha < score && score < beta) {
-                    score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                        depth-1, -beta, -alpha);
+                    score = -endgame_h(copy, -s, depth-1, -beta, -alpha);
                 }
             }
             else {
-                score = -endgame_h(copy, ((s == WHITE) ? BLACK : WHITE),
-                    depth-1, -beta, -alpha);
+                score = -endgame_h(copy, -s, depth-1, -beta, -alpha);
             }
 
             if (alpha < score)

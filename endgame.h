@@ -13,13 +13,13 @@ private:
 
 public:
     int endgameTimeMS;
-    Side mySide;
+    int mySide;
 
     Endgame();
     ~Endgame();
 
     int endgame(Board &b, MoveList &moves, int depth);
-    int endgame_h(Board &b, Side s, int depth, int alpha, int beta);
+    int endgame_h(Board &b, int s, int depth, int alpha, int beta);
 };
 
 #endif

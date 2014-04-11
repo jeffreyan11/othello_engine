@@ -44,7 +44,7 @@ bool Board::isDone() {
 /**
  * @brief Returns true if there are legal moves for the given side.
  */
-bool Board::hasMoves(Side side) {
+bool Board::hasMoves(int side) {
     return numLegalMoves(side);
 }
 
@@ -54,7 +54,7 @@ bool Board::hasMoves(Side side) {
  */
 bool Board::checkMove(Move *m, Side side) {
     // Passing is only legal if you have no moves.
-    if (m == NULL) return !hasMoves(side);
+    if (m == NULL) return !hasMoves((side == BLACK) ? CBLACK : CWHITE);
 
     if(legal == 0xFFFF000000000000)
         getLegal(side);
@@ -65,7 +65,7 @@ bool Board::checkMove(Move *m, Side side) {
 /**
  * @brief Overloaded function for internal use with getLegalMoves().
 */
-bool Board::checkMove(int index, Side side) {
+bool Board::checkMove(int index, int side) {
     if(legal == 0xFFFF000000000000)
         getLegal(side);
 
@@ -78,7 +78,7 @@ bool Board::checkMove(int index, Side side) {
  * This algorithm modifies the bitboards by lookup with precalculated tables in
  * each of the eight directions.
  */
-void Board::doMove(int index, Side side) {
+void Board::doMove(int index, int side) {
     // A NULL move means pass.
     if (index == MOVE_NULL) {
         legal = 0xFFFF000000000000;
@@ -89,8 +89,8 @@ void Board::doMove(int index, Side side) {
     if (!checkMove(index, side)) return;
 
     bitbrd changeMask = 0;
-    bitbrd pos = (side == WHITE) ? ~black : ~(taken^black);
-    bitbrd self = (side == BLACK) ? black : taken^black;
+    bitbrd pos = (side == CWHITE) ? ~black : ~(taken^black);
+    bitbrd self = (side == CBLACK) ? black : taken^black;
     //bitbrd block, result;
 
     switch(BOARD_REGIONS[index]) {
@@ -165,7 +165,7 @@ void Board::doMove(int index, Side side) {
 
     // update taken, black, legal
     taken |= changeMask;
-    if(side == BLACK)
+    if(side == CBLACK)
         black |= changeMask;
     else
         black &= ~changeMask;
@@ -176,7 +176,7 @@ void Board::doMove(int index, Side side) {
 /**
  * @brief Returns a list of all legal moves.
 */
-MoveList Board::getLegalMoves(Side side) {
+MoveList Board::getLegalMoves(int side) {
     MoveList result;
     getLegal(side);
     bitbrd temp = legal;
@@ -220,11 +220,11 @@ MoveList Board::getLegalMoves(Side side) {
  * This method operates by checking in all eight directions, first for the line
  * of pieces of the opposite color, then for the anchor once the line ends.
 */
-void Board::getLegal(Side side) {
+void Board::getLegal(int side) {
     bitbrd result = 0;
     bitbrd tempM;
-    bitbrd self = (side == BLACK) ? (black) : (taken ^ black);
-    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
+    bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
     bitbrd empty = ~taken;
     // check north captures
     tempM = (self >> 8) & other;
@@ -286,11 +286,11 @@ void Board::getLegal(Side side) {
     legal = result;
 }
 
-int Board::numLegalMoves(Side side) {
+int Board::numLegalMoves(int side) {
     bitbrd result = 0;
     bitbrd tempM;
-    bitbrd self = (side == BLACK) ? (black) : (taken ^ black);
-    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
+    bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
     bitbrd empty = ~taken;
     // check north captures
     tempM = (self >> 8) & other;
@@ -352,10 +352,10 @@ int Board::numLegalMoves(Side side) {
     return countSetBits(result);
 }
 
-int Board::potentialMobility(Side side) {
+int Board::potentialMobility(int side) {
     bitbrd result = 0;
     bitbrd temp;
-    bitbrd other = (side == BLACK) ? (taken ^ black) : (black);
+    bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
     bitbrd empty = ~taken;
     // check north
     temp = (other >> 8) & empty;
@@ -385,8 +385,8 @@ int Board::potentialMobility(Side side) {
     return countSetBits(result);
 }
 
-bitbrd Board::toBits(Side side) {
-    if(side == BLACK)
+bitbrd Board::toBits(int side) {
+    if(side == CBLACK)
         return black;
     else
         return (taken ^ black);
@@ -419,8 +419,8 @@ bitbrd Board::getBlack() {
 /*
  * Current count of given side's stones.
  */
-int Board::count(Side side) {
-    bitbrd i = (side == BLACK) ? (black) : (black^taken);
+int Board::count(int side) {
+    bitbrd i = (side == CBLACK) ? (black) : (black^taken);
 
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
