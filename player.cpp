@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 14;
+    maxDepth = 10;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -39,6 +39,7 @@ Player::Player(Side side) {
     #endif
 
     readEdgeTable();
+    readPattern33Table();
 }
 
 /**
@@ -336,16 +337,21 @@ int Player::heuristic (Board *b) {
     if(myCoins == 0)
         return -9001;
 
-    if(turn < 40)
+    if(turn < 30)
+        score = 2*(b->count(oppSide) - myCoins);
+    else if(turn < 50)
         score = myCoins - b->count(oppSide);
     else
-        score = 2 * (myCoins - b->count(oppSide));
+        score = 2*(myCoins - b->count(oppSide));
 
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
-        score += (mySide == BLACK) ? 5*boardToPV(b) : -5*boardToPV(b);
-        score -= 22 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        score += (mySide == BLACK) ? 5*boardToEPV(b) : -5*boardToEPV(b);
+        score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
+        score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        score -= 6 * (countSetBits(bm&ADJ_CORNERS) -
+            countSetBits(bo&ADJ_CORNERS));
     #else
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
         //if(turn > 35)
@@ -383,7 +389,31 @@ int Player::countSetBits(bitbrd i) {
     #endif
 }
 
-int Player::boardToPV(Board *b) {
+bitbrd Player::reflectVertical(bitbrd i) {
+    #if defined(__x86_64__)
+        asm ("bswap %0" : "=r" (i) : "0" (i));
+        return i;
+    #else
+        const bitbrd k1 = 0x00FF00FF00FF00FF;
+        const bitbrd k2 = 0x0000FFFF0000FFFF;
+        i = ((i >>  8) & k1) | ((i & k1) <<  8);
+        i = ((i >> 16) & k2) | ((i & k2) << 16);
+        i = ( i >> 32)       | ( i       << 32);
+        return i;
+    #endif
+}
+
+bitbrd Player::reflectHorizontal(bitbrd x) {
+    const bitbrd k1 = 0x5555555555555555;
+    const bitbrd k2 = 0x3333333333333333;
+    const bitbrd k4 = 0x0f0f0f0f0f0f0f0f;
+    x = ((x >> 1) & k1) | ((x & k1) << 1);
+    x = ((x >> 2) & k2) | ((x & k2) << 2);
+    x = ((x >> 4) & k4) | ((x & k4) << 4);
+    return x;
+}
+
+int Player::boardToEPV(Board *b) {
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
@@ -398,8 +428,37 @@ int Player::boardToPV(Board *b) {
     return result;
 }
 
+int Player::boardTo33PV(Board *b) {
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
+    int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
+    int ul = bitsToPI(ulb, ulw);
+
+    bitbrd rvb = reflectVertical(black);
+    bitbrd rvw = reflectVertical(white);
+    int llb = (int) ((rvb&7) + ((rvb>>5)&0x38) + ((rvb>>10)&0x1C0));
+    int llw = (int) ((rvw&7) + ((rvw>>5)&0x38) + ((rvw>>10)&0x1C0));
+    int ll = bitsToPI(llb, llw);
+
+    bitbrd rhb = reflectHorizontal(black);
+    bitbrd rhw = reflectHorizontal(white);
+    int urb = (int) ((rhb&7) + ((rhb>>5)&0x38) + ((rhb>>10)&0x1C0));
+    int urw = (int) ((rhw&7) + ((rhw>>5)&0x38) + ((rhw>>10)&0x1C0));
+    int ur = bitsToPI(urb, urw);
+
+    bitbrd rbb = reflectVertical(rhb);
+    bitbrd rbw = reflectVertical(rhw);
+    int lrb = (int) ((rbb&7) + ((rbb>>5)&0x38) + ((rbb>>10)&0x1C0));
+    int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
+    int lr = bitsToPI(lrb, lrw);
+
+    int result = p33Table[ul] + p33Table[ll] + p33Table[ur] + p33Table[lr];
+    return result;
+}
+
 int Player::bitsToPI(int b, int w) {
-    return PIECES_TO_INDEX[(int)b] + 2*PIECES_TO_INDEX[(int)w];
+    return PIECES_TO_INDEX[b] + 2*PIECES_TO_INDEX[w];
 }
 
 void Player::sort(MoveList &moves, MoveList &scores, int left, int right) {
@@ -459,5 +518,26 @@ void Player::readEdgeTable() {
             i++;
         }
         edgetable.close();
+    }
+}
+
+void Player::readPattern33Table() {
+    std::string line;
+    std::string file;
+        file = "p33table.txt";
+    std::ifstream p33table(file);
+
+    if(p33table.is_open()) {
+        int i = 0;
+        while(getline(p33table, line)) {
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                p33Table[9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+
+            i++;
+        }
+        p33table.close();
     }
 }

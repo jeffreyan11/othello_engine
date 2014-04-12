@@ -1,7 +1,6 @@
 #include "endgame.h"
 
 Endgame::Endgame() {
-    endgame_table = Hash(500000);
 }
 
 Endgame::~Endgame() {

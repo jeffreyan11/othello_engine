@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     //        INFTY, 1000000, p.endgame_table);
 
     //Board b;
-    //for(int i = 0; i < 1000000; i++)
+    //for(int i = 0; i < 1000000000; i++)
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
