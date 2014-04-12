@@ -225,65 +225,46 @@ void Board::getLegal(int side) {
     bitbrd tempM;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
-    bitbrd empty = ~taken;
-    // check north captures
-    tempM = (self >> 8) & other;
-    while(tempM) {
-        tempM >>= 8;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // south
-    tempM = (self << 8) & other;
-    while(tempM) {
-        tempM <<= 8;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // east
-    tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // west
-    tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // ne
-    tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // nw
-    tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // sw
-    tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // se
-    tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
 
-    legal = result;
+    // north and south
+    tempM = (((self << 8) | (self >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    result = ((tempM << 8) | (tempM >> 8));
+
+    other &= 0x7E7E7E7E7E7E7E7E;
+
+    // east and west
+    tempM = (((self << 1) | (self >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    result |= ((tempM << 1) | (tempM >> 1));
+
+    // ne and sw
+    tempM = (((self << 7) | (self >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    result |= ((tempM << 7) | (tempM >> 7));
+
+    // nw and se
+    tempM = (((self << 9) | (self >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    result |= ((tempM << 9) | (tempM >> 9));
+
+    legal = result & ~taken;
 }
 
 int Board::numLegalMoves(int side) {
@@ -291,63 +272,46 @@ int Board::numLegalMoves(int side) {
     bitbrd tempM;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
-    bitbrd empty = ~taken;
-    // check north captures
-    tempM = (self >> 8) & other;
-    while(tempM) {
-        tempM >>= 8;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // south
-    tempM = (self << 8) & other;
-    while(tempM) {
-        tempM <<= 8;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // east
-    tempM = (self << 1) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM << 1) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // west
-    tempM = (self >> 1) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM >> 1) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // ne
-    tempM = (self >> 7) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM >> 7) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // nw
-    tempM = (self >> 9) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM >> 9) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // sw
-    tempM = (self << 7) & other & 0x7F7F7F7F7F7F7F7F;
-    while(tempM) {
-        tempM = (tempM << 7) & 0x7F7F7F7F7F7F7F7F;
-        result |= tempM & empty;
-        tempM &= other;
-    }
-    // se
-    tempM = (self << 9) & other & 0xFEFEFEFEFEFEFEFE;
-    while(tempM) {
-        tempM = (tempM << 9) & 0xFEFEFEFEFEFEFEFE;
-        result |= tempM & empty;
-        tempM &= other;
-    }
+
+    // north and south
+    tempM = (((self << 8) | (self >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
+    result = ((tempM << 8) | (tempM >> 8));
+
+    other &= 0x7E7E7E7E7E7E7E7E;
+
+    // east and west
+    tempM = (((self << 1) | (self >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
+    result |= ((tempM << 1) | (tempM >> 1));
+
+    // ne and sw
+    tempM = (((self << 7) | (self >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
+    result |= ((tempM << 7) | (tempM >> 7));
+
+    // nw and se
+    tempM = (((self << 9) | (self >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
+    result |= ((tempM << 9) | (tempM >> 9));
+
+    result &= ~taken;
 
     return countSetBits(result);
 }
