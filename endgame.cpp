@@ -49,6 +49,8 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
             break;
     }
 
+    cerr << "Endgame table has: " << endgame_table.keys << " keys." << endl;
+
     return tempMove;
 }
 
@@ -87,7 +89,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     if(depth > 10) {
-        int tempMove = legalMoves.get(0);
+        int tempMove = -1;
         for (unsigned int i = 0; i < legalMoves.size; i++) {
             Board copy = Board(b.taken, b.black, b.legal);
             copy.doMove(legalMoves.get(i), s);
@@ -109,7 +111,8 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta) {
             if (alpha >= beta)
                 break;
         }
-        endgame_table.add(&b, tempMove, 65);
+        if(tempMove != -1)
+            endgame_table.add(&b, tempMove, 65);
     }
     else {
         for (unsigned int i = 0; i < legalMoves.size; i++) {

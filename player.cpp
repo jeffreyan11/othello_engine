@@ -347,10 +347,11 @@ int Player::heuristic (Board *b) {
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
-        score += (mySide == BLACK) ? 5*boardToEPV(b) : -5*boardToEPV(b);
-        score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
-        score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-        score -= 6 * (countSetBits(bm&ADJ_CORNERS) -
+        score += (mySide == BLACK) ? 3*boardToEPV(b) : -3*boardToEPV(b);
+        score += 20 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+        //score += (mySide == BLACK) ? boardTo33PV(b) : -boardTo33PV(b);
+        score -= 20 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
             countSetBits(bo&ADJ_CORNERS));
     #else
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
@@ -365,7 +366,7 @@ int Player::heuristic (Board *b) {
     int myLM = b->numLegalMoves(mySide);
     int oppLM = b->numLegalMoves(oppSide);
     score += 100 * (myLM - oppLM) / (myLM + oppLM + 1);
-    score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 7 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }
