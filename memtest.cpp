@@ -52,17 +52,17 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    //Board b;
-    //cerr << perft(b, 11, CBLACK, false) << endl;;
+    Board b;
+    cerr << perft(b, 11, CBLACK, false) << endl;
 
-    Player p(BLACK);
+    /*Player p(BLACK);
     Player p2(WHITE);
 
     Move *m = p.doMove(NULL, -1);
     for(int i = 0; i < 18; i++) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
-    }
+    }*/
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
