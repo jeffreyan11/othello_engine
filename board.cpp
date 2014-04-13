@@ -465,6 +465,13 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
             return (result ^ NORTHRAYI[anchor]);
     }
     return 0;
+    /*bitbrd result = NORTHRAY[index];
+    bitbrd block = result & self;
+    if((block << 8) & ~pos) {
+        int anchor = bitScanReverse(block);
+        return (result ^ NORTHRAY[anchor]);
+    }
+    return 0;*/
 }
 
 bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
@@ -476,6 +483,13 @@ bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
             return (result ^ SOUTHRAYI[anchor]);
     }
     return 0;
+    /*bitbrd result = SOUTHRAY[index];
+    bitbrd block = result & self;
+    if(((block & -block) >> 8) & ~pos) {
+        int anchor = bitScanForward(block);
+        return (result ^ SOUTHRAY[anchor]);
+    }
+    return 0;*/
 }
 
 bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
