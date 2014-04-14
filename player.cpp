@@ -322,7 +322,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            if(depth >= 3)
+            if(depth >= 4 && depth <= maxDepth-3)
                 killer_table.add(b, legalMoves.get(i),
                     turn+attemptingDepth-depth);
             break;
@@ -348,7 +348,7 @@ int Player::heuristic (Board *b) {
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
         score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-        score += 20 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+        score += 30 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
         score += (mySide == BLACK) ? 10*boardTo33PV(b) : -10*boardTo33PV(b);
         score -= 15 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
         score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
@@ -531,9 +531,9 @@ void Player::readPattern33Table() {
     if(p33table.is_open()) {
         int i = 0;
         while(getline(p33table, line)) {
-            for(int j = 0; j < 9; j++) {
+            for(int j = 0; j < 27; j++) {
                 std::string::size_type sz = 0;
-                p33Table[9*i+j] = std::stoi(line, &sz, 0);
+                p33Table[27*i+j] = std::stoi(line, &sz, 0);
                 line = line.substr(sz);
             }
 
