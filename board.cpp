@@ -228,6 +228,68 @@ void Board::getLegal(int side) {
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
 
+    #if KOGGE_STONE
+    // north
+    bitbrd templ = self | (other & (self << 8));
+    bitbrd maskl = other & (other << 8);
+    templ |= maskl & (templ << 16);
+    maskl &= (maskl << 16);
+    templ |= maskl & (templ << 32);
+    result = (templ & other) << 8;
+    // south
+    bitbrd tempr = self | (other & (self >> 8));
+    bitbrd maskr = other & (other >> 8);
+    tempr |= maskr & (tempr >> 16);
+    maskr &= (maskr >> 16);
+    tempr |= maskr & (tempr >> 32);
+    result |= (tempr & other) >> 8;
+
+    other &= 0x7E7E7E7E7E7E7E7E;
+
+    // east
+    templ = self | (other & (self << 1));
+    maskl = other & (other << 1);
+    templ |= maskl & (templ << 2);
+    maskl &= (maskl << 2);
+    templ |= maskl & (templ << 4);
+    result |= (templ & other) << 1;
+    // west
+    tempr = self | (other & (self >> 1));
+    maskr = other & (other >> 1);
+    tempr |= maskr & (tempr >> 2);
+    maskr &= (maskr >> 2);
+    tempr |= maskr & (tempr >> 4);
+    result |= (tempr & other) >> 1;
+    // ne
+    templ = self | (other & (self << 7));
+    maskl = other & (other << 7);
+    templ |= maskl & (templ << 14);
+    maskl &= (maskl << 14);
+    templ |= maskl & (templ << 28);
+    result |= (templ & other) << 7;
+    // sw
+    tempr = self | (other & (self >> 7));
+    maskr = other & (other >> 7);
+    tempr |= maskr & (tempr >> 14);
+    maskr &= (maskr >> 14);
+    tempr |= maskr & (tempr >> 28);
+    result |= (tempr & other) >> 7;
+    // nw
+    templ = self | (other & (self << 9));
+    maskl = other & (other << 9);
+    templ |= maskl & (templ << 18);
+    maskl &= (maskl << 18);
+    templ |= maskl & (templ << 36);
+    result |= (templ & other) << 9;
+    // se
+    tempr = self | (other & (self >> 9));
+    maskr = other & (other >> 9);
+    tempr |= maskr & (tempr >> 18);
+    maskr &= (maskr >> 18);
+    tempr |= maskr & (tempr >> 36);
+    result |= (tempr & other) >> 9;
+
+    #else
     // north and south
     tempM = (((self << 8) | (self >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
@@ -265,6 +327,7 @@ void Board::getLegal(int side) {
     tempM |= (((tempM << 9) | (tempM >> 9)) & other);
     tempM |= (((tempM << 9) | (tempM >> 9)) & other);
     result |= ((tempM << 9) | (tempM >> 9));
+    #endif
 
     legal = result & ~taken;
 }
@@ -352,10 +415,7 @@ int Board::potentialMobility(int side) {
 }
 
 bitbrd Board::toBits(int side) {
-    if(side == CBLACK)
-        return black;
-    else
-        return (taken ^ black);
+    return (side == CBLACK) ? black : (taken ^ black);
 }
 
 /*
@@ -431,14 +491,13 @@ int Board::bitScanReverse(bitbrd bb) {
             return a;
         }
     #else
-        const bitbrd debruijn64 = 0x03f79d71b4cb0a89;
         bb |= bb >> 1;
         bb |= bb >> 2;
         bb |= bb >> 4;
         bb |= bb >> 8;
         bb |= bb >> 16;
         bb |= bb >> 32;
-        return index64[(int)((bb * debruijn64) >> 58)];
+        return index64[(int)((bb * 0x03f79d71b4cb0a89) >> 58)];
     #endif
 }
 

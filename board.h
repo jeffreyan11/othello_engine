@@ -4,6 +4,8 @@
 #include "common.h"
 using namespace std;
 
+#define KOGGE_STONE true
+
 /**
  * @brief For converting a move number 0-63 to a bitmask.
 */
