@@ -89,7 +89,7 @@ void Hash::clean(int turn) {
  * @brief Hashes a board position using the FNV hashing algorithm.
 */
 uint32_t Hash::hash(const Board *b) {
-    uint32_t h = 2166136261;
+    uint32_t h = 2166136261UL;
     h ^= b->taken & 0xFFFFFFFF;
     h *= 16777619;
     h ^= (b->taken >> 32);
