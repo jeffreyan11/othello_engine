@@ -240,6 +240,7 @@ public:
     bitbrd toBits(int side);
 
     void setBoard(char data[]);
+    char *toString();
     bitbrd getTaken();
     bitbrd getBlack();
     int bitScanForward(bitbrd bb);

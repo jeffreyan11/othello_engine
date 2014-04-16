@@ -488,6 +488,7 @@ bitbrd Board::toBits(int side) {
 void Board::setBoard(char data[]) {
     taken = 0;
     black = 0;
+    legal = 0xFFFF000000000000;
     for (int i = 0; i < 64; i++) {
         if (data[i] == 'b' || data[i] == 'X') {
             taken |= MOVEMASK[i];
@@ -496,6 +497,21 @@ void Board::setBoard(char data[]) {
             taken |= MOVEMASK[i];
         }
     }
+}
+
+char *Board::toString() {
+    char *result = new char[64];
+    for (int i = 0; i < 64; i++) {
+        if (taken & MOVEMASK[i]) {
+            if (black & MOVEMASK[i])
+                result[i] = 'b';
+            else
+                result[i] = 'w';
+        }
+        else
+            result[i] = '-';
+    }
+    return result;
 }
 
 bitbrd Board::getTaken() {
