@@ -224,7 +224,6 @@ MoveList Board::getLegalMoves(int side) {
 */
 void Board::getLegal(int side) {
     bitbrd result = 0;
-    bitbrd tempM;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
 
@@ -291,7 +290,7 @@ void Board::getLegal(int side) {
 
     #else
     // north and south
-    tempM = (((self << 8) | (self >> 8)) & other);
+    bitbrd tempM = (((self << 8) | (self >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
@@ -334,12 +333,73 @@ void Board::getLegal(int side) {
 
 int Board::numLegalMoves(int side) {
     bitbrd result = 0;
-    bitbrd tempM;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
 
+    #if KOGGE_STONE
+    // north
+    bitbrd templ = self | (other & (self << 8));
+    bitbrd maskl = other & (other << 8);
+    templ |= maskl & (templ << 16);
+    maskl &= (maskl << 16);
+    templ |= maskl & (templ << 32);
+    result = (templ & other) << 8;
+    // south
+    bitbrd tempr = self | (other & (self >> 8));
+    bitbrd maskr = other & (other >> 8);
+    tempr |= maskr & (tempr >> 16);
+    maskr &= (maskr >> 16);
+    tempr |= maskr & (tempr >> 32);
+    result |= (tempr & other) >> 8;
+
+    other &= 0x7E7E7E7E7E7E7E7E;
+
+    // east
+    templ = self | (other & (self << 1));
+    maskl = other & (other << 1);
+    templ |= maskl & (templ << 2);
+    maskl &= (maskl << 2);
+    templ |= maskl & (templ << 4);
+    result |= (templ & other) << 1;
+    // west
+    tempr = self | (other & (self >> 1));
+    maskr = other & (other >> 1);
+    tempr |= maskr & (tempr >> 2);
+    maskr &= (maskr >> 2);
+    tempr |= maskr & (tempr >> 4);
+    result |= (tempr & other) >> 1;
+    // ne
+    templ = self | (other & (self << 7));
+    maskl = other & (other << 7);
+    templ |= maskl & (templ << 14);
+    maskl &= (maskl << 14);
+    templ |= maskl & (templ << 28);
+    result |= (templ & other) << 7;
+    // sw
+    tempr = self | (other & (self >> 7));
+    maskr = other & (other >> 7);
+    tempr |= maskr & (tempr >> 14);
+    maskr &= (maskr >> 14);
+    tempr |= maskr & (tempr >> 28);
+    result |= (tempr & other) >> 7;
+    // nw
+    templ = self | (other & (self << 9));
+    maskl = other & (other << 9);
+    templ |= maskl & (templ << 18);
+    maskl &= (maskl << 18);
+    templ |= maskl & (templ << 36);
+    result |= (templ & other) << 9;
+    // se
+    tempr = self | (other & (self >> 9));
+    maskr = other & (other >> 9);
+    tempr |= maskr & (tempr >> 18);
+    maskr &= (maskr >> 18);
+    tempr |= maskr & (tempr >> 36);
+    result |= (tempr & other) >> 9;
+
+    #else
     // north and south
-    tempM = (((self << 8) | (self >> 8)) & other);
+    bitbrd tempM = (((self << 8) | (self >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
     tempM |= (((tempM << 8) | (tempM >> 8)) & other);
@@ -375,6 +435,7 @@ int Board::numLegalMoves(int side) {
     tempM |= (((tempM << 9) | (tempM >> 9)) & other);
     tempM |= (((tempM << 9) | (tempM >> 9)) & other);
     result |= ((tempM << 9) | (tempM >> 9));
+    #endif
 
     result &= ~taken;
 
@@ -383,32 +444,34 @@ int Board::numLegalMoves(int side) {
 
 int Board::potentialMobility(int side) {
     bitbrd result = 0;
-    bitbrd temp;
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
     bitbrd empty = ~taken;
     // check north
-    temp = (other >> 8) & empty;
+    bitbrd temp = (other >> 8) & empty;
     result |= (temp << 8);
     // south
     temp = (other << 8) & empty;
     result |= (temp >> 8);
+
+    empty &= 0x7E7E7E7E7E7E7E7E;
+
     // east
-    temp = (other << 1) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp = (other << 1) & empty;
     result |= (temp >> 1);
     // west
-    temp = (other >> 1) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp = (other >> 1) & empty;
     result |= (temp << 1);
     // ne
-    temp = (other >> 7) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp = (other >> 7) & empty;
     result |= (temp << 7);
     // nw
-    temp = (other >> 9) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp = (other >> 9) & empty;
     result |= (temp << 9);
     // sw
-    temp = (other << 7) & empty & 0x7F7F7F7F7F7F7F7F;
+    temp = (other << 7) & empty;
     result |= (temp >> 7);
     // se
-    temp = (other << 9) & empty & 0xFEFEFEFEFEFEFEFE;
+    temp = (other << 9) & empty;
     result |= (temp >> 9);
 
     return countSetBits(result);
@@ -419,17 +482,17 @@ bitbrd Board::toBits(int side) {
 }
 
 /*
- * Sets the board state given an 8x8 char array where 'w' indicates a white
- * piece and 'b' indicates a black piece. Mainly for testing purposes.
+ * Sets the board state given an 8x8 char array where 'w', 'O' indicates a white
+ * piece and 'b', 'X' indicates a black piece. Mainly for testing purposes.
  */
 void Board::setBoard(char data[]) {
     taken = 0;
     black = 0;
     for (int i = 0; i < 64; i++) {
-        if (data[i] == 'b') {
+        if (data[i] == 'b' || data[i] == 'X') {
             taken |= MOVEMASK[i];
             black |= MOVEMASK[i];
-        } if (data[i] == 'w') {
+        } if (data[i] == 'w' || data[i] == 'O') {
             taken |= MOVEMASK[i];
         }
     }
@@ -529,13 +592,6 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
             return (result ^ NORTHRAY[anchor]);
     }
     return 0;
-    /*bitbrd result = NORTHRAY[index];
-    bitbrd block = result & self;
-    if((block << 8) & ~pos) {
-        int anchor = bitScanReverse(block);
-        return (result ^ NORTHRAY[anchor]);
-    }
-    return 0;*/
 }
 
 bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {

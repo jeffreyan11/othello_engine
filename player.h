@@ -102,7 +102,8 @@ private:
     Move* indexToMove[64];
 
     int edgeTable[6561];
-    int p33Table[19683];
+    int s33Table[19683];
+    int p24Table[6561];
 
     int pvs(Board *b, MoveList &moves, MoveList &scores,
         int side, int depth, int alpha, int beta);
@@ -116,6 +117,7 @@ private:
 
     int boardToEPV(Board *b);
     int boardTo33PV(Board *b);
+    int boardTo24PV(Board *b);
     int bitsToPI(int b, int w);
 
     void sort(MoveList &moves, MoveList &scores, int left, int right);
@@ -123,7 +125,8 @@ private:
     int partition(MoveList &moves, MoveList &scores, int left, int
         right, int pindex);
     void readEdgeTable();
-    void readPattern33Table();
+    void readStability33Table();
+    void readPattern24Table();
 
 public:
     Board game;

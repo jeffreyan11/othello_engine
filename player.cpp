@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 12;
+    maxDepth = 10;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
@@ -39,7 +39,8 @@ Player::Player(Side side) {
     #endif
 
     readEdgeTable();
-    readPattern33Table();
+    readStability33Table();
+    readPattern24Table();
 }
 
 /**
@@ -347,12 +348,13 @@ int Player::heuristic (Board *b) {
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
     #if USE_EDGE_TABLE
+        score += (mySide == BLACK) ? 3*boardTo24PV(b) : -2*boardTo24PV(b);
         score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-        score += 30 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-        score += (mySide == BLACK) ? 10*boardTo33PV(b) : -10*boardTo33PV(b);
-        score -= 15 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-        score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
-            countSetBits(bo&ADJ_CORNERS));
+        //score += 30 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+        score += (mySide == BLACK) ? 5*boardTo33PV(b) : -4*boardTo33PV(b);
+        //score -= 15 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+        //score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
+        //    countSetBits(bo&ADJ_CORNERS));
     #else
         score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
         //if(turn > 35)
@@ -454,8 +456,36 @@ int Player::boardTo33PV(Board *b) {
     int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
     int lr = bitsToPI(lrb, lrw);
 
-    int result = p33Table[ul] + p33Table[ll] + p33Table[ur] + p33Table[lr];
+    int result = s33Table[ul] + s33Table[ll] + s33Table[ur] + s33Table[lr];
     return result;
+}
+
+int Player::boardTo24PV(Board *b) {
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
+    int ulw = (int) ((white&0xF) + ((white>>4)&0xF0));
+    int ul = bitsToPI(ulb, ulw);
+
+    bitbrd rvb = reflectVertical(black);
+    bitbrd rvw = reflectVertical(white);
+    int llb = (int) ((rvb&0xF) + ((rvb>>4)&0xF0));
+    int llw = (int) ((rvw&0xF) + ((rvw>>4)&0xF0));
+    int ll = bitsToPI(llb, llw);
+
+    bitbrd rhb = reflectHorizontal(black);
+    bitbrd rhw = reflectHorizontal(white);
+    int urb = (int) ((rhb&0xF) + ((rhb>>4)&0xF0));
+    int urw = (int) ((rhw&0xF) + ((rhw>>4)&0xF0));
+    int ur = bitsToPI(urb, urw);
+
+    bitbrd rbb = reflectVertical(rhb);
+    bitbrd rbw = reflectVertical(rhw);
+    int lrb = (int) ((rbb&0xF) + ((rbb>>4)&0xF0));
+    int lrw = (int) ((rbw&0xF) + ((rbw>>4)&0xF0));
+    int lr = bitsToPI(lrb, lrw);
+
+    return p24Table[ul] + p24Table[ll] + p24Table[ur] + p24Table[lr];
 }
 
 int Player::bitsToPI(int b, int w) {
@@ -522,23 +552,41 @@ void Player::readEdgeTable() {
     }
 }
 
-void Player::readPattern33Table() {
+void Player::readStability33Table() {
     std::string line;
     std::string file;
-        file = "p33table.txt";
-    std::ifstream p33table(file);
+        file = "s33table.txt";
+    std::ifstream s33table(file);
 
-    if(p33table.is_open()) {
+    if(s33table.is_open()) {
         int i = 0;
-        while(getline(p33table, line)) {
+        while(getline(s33table, line)) {
             for(int j = 0; j < 27; j++) {
                 std::string::size_type sz = 0;
-                p33Table[27*i+j] = std::stoi(line, &sz, 0);
+                s33Table[27*i+j] = std::stoi(line, &sz, 0);
                 line = line.substr(sz);
             }
 
             i++;
         }
-        p33table.close();
+        s33table.close();
+    }
+}
+
+void Player::readPattern24Table() {
+    std::string line;
+    std::string file;
+        file = "p24table.txt";
+    std::ifstream p24table(file);
+
+    if(p24table.is_open()) {
+        int i = 0;
+        while(getline(p24table, line)) {
+            std::string::size_type sz = 0;
+            p24Table[i] = std::stoi(line, &sz, 0);
+
+            i++;
+        }
+        p24table.close();
     }
 }
