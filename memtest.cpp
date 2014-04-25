@@ -1,5 +1,5 @@
-
 #include <chrono>
+#include <fstream>
 #include "common.h"
 #include "player.h"
 #include "board.h"
@@ -47,13 +47,39 @@ unsigned long long perft(Board &b, int depth, int side, bool passed) {
     return nodes;
 }
 
+void ffo(std::string file) {
+    std::string line;
+    std::ifstream cfile(file);
+    char board[64];
+
+    if(cfile.is_open()) {
+        getline(cfile, line);
+        const char *read = line.c_str();
+        for(int i = 0; i < 64; i++)
+            board[i] = read[i];
+
+        getline(cfile, line);
+    }
+
+    Board b;
+    b.setBoard(board);
+    MoveList lm = b.getLegalMoves(CBLACK);
+
+    Endgame e;
+    e.endgameTimeMS = 100000000;
+    e.mySide = CBLACK;
+    e.endgame(b, lm, 20);
+}
+
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
 int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
     Board b;
-    cerr << perft(b, 10, CBLACK, false) << endl;
+    cerr << perft(b, 11, CBLACK, false) << endl;
+
+    //ffo("ffotest/end40.pos");
 
     /*Player p(BLACK);
     Player p2(WHITE);

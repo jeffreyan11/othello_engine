@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 10;
+    maxDepth = 12;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;

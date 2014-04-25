@@ -216,6 +216,36 @@ MoveList Board::getLegalMoves(int side) {
 }
 
 /**
+ * @brief Returns a list of all legal moves, given 5 or less empty squares.
+*/
+MoveList Board::getLegalMoves5(int side) {
+    MoveList result;
+    getLegal(side);
+    bitbrd temp = legal;
+
+    if(temp) {
+        result.add(bitScanForward(temp));
+        temp &= temp-1;
+      if(temp) {
+        result.add(bitScanForward(temp));
+        temp &= temp-1;
+        if(temp) {
+          result.add(bitScanForward(temp));
+          temp &= temp-1;
+          if(temp) {
+            result.add(bitScanForward(temp));
+            temp &= temp-1;
+            if(temp)
+             result.add(bitScanForward(temp));
+          }
+        }
+      }
+    }
+
+    return result;
+}
+
+/**
  * @brief Stores all legal moves for a side in the bitbrd object legal, for
  * quick retrieval later by checkMove().
  * 
@@ -228,65 +258,118 @@ void Board::getLegal(int side) {
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
 
     #if KOGGE_STONE
-    // north
+    // north and south
     bitbrd templ = self | (other & (self << 8));
-    bitbrd maskl = other & (other << 8);
-    templ |= maskl & (templ << 16);
-    maskl &= (maskl << 16);
-    templ |= maskl & (templ << 32);
-    result = (templ & other) << 8;
-    // south
     bitbrd tempr = self | (other & (self >> 8));
+    bitbrd maskl = other & (other << 8);
     bitbrd maskr = other & (other >> 8);
+    templ |= maskl & (templ << 16);
     tempr |= maskr & (tempr >> 16);
+    maskl &= (maskl << 16);
     maskr &= (maskr >> 16);
+    templ |= maskl & (templ << 32);
     tempr |= maskr & (tempr >> 32);
+    result = (templ & other) << 8;
     result |= (tempr & other) >> 8;
 
     other &= 0x7E7E7E7E7E7E7E7E;
 
-    // east
+    // east and west
     templ = self | (other & (self << 1));
-    maskl = other & (other << 1);
-    templ |= maskl & (templ << 2);
-    maskl &= (maskl << 2);
-    templ |= maskl & (templ << 4);
-    result |= (templ & other) << 1;
-    // west
     tempr = self | (other & (self >> 1));
+    maskl = other & (other << 1);
     maskr = other & (other >> 1);
+    templ |= maskl & (templ << 2);
     tempr |= maskr & (tempr >> 2);
+    maskl &= (maskl << 2);
     maskr &= (maskr >> 2);
+    templ |= maskl & (templ << 4);
     tempr |= maskr & (tempr >> 4);
+    result |= (templ & other) << 1;
     result |= (tempr & other) >> 1;
-    // ne
+
+    // ne and sw
     templ = self | (other & (self << 7));
-    maskl = other & (other << 7);
-    templ |= maskl & (templ << 14);
-    maskl &= (maskl << 14);
-    templ |= maskl & (templ << 28);
-    result |= (templ & other) << 7;
-    // sw
     tempr = self | (other & (self >> 7));
+    maskl = other & (other << 7);
     maskr = other & (other >> 7);
+    templ |= maskl & (templ << 14);
     tempr |= maskr & (tempr >> 14);
+    maskl &= (maskl << 14);
     maskr &= (maskr >> 14);
+    templ |= maskl & (templ << 28);
     tempr |= maskr & (tempr >> 28);
+    result |= (templ & other) << 7;
     result |= (tempr & other) >> 7;
-    // nw
+
+    // nw and se
     templ = self | (other & (self << 9));
-    maskl = other & (other << 9);
-    templ |= maskl & (templ << 18);
-    maskl &= (maskl << 18);
-    templ |= maskl & (templ << 36);
-    result |= (templ & other) << 9;
-    // se
     tempr = self | (other & (self >> 9));
+    maskl = other & (other << 9);
     maskr = other & (other >> 9);
+    templ |= maskl & (templ << 18);
     tempr |= maskr & (tempr >> 18);
+    maskl &= (maskl << 18);
     maskr &= (maskr >> 18);
+    templ |= maskl & (templ << 36);
     tempr |= maskr & (tempr >> 36);
+    result |= (templ & other) << 9;
     result |= (tempr & other) >> 9;
+
+    #elif BETTER_KOGGE_STONE
+    // north and south
+    bitbrd templ = other & (self << 8);
+    bitbrd tempr = other & (self >> 8);
+    templ |= other & (templ << 8);
+    tempr |= other & (tempr >> 8);
+    bitbrd maskl = other & (other << 8);
+    bitbrd maskr = other & (other >> 8);
+    templ |= maskl & (templ << 16);
+    tempr |= maskr & (tempr >> 16);
+    templ |= maskl & (templ << 16);
+    tempr |= maskr & (tempr >> 16);
+    result |= (templ << 8) | (tempr >> 8);
+
+    other &= 0x7E7E7E7E7E7E7E7E;
+
+    // east and west
+    templ = other & (self << 1);
+    tempr = other & (self >> 1);
+    templ |= other & (templ << 1);
+    tempr |= other & (tempr >> 1);
+    maskl = other & (other << 1);
+    maskr = other & (other >> 1);
+    templ |= maskl & (templ << 2);
+    tempr |= maskr & (tempr >> 2);
+    templ |= maskl & (templ << 2);
+    tempr |= maskr & (tempr >> 2);
+    result |= (templ << 1) | (tempr >> 1);
+
+    // ne and sw
+    templ = other & (self << 7);
+    tempr = other & (self >> 7);
+    templ |= other & (templ << 7);
+    tempr |= other & (tempr >> 7);
+    maskl = other & (other << 7);
+    maskr = other & (other >> 7);
+    templ |= maskl & (templ << 14);
+    tempr |= maskr & (tempr >> 14);
+    templ |= maskl & (templ << 14);
+    tempr |= maskr & (tempr >> 14);
+    result |= (templ << 7) | (tempr >> 7);
+
+    // nw and se
+    templ = other & (self << 9);
+    tempr = other & (self >> 9);
+    templ |= other & (templ << 9);
+    tempr |= other & (tempr >> 9);
+    maskl = other & (other << 9);
+    maskr = other & (other >> 9);
+    templ |= maskl & (templ << 18);
+    tempr |= maskr & (tempr >> 18);
+    templ |= maskl & (templ << 18);
+    tempr |= maskr & (tempr >> 18);
+    result |= (templ << 9) | (tempr >> 9);
 
     #else
     // north and south

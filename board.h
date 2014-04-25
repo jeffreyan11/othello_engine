@@ -4,7 +4,8 @@
 #include "common.h"
 using namespace std;
 
-#define KOGGE_STONE true
+#define KOGGE_STONE false
+#define BETTER_KOGGE_STONE true
 
 /**
  * @brief For converting a move number 0-63 to a bitmask.
@@ -235,6 +236,7 @@ public:
     void doMove(int index, int side);
     int count(int side);
     MoveList getLegalMoves(int side);
+    MoveList getLegalMoves5(int side);
     int numLegalMoves(int side);
     int potentialMobility(int side);
     bitbrd toBits(int side);
