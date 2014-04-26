@@ -13,9 +13,6 @@ Player::Player(Side side) {
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 20;
-    if(side == WHITE)
-        endgameDepth--;
-    endgameSwitch = false;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     endgameSolver.mySide = mySide;
@@ -83,8 +80,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             }
         }
         else {
-            totalTimePM = 1000000;
-            endgameTimeMS = 1000000;
+            totalTimePM = 10000000;
+            endgameTimeMS = 10000000;
             endgameSolver.endgameTimeMS = endgameTimeMS;
         }
     }
@@ -100,9 +97,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
     else {
         game.doMove(MOVE_NULL, oppSide);
-        if(endgameSwitch)
-            endgameDepth++;
     }
+    int empties = 64 - countSetBits(game.getTaken());
 
     // check opening book
     #if USE_OPENING_BOOK
@@ -151,26 +147,20 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }*/
 
     // endgame solver
-    while(endgameSwitch || turn >= (64 - endgameDepth)) {
+    while(empties <= endgameDepth) {
         if(msLeft < endgameTimeMS && msLeft != -1) {
-            endgameSwitch = false;
             endgameDepth -= 2;
             break;
         }
-        cerr << "Endgame solver: depth " << endgameDepth << endl;
-        //pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
-        //sort(legalMoves, scores, 0, legalMoves.size()-1);
-        //scores.clear();
+        cerr << "Endgame solver: depth " << empties << endl;
 
-        endgameSwitch = true;
-        myMove = endgameSolver.endgame(game, legalMoves, endgameDepth);
+        myMove = endgameSolver.endgame(game, legalMoves, empties);
         if(myMove == MOVE_BROKEN) {
             cerr << "Broken out of endgame solver." << endl;
             endgameDepth -= 2;
             break;
         }
 
-        endgameDepth -= 2;
         game.doMove(myMove, mySide);
         turn++;
 

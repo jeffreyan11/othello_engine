@@ -21,9 +21,17 @@ public:
     int endgame(Board &b, MoveList &moves, int depth);
     int endgame_h(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
-    int endgame10(Board &b, int s, int depth, int alpha, int beta,
+    int endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
     int endgame5(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgame4(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgame3(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgame2(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgame1(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
 
     int result_solve(Board &b, MoveList &moves, int depth);

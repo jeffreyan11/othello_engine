@@ -88,7 +88,7 @@ private:
     int sortDepth;
     int endgameDepth;
     int attemptingDepth;
-    bool endgameSwitch;
+
     Endgame endgameSolver;
 
     #if USE_OPENING_BOOK
@@ -137,7 +137,7 @@ public:
 
     Player(Side side);
     ~Player();
-    
+
     Move *doMove(Move *opponentsMove, int msLeft);
 };
 

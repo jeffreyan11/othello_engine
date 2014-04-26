@@ -688,7 +688,7 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor])
-            return (result ^ NORTHRAY[anchor]);
+            return (result ^ NORTHRAYI[anchor]);
     }
     return 0;
 }
@@ -699,7 +699,7 @@ bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
     block &= -block & self;
     if((block >> 8) & ~pos) {
         int anchor = bitScanForward(block);
-        return (result ^ SOUTHRAY[anchor]);
+        return (result ^ SOUTHRAYI[anchor]);
     }
     return 0;
 }
@@ -710,7 +710,7 @@ bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
     block &= -block & self;
     if((block >> 1) & ~pos) {
         int anchor = bitScanForward(block);
-        return (result ^ EASTRAY[anchor]);
+        return (result ^ EASTRAYI[anchor]);
     }
     return 0;
 }
@@ -721,7 +721,7 @@ bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor])
-            return (result ^ WESTRAY[anchor]);
+            return (result ^ WESTRAYI[anchor]);
     }
     return 0;
 }
@@ -732,7 +732,7 @@ bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor])
-            return (result ^ NERAY[anchor]);
+            return (result ^ NERAYI[anchor]);
     }
     return 0;
 }
@@ -743,7 +743,7 @@ bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
     if(block) {
         int anchor = bitScanReverse(block);
         if(self & MOVEMASK[anchor])
-            return (result ^ NWRAY[anchor]);
+            return (result ^ NWRAYI[anchor]);
     }
     return 0;
 }
@@ -754,7 +754,7 @@ bitbrd Board::swFill(int index, bitbrd self, bitbrd pos) {
     block &= -block & self;
     if((block >> 7) & ~pos) {
         int anchor = bitScanForward(block);
-        return (result ^ SWRAY[anchor]);
+        return (result ^ SWRAYI[anchor]);
     }
     return 0;
 }
@@ -765,7 +765,7 @@ bitbrd Board::seFill(int index, bitbrd self, bitbrd pos) {
     block &= -block & self;
     if((block >> 9) & ~pos) {
         int anchor = bitScanForward(block);
-        return (result ^ SERAY[anchor]);
+        return (result ^ SERAYI[anchor]);
     }
     return 0;
 }

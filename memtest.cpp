@@ -64,11 +64,12 @@ void ffo(std::string file) {
     Board b;
     b.setBoard(board);
     MoveList lm = b.getLegalMoves(CBLACK);
+    int empties = 64 - b.count(CBLACK) - b.count(CWHITE);
 
     Endgame e;
     e.endgameTimeMS = 100000000;
     e.mySide = CBLACK;
-    e.endgame(b, lm, 20);
+    e.endgame(b, lm, empties);
 }
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
@@ -76,10 +77,11 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    Board b;
-    cerr << perft(b, 11, CBLACK, false) << endl;
+    //Board b;
+    //cerr << perft(b, 11, CBLACK, false) << endl;
 
-    //ffo("ffotest/end40.pos");
+    ffo("ffotest/end40.pos");
+    //ffo("ffotest/end41.pos");
 
     /*Player p(BLACK);
     Player p2(WHITE);
