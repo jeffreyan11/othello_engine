@@ -190,13 +190,13 @@ MoveList Board::getLegalMoves(int side) {
         result.add(bitScanForward(corner));
         corner &= corner-1;
       if(corner) {
-        result.add(bitScanForward(corner));
-        corner &= corner-1;
-        if(corner) {
           result.add(bitScanForward(corner));
           corner &= corner-1;
-          if(corner)
+        if(corner) {
             result.add(bitScanForward(corner));
+            corner &= corner-1;
+          if(corner)
+              result.add(bitScanForward(corner));
         }
       }
     }
@@ -216,9 +216,9 @@ MoveList Board::getLegalMoves(int side) {
 }
 
 /**
- * @brief Returns a list of all legal moves, given 5 or less empty squares.
+ * @brief Returns a list of all legal moves, given 4 or less empty squares.
 */
-MoveList Board::getLegalMoves5(int side) {
+MoveList Board::getLegalMoves4(int side) {
     MoveList result;
     getLegal(side);
     bitbrd temp = legal;
@@ -227,22 +227,139 @@ MoveList Board::getLegalMoves5(int side) {
         result.add(bitScanForward(temp));
         temp &= temp-1;
       if(temp) {
-        result.add(bitScanForward(temp));
-        temp &= temp-1;
-        if(temp) {
           result.add(bitScanForward(temp));
           temp &= temp-1;
-          if(temp) {
+        if(temp) {
             result.add(bitScanForward(temp));
             temp &= temp-1;
-            if(temp)
-             result.add(bitScanForward(temp));
-          }
+          if(temp)
+              result.add(bitScanForward(temp));
         }
       }
     }
 
+    if(result.size == 2) {
+        if( (NEIGHBORS[result.get(0)] & ~taken)
+                && !(NEIGHBORS[result.get(1)] & ~taken) ) {
+            int temp = result.get(0);
+            result.set(0, result.get(1));
+            result.set(1, temp);
+        }
+    }
+    else if(result.size == 3) {
+        if( (NEIGHBORS[result.get(0)] & ~taken) ) {
+            if( !(NEIGHBORS[result.get(1)] & ~taken) ) {
+                int temp = result.get(0);
+                result.set(0, result.get(1));
+                result.set(1, temp);
+            }
+            else if ( !(NEIGHBORS[result.get(2)] & ~taken) ) {
+                int temp = result.get(0);
+                result.set(0, result.get(2));
+                result.set(2, temp);
+            }
+        }
+    }
+    else if(result.size == 4) {
+        if( (NEIGHBORS[result.get(0)] & ~taken) ) {
+            if( !(NEIGHBORS[result.get(1)] & ~taken) ) {
+                int temp = result.get(0);
+                result.set(0, result.get(1));
+                result.set(1, temp);
+            }
+            else if ( !(NEIGHBORS[result.get(2)] & ~taken) ) {
+                int temp = result.get(0);
+                result.set(0, result.get(2));
+                result.set(2, temp);
+            }
+            else if ( !(NEIGHBORS[result.get(3)] & ~taken) ) {
+                int temp = result.get(0);
+                result.set(0, result.get(3));
+                result.set(3, temp);
+            }
+        }
+    }
+
     return result;
+}
+
+/**
+ * @brief Returns a list of all legal moves, given 3 or less empty squares.
+*/
+int Board::getLegalMoves3(int side, int &m1, int &m2) {
+    int result = MOVE_NULL;
+    getLegal(side);
+    bitbrd temp = legal;
+    int n = 0;
+
+    if(temp) {
+        m1 = bitScanForward(temp);
+        temp &= temp-1;
+        n++;
+      if(temp) {
+          m2 = bitScanForward(temp);
+          temp &= temp-1;
+          n++;
+        if(temp) {
+            result = bitScanForward(temp);
+            n++;
+        }
+      }
+    }
+
+    if(n == 2) {
+        if( (NEIGHBORS[m1] & ~taken)
+                && !(NEIGHBORS[m2] & ~taken) ) {
+            int temp = m1;
+            m1 = m2;
+            m2 = temp;
+        }
+    }
+    else if(n == 3) {
+        if( (NEIGHBORS[m1] & ~taken) ) {
+            if( !(NEIGHBORS[m2] & ~taken) ) {
+                int temp = m1;
+                m1 = m2;
+                m2 = temp;
+            }
+            else if ( !(NEIGHBORS[result] & ~taken) ) {
+                int temp = m1;
+                m1 = result;
+                result = temp;
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Returns the legal moves for 2 squares left on the board.
+*/
+int Board::getLegalMoves2(int side, int &m1) {
+    getLegal(side);
+    bitbrd temp = legal;
+
+    if(temp) {
+        m1 = bitScanForward(temp);
+        temp &= temp-1;
+        if(temp)
+            return bitScanForward(temp);
+    }
+
+    return MOVE_NULL;
+}
+
+/**
+ * @brief Returns the legal move, if any, for 1 square left on the board.
+*/
+int Board::getLegalMove1(int side) {
+    getLegal(side);
+
+    if(legal)
+        return bitScanForward(legal);
+
+    return MOVE_NULL;
 }
 
 /**

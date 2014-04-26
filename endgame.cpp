@@ -148,61 +148,20 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
         copy.doMove(legalMoves.get(i), s);
 
         if (i != 0) {
-            score = (depth > 5) ?
+            score = (depth > 4) ?
                 -endgame_no_tt(copy, -s, depth-1, -alpha-1, -alpha, false) :
-                -endgame5(copy, -s, depth-1, -alpha-1, -alpha, false);
+                -endgame4(copy, -s, -alpha-1, -alpha, false);
             if (alpha < score && score < beta) {
-                score = (depth > 5) ?
+                score = (depth > 4) ?
                     -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false) :
-                    -endgame5(copy, -s, depth-1, -beta, -alpha, false);
+                    -endgame4(copy, -s, -beta, -alpha, false);
             }
         }
         else {
-            score = (depth > 5) ?
+            score = (depth > 4) ?
                 -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false) :
-                -endgame5(copy, -s, depth-1, -beta, -alpha, false);
+                -endgame4(copy, -s, -beta, -alpha, false);
         }
-
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta)
-            break;
-    }
-
-    return alpha;
-}
-
-/**
- * @brief Endgame solver, to be used with exactly 5 empty squares.
-*/
-int Endgame::endgame5(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
-    int score;
-    MoveList legalMoves = b.getLegalMoves5(s);
-
-    if(legalMoves.size <= 0) {
-        if(passedLast)
-            return (b.count(s) - b.count(-s));
-
-        b.doMove(MOVE_NULL, s);
-        score = -endgame5(b, -s, depth, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
-    }
-
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(legalMoves.get(i), s);
-
-        if (i != 0) {
-            score = -endgame4(copy, -s, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame4(copy, -s, depth-1, -beta, -alpha, false);
-        }
-        else
-            score = -endgame4(copy, -s, depth-1, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
@@ -216,17 +175,16 @@ int Endgame::endgame5(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with exactly 4 empty squares.
 */
-int Endgame::endgame4(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
+int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
     int score;
-    MoveList legalMoves = b.getLegalMoves5(s);
+    MoveList legalMoves = b.getLegalMoves4(s);
 
     if(legalMoves.size <= 0) {
         if(passedLast)
             return (b.count(s) - b.count(-s));
 
         b.doMove(MOVE_NULL, s);
-        score = -endgame4(b, -s, depth, -beta, -alpha, true);
+        score = -endgame4(b, -s, -beta, -alpha, true);
 
         if (alpha < score)
             alpha = score;
@@ -238,12 +196,12 @@ int Endgame::endgame4(Board &b, int s, int depth, int alpha, int beta,
         copy.doMove(legalMoves.get(i), s);
 
         if (i != 0) {
-            score = -endgame3(copy, -s, depth-1, -alpha-1, -alpha, false);
+            score = -endgame3(copy, -s, -alpha-1, -alpha, false);
             if (alpha < score && score < beta)
-                score = -endgame3(copy, -s, depth-1, -beta, -alpha, false);
+                score = -endgame3(copy, -s, -beta, -alpha, false);
         }
         else
-            score = -endgame3(copy, -s, depth-1, -beta, -alpha, false);
+            score = -endgame3(copy, -s, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
@@ -257,39 +215,60 @@ int Endgame::endgame4(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with exactly 3 empty squares.
 */
-int Endgame::endgame3(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
+int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
     int score;
-    MoveList legalMoves = b.getLegalMoves5(s);
+    int legalMove1 = MOVE_NULL;
+    int legalMove2 = MOVE_NULL;
+    int legalMove3 = b.getLegalMoves3(s, legalMove1, legalMove2);
 
-    if(legalMoves.size <= 0) {
+    if(legalMove1 == MOVE_NULL) {
         if(passedLast)
             return (b.count(s) - b.count(-s));
 
         b.doMove(MOVE_NULL, s);
-        score = -endgame3(b, -s, depth, -beta, -alpha, true);
+        score = -endgame3(b, -s, -beta, -alpha, true);
 
         if (alpha < score)
             alpha = score;
         return alpha;
     }
 
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(legalMoves.get(i), s);
+    Board copy = Board(b.taken, b.black, b.legal);
+    copy.doMove(legalMove1, s);
 
-        if (i != 0) {
-            score = -endgame2(copy, -s, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame2(copy, -s, depth-1, -beta, -alpha, false);
-        }
-        else
-            score = -endgame2(copy, -s, depth-1, -beta, -alpha, false);
+    score = -endgame2(copy, -s, -beta, -alpha, false);
+
+    if (alpha < score)
+        alpha = score;
+    if (alpha >= beta)
+        return alpha;
+
+    if(legalMove2 != MOVE_NULL) {
+        copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(legalMove2, s);
+
+        score = -endgame2(copy, -s, -alpha-1, -alpha, false);
+        if (alpha < score && score < beta)
+            score = -endgame2(copy, -s, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
         if (alpha >= beta)
-            break;
+            return alpha;
+
+        if(legalMove3 != MOVE_NULL) {
+            copy = Board(b.taken, b.black, b.legal);
+            copy.doMove(legalMove3, s);
+
+            score = -endgame2(copy, -s, -alpha-1, -alpha, false);
+            if (alpha < score && score < beta)
+                score = -endgame2(copy, -s, -beta, -alpha, false);
+
+            if (alpha < score)
+                alpha = score;
+            if (alpha >= beta)
+                return alpha;
+        }
     }
 
     return alpha;
@@ -298,43 +277,40 @@ int Endgame::endgame3(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with exactly 2 empty squares.
 */
-int Endgame::endgame2(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
-    if (depth <= 0)
-        return (b.count(s) - b.count(-s));
-
+int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
     int score;
-    MoveList legalMoves = b.getLegalMoves5(s);
+    int legalMove1 = MOVE_NULL;
+    int legalMove2 = b.getLegalMoves2(s, legalMove1);
 
-    if(legalMoves.size <= 0) {
+    if(legalMove1 == MOVE_NULL) {
         if(passedLast)
             return (b.count(s) - b.count(-s));
 
         b.doMove(MOVE_NULL, s);
-        score = -endgame2(b, -s, depth, -beta, -alpha, true);
+        score = -endgame2(b, -s, -beta, -alpha, true);
 
         if (alpha < score)
             alpha = score;
         return alpha;
     }
 
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
+    if(legalMove2 != MOVE_NULL) {
         Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(legalMoves.get(i), s);
-
-        if (i != 0) {
-            score = -endgame1(copy, -s, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame1(copy, -s, depth-1, -beta, -alpha, false);
-        }
-        else
-            score = -endgame1(copy, -s, depth-1, -beta, -alpha, false);
+        copy.doMove(legalMove2, s);
+        score = -endgame1(copy, -s, -beta);
 
         if (alpha < score)
             alpha = score;
         if (alpha >= beta)
-            break;
+            return alpha;
     }
+
+    Board copy = Board(b.taken, b.black, b.legal);
+    copy.doMove(legalMove1, s);
+    score = -endgame1(copy, -s, -beta);
+
+    if (alpha < score)
+        alpha = score;
 
     return alpha;
 }
@@ -342,43 +318,34 @@ int Endgame::endgame2(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with exactly 1 empty square.
 */
-int Endgame::endgame1(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
-    if (depth <= 0)
-        return (b.count(s) - b.count(-s));
-
+int Endgame::endgame1(Board &b, int s, int alpha) {
     int score;
-    MoveList legalMoves = b.getLegalMoves5(s);
+    int legalMove = b.getLegalMove1(s);
 
-    if(legalMoves.size <= 0) {
-        if(passedLast)
+    if(legalMove == MOVE_NULL) {
+        b.doMove(MOVE_NULL, s);
+        int otherMove = b.getLegalMove1(-s);
+
+        if(otherMove == MOVE_NULL)
             return (b.count(s) - b.count(-s));
 
-        b.doMove(MOVE_NULL, s);
-        score = -endgame1(b, -s, depth, -beta, -alpha, true);
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(otherMove, -s);
+
+        score = 2*copy.count(s) - 64;
 
         if (alpha < score)
             alpha = score;
         return alpha;
     }
 
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(legalMoves.get(i), s);
+    Board copy = Board(b.taken, b.black, b.legal);
+    copy.doMove(legalMove, s);
 
-        if (i != 0) {
-            score = -endgame1(copy, -s, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame1(copy, -s, depth-1, -beta, -alpha, false);
-        }
-        else
-            score = -endgame1(copy, -s, depth-1, -beta, -alpha, false);
+    score = 2*copy.count(s) - 64;
 
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta)
-            break;
-    }
+    if (alpha < score)
+        alpha = score;
 
     return alpha;
 }
