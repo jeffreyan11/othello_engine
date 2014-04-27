@@ -77,10 +77,10 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    //Board b;
-    //cerr << perft(b, 11, CBLACK, false) << endl;
+    Board b;
+    cerr << perft(b, 11, CBLACK, false) << endl;
 
-    ffo("ffotest/end40.pos");
+    //ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
 
     /*Player p(BLACK);
@@ -98,21 +98,3 @@ int main(int argc, char **argv) {
 
     cerr << time_span.count() << endl;
 }
-
-    /*Board b;
-    char boardData[64] = {
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 
-        ' ', ' ', 'b', 'b', 'b', ' ', ' ', ' ', 
-        ' ', ' ', ' ', 'b', 'w', 'b', 'w', ' ', 
-        ' ', ' ', ' ', ' ', ' ', 'w', 'w', 'w', 
-        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w', 
-        ' ', ' ', ' ', ' ', ' ', ' ', 'w', 'w'
-    };
-    b.setBoard(boardData);
-    Move m (4,5);
-    for(int i = 0; i < 200000000; i++) {
-        b.checkMove(&m, BLACK);
-    }
-    cout << "done" << endl;*/

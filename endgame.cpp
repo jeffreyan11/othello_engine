@@ -63,13 +63,14 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
 
+    // attempt hashtable move cutoff
     int killer = endgame_table.get(&b);
     if(killer != -1) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(killer, s);
         score = (depth > 10) ?
             -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-            -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false);
+            -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
@@ -98,17 +99,17 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         if (i != 0) {
             score = (depth > 10) ?
                 -endgame_h(copy, -s, depth-1, -alpha-1, -alpha, false) :
-                -endgame_no_tt(copy, -s, depth-1, -alpha-1, -alpha, false);
+                -endgame_shallow(copy, -s, depth-1, -alpha-1, -alpha, false);
             if (alpha < score && score < beta) {
                 score = (depth > 10) ?
                     -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-                    -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false);
+                    -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
             }
         }
         else {
             score = (depth > 10) ?
                 -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-                -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false);
+                -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
         }
 
         if (alpha < score) {
@@ -127,7 +128,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with 10 or less empty squares.
 */
-int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
+int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
     bitbrd legal = b.getLegalExt(s);
@@ -138,7 +139,7 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
         if(passedLast)
             return (b.count(s) - b.count(-s));
 
-        score = -endgame_no_tt(b, -s, depth, -beta, -alpha, true);
+        score = -endgame_shallow(b, -s, depth, -beta, -alpha, true);
 
         if (alpha < score)
             alpha = score;
@@ -184,17 +185,17 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
 
         if (i != 0) {
             if(depth > 4)
-            score = -endgame_no_tt(copy, -s, depth-1, -alpha-1, -alpha, false);
+            score = -endgame_shallow(copy, -s, depth-1, -alpha-1, -alpha, false);
             else score = -endgame4(copy, -s, -alpha-1, -alpha, false);
             if (alpha < score && score < beta) {
                 if(depth > 4)
-                score = -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false);
+                score = -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
                 else score = -endgame4(copy, -s, -beta, -alpha, false);
             }
         }
         else {
             if(depth > 4)
-                score = -endgame_no_tt(copy, -s, depth-1, -beta, -alpha, false);
+            score = -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
             else score = -endgame4(copy, -s, -beta, -alpha, false);
         }
 
@@ -396,7 +397,6 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
         copy.doMove(otherMove, -s);
 
         score = 2*copy.count(s) - 64;
-
         if (alpha < score)
             alpha = score;
         return alpha;
@@ -406,7 +406,6 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
     copy.doMove(legalMove, s);
 
     score = 2*copy.count(s) - 64;
-
     if (alpha < score)
         alpha = score;
     return alpha;

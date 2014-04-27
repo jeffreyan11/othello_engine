@@ -37,6 +37,7 @@ Player::Player(Side side) {
     readEdgeTable();
     readStability33Table();
     readPattern24Table();
+    readPatternE2XTable();
 }
 
 /**
@@ -85,6 +86,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         game.doMove(MOVE_NULL, oppSide);
     }
     int empties = 64 - countSetBits(game.getTaken());
+    cerr << endl;
 
     // check opening book
     #if USE_OPENING_BOOK
@@ -262,15 +264,15 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     for (unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(legalMoves.get(i), s);
+
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, -s, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta) {
+            if (alpha < score && score < beta)
                 score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
-            }
         }
-        else {
+        else
             score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
-        }
+
         if (alpha < score)
             alpha = score;
         if(ttScore > topScore)
@@ -301,6 +303,7 @@ int Player::heuristic (Board *b) {
     #if USE_EDGE_TABLE
     score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
     score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
+    score += (mySide == BLACK) ? boardToE2XPV(b) : -boardToE2XPV(b);
     score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
     #else
     bitbrd bm = b->toBits(mySide);
@@ -475,6 +478,41 @@ int Player::boardTo24PV(Board *b) {
         p24Table[rul] + p24Table[rll] + p24Table[rur] + p24Table[rlr];
 }
 
+int Player::boardToE2XPV(Board *b) {
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int r1b = (int) ( (black & 0xFF) +
+        ((black & 0x200) >> 1) + ((black & 0x4000) >> 5) );
+    int r1w = (int) ( (white & 0xFF) +
+        ((white & 0x200) >> 1) + ((white & 0x4000) >> 5) );
+    int r1 = bitsToPI(r1b, r1w);
+
+    int r8b = (int) ( (black>>56) + ((black & 0x2000000000000) >> 41) +
+        ((black & 0x40000000000000) >> 45) );
+    int r8w = (int) ( (white>>56) + ((white & 0x2000000000000) >> 41) +
+        ((white & 0x40000000000000) >> 45) );
+    int r8 = bitsToPI(r8b, r8w);
+
+    int c1b = (int) (
+        (((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) + 
+        ((black & 0x200) >> 1) + ((black & 0x2000000000000) >> 40) );
+    int c1w = (int) (
+        (((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) +
+        ((white & 0x200) >> 1) + ((white & 0x2000000000000) >> 40) );
+    int c1 = bitsToPI(c1b, c1w);
+
+    int c8b = (int) (
+        (((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) +
+        ((black & 0x4000) >> 6) + ((black & 0x40000000000000) >> 45) );
+    int c8w = (int) (
+        (((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) +
+        ((white & 0x4000) >> 6) + ((white & 0x40000000000000) >> 45) );
+    int c8 = bitsToPI(c8b, c8w);
+
+    int result = pE2XTable[r1] + pE2XTable[r8] + pE2XTable[c1] + pE2XTable[c8];
+    return result;
+}
+
 int Player::bitsToPI(int b, int w) {
     return PIECES_TO_INDEX[b] + 2*PIECES_TO_INDEX[w];
 }
@@ -575,5 +613,25 @@ void Player::readPattern24Table() {
             i++;
         }
         p24table.close();
+    }
+}
+
+void Player::readPatternE2XTable() {
+    std::string line;
+    std::string file;
+        file = "pE2Xtable.txt";
+    std::ifstream pE2Xtable(file);
+
+    if(pE2Xtable.is_open()) {
+        int i = 0;
+        while(getline(pE2Xtable, line)) {
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                pE2XTable[9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+
+            i++;
+        }
     }
 }

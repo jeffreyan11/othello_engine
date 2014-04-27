@@ -94,22 +94,12 @@ void Board::doMove(int index, int side) {
     bitbrd self = (side == CBLACK) ? black : taken^black;
 
     switch(BOARD_REGIONS[index]) {
-    case 1:
-        changeMask = southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
     case 2:
         changeMask = southFill(index, self, pos);
         changeMask |= eastFill(index, self, pos);
         changeMask |= westFill(index, self, pos);
         changeMask |= swFill(index, self, pos);
         changeMask |= seFill(index, self, pos);
-        break;
-    case 3:
-        changeMask = southFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
         break;
     case 4:
         changeMask = northFill(index, self, pos);
@@ -125,17 +115,27 @@ void Board::doMove(int index, int side) {
         changeMask |= nwFill(index, self, pos);
         changeMask |= swFill(index, self, pos);
         break;
-    case 7:
-        changeMask = northFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        break;
     case 8:
         changeMask = northFill(index, self, pos);
         changeMask |= eastFill(index, self, pos);
         changeMask |= westFill(index, self, pos);
         changeMask |= neFill(index, self, pos);
         changeMask |= nwFill(index, self, pos);
+        break;
+    case 1:
+        changeMask = southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 3:
+        changeMask = southFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        break;
+    case 7:
+        changeMask = northFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
         break;
     case 9:
         changeMask = northFill(index, self, pos);
@@ -155,15 +155,6 @@ void Board::doMove(int index, int side) {
     }
 
     changeMask |= MOVEMASK[index];
-
-    /*changeMask |= northFill(index, self, pos);
-    changeMask |= southFill(index, self, pos);
-    changeMask |= eastFill(index, self, pos);
-    changeMask |= westFill(index, self, pos);
-    changeMask |= neFill(index, self, pos);
-    changeMask |= nwFill(index, self, pos);
-    changeMask |= swFill(index, self, pos);
-    changeMask |= seFill(index, self, pos);*/
 
     // update taken, black, legal
     taken |= changeMask;
@@ -241,9 +232,9 @@ int Board::getLegalMoves4(int side, int &m1, int &m2, int &m3) {
       }
     }
 
+    // parity sorting
     if(n == 2) {
-        if( (NEIGHBORS[m1] & ~taken)
-                && !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & ~taken) && !(NEIGHBORS[m2] & ~taken) ) {
             int temp = m1;
             m1 = m2;
             m2 = temp;
@@ -324,9 +315,9 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
       }
     }
 
+    // parity sorting
     if(n == 2) {
-        if( (NEIGHBORS[m1] & ~taken)
-                && !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & ~taken) && !(NEIGHBORS[m2] & ~taken) ) {
             int temp = m1;
             m1 = m2;
             m2 = temp;
@@ -600,36 +591,17 @@ int Board::numLegalMoves(int side) {
 }
 
 int Board::potentialMobility(int side) {
-    bitbrd result = 0;
     bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
     bitbrd empty = ~taken;
-    // check north
-    bitbrd temp = (other >> 8) & empty;
-    result |= (temp << 8);
-    // south
-    temp = (other << 8) & empty;
-    result |= (temp >> 8);
+
+    bitbrd result = (other >> 8) | (other << 8);
+    result &= empty;
 
     empty &= 0x7E7E7E7E7E7E7E7E;
-
-    // east
-    temp = (other << 1) & empty;
-    result |= (temp >> 1);
-    // west
-    temp = (other >> 1) & empty;
-    result |= (temp << 1);
-    // ne
-    temp = (other >> 7) & empty;
-    result |= (temp << 7);
-    // nw
-    temp = (other >> 9) & empty;
-    result |= (temp << 9);
-    // sw
-    temp = (other << 7) & empty;
-    result |= (temp >> 7);
-    // se
-    temp = (other << 9) & empty;
-    result |= (temp >> 9);
+    result |= (other << 1) | (other >> 1);
+    result |= (other >> 7) | (other << 7);
+    result |= (other >> 9) | (other << 9);
+    result &= empty;
 
     return countSetBits(result);
 }
