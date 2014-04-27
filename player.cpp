@@ -19,7 +19,6 @@ Player::Player(Side side) {
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
     totalTimePM = -2;
-    endgameTimeMS = 0;
 
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
@@ -65,24 +64,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(totalTimePM == -2) {
         totalTimePM = msLeft;
-        endgameTimeMS = msLeft / 3;
-        endgameSolver.endgameTimeMS = endgameTimeMS;
         if(totalTimePM != -1) {
-            if(totalTimePM > 600000)
-                totalTimePM = (totalTimePM - endgameTimeMS) / 21;
-            else if(totalTimePM > 300000) {
-                totalTimePM = (totalTimePM - endgameTimeMS) / 24;
-                endgameDepth = 16;
-            }
-            else {
-                totalTimePM = (totalTimePM - endgameTimeMS) / 26;
-                endgameDepth = 14;
-            }
+            totalTimePM /= 24;
         }
         else {
             totalTimePM = 10000000;
-            endgameTimeMS = 10000000;
-            endgameSolver.endgameTimeMS = endgameTimeMS;
         }
     }
 
@@ -123,52 +109,29 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int myMove = -1;
     MoveList scores;
 
-    // solve for game result
-    /*while(turn >= (64 - endgameDepth - 2) && turn < (64 - endgameDepth)) {
-        if(msLeft < endgameTimeMS && msLeft != -1)
-            break;
-
-        cerr << "Game result solver: depth " << endgameDepth+2 << endl;
-
-        myMove = endgameSolver.result_solve(game, legalMoves, endgameDepth+2);
-        if(myMove == MOVE_BROKEN) {
-            cerr << "Broken out of result solver." << endl;
-            break;
-        }
-
-        game.doMove(myMove, mySide);
-        turn++;
-
-        end_time = high_resolution_clock::now();
-        time_span = duration_cast<duration<double>>(end_time-start_time);
-        cerr << "Result solver took: " << time_span.count() << endl;
-
-        return indexToMove[myMove];
-    }*/
-
     // endgame solver
-    while(empties <= endgameDepth) {
-        if(msLeft < endgameTimeMS && msLeft != -1) {
-            endgameDepth -= 2;
-            break;
-        }
+    if(empties <= endgameDepth &&
+            (msLeft >= endgameTime[empties] || msLeft == -1)) {
+        // timing
+        endgameSolver.endgameTimeMS = msLeft / 2;
+        if(msLeft == -1)
+            endgameSolver.endgameTimeMS = 100000000;
         cerr << "Endgame solver: depth " << empties << endl;
 
         myMove = endgameSolver.endgame(game, legalMoves, empties);
-        if(myMove == MOVE_BROKEN) {
-            cerr << "Broken out of endgame solver." << endl;
-            endgameDepth -= 2;
-            break;
+
+        if(myMove != MOVE_BROKEN) {
+            game.doMove(myMove, mySide);
+            turn++;
+
+            end_time = high_resolution_clock::now();
+            time_span = duration_cast<duration<double>>(end_time-start_time);
+            cerr << "Endgame took: " << time_span.count() << endl;
+
+            return indexToMove[myMove];
         }
-
-        game.doMove(myMove, mySide);
-        turn++;
-
-        end_time = high_resolution_clock::now();
-        time_span = duration_cast<duration<double>>(end_time-start_time);
-        cerr << "Endgame took: " << time_span.count() << endl;
-
-        return indexToMove[myMove];
+        cerr << "Broken out of endgame solver." << endl;
+        endgameDepth -= 2;
     }
 
     // sort search
@@ -199,7 +162,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
     } while( (
-        ((msLeft-endgameTimeMS)/(64-endgameDepth-turn) > time_span.count()*1000.0*20) || msLeft == -1) && attemptingDepth <= maxDepth );
+        (msLeft/empties > time_span.count()*1000.0*25) || msLeft == -1) && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
     turn++;
@@ -335,23 +298,18 @@ int Player::heuristic (Board *b) {
     else
         score = 2*(myCoins - b->count(oppSide));
 
+    #if USE_EDGE_TABLE
+    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
+    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
+    score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
+    #else
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
-    #if USE_EDGE_TABLE
-        score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
-        score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-        //score += 30 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-        score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
-        //score -= 15 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-        //score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
-        //    countSetBits(bo&ADJ_CORNERS));
-    #else
-        score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-        //if(turn > 35)
-        //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
-        score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-        score -= 10 * (countSetBits(bm&ADJ_CORNERS) -
-            countSetBits(bo&ADJ_CORNERS));
+    score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+    //if(turn > 35)
+    //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+    score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
     #endif
 
     //score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));

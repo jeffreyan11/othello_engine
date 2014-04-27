@@ -58,7 +58,7 @@ void ffo(std::string file) {
         for(int i = 0; i < 64; i++)
             board[i] = read[i];
 
-        getline(cfile, line);
+        //getline(cfile, line);
     }
 
     Board b;
@@ -69,7 +69,7 @@ void ffo(std::string file) {
     Endgame e;
     e.endgameTimeMS = 100000000;
     e.mySide = CBLACK;
-    e.endgame(b, lm, empties);
+    int result = e.endgame(b, lm, empties);
 }
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp

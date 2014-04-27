@@ -159,8 +159,9 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
         if(corner) {
             moves[n] = bitScanForward(corner); n++;
             corner &= corner-1;
-          if(corner)
+          if(corner) {
               moves[n] = bitScanForward(corner); n++;
+          }
         }
       }
     }
