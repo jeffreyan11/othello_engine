@@ -218,69 +218,88 @@ MoveList Board::getLegalMoves(int side) {
 /**
  * @brief Returns a list of all legal moves, given 4 or less empty squares.
 */
-MoveList Board::getLegalMoves4(int side) {
-    MoveList result;
+int Board::getLegalMoves4(int side, int &m1, int &m2, int &m3) {
+    int m4 = MOVE_NULL;
     getLegal(side);
     bitbrd temp = legal;
+    int n = 0;
 
     if(temp) {
-        result.add(bitScanForward(temp));
-        temp &= temp-1;
+        m1 = bitScanForward(temp);
+        temp &= temp-1; n++;
       if(temp) {
-          result.add(bitScanForward(temp));
-          temp &= temp-1;
+          m2 = bitScanForward(temp);
+          temp &= temp-1; n++;
         if(temp) {
-            result.add(bitScanForward(temp));
-            temp &= temp-1;
-          if(temp)
-              result.add(bitScanForward(temp));
+            m3 = bitScanForward(temp);
+            temp &= temp-1; n++;
+          if(temp) {
+              m4 = bitScanForward(temp);
+              n++;
+          }
         }
       }
     }
 
-    if(result.size == 2) {
-        if( (NEIGHBORS[result.get(0)] & ~taken)
-                && !(NEIGHBORS[result.get(1)] & ~taken) ) {
-            int temp = result.get(0);
-            result.set(0, result.get(1));
-            result.set(1, temp);
+    if(n == 2) {
+        if( (NEIGHBORS[m1] & ~taken)
+                && !(NEIGHBORS[m2] & ~taken) ) {
+            int temp = m1;
+            m1 = m2;
+            m2 = temp;
         }
     }
-    else if(result.size == 3) {
-        if( (NEIGHBORS[result.get(0)] & ~taken) ) {
-            if( !(NEIGHBORS[result.get(1)] & ~taken) ) {
-                int temp = result.get(0);
-                result.set(0, result.get(1));
-                result.set(1, temp);
+    else if(n == 3) {
+        if( (NEIGHBORS[m1] & ~taken) ) {
+            if( !(NEIGHBORS[m2] & ~taken) ) {
+                int temp = m1;
+                m1 = m2;
+                m2 = temp;
             }
-            else if ( !(NEIGHBORS[result.get(2)] & ~taken) ) {
-                int temp = result.get(0);
-                result.set(0, result.get(2));
-                result.set(2, temp);
+            else if ( !(NEIGHBORS[m3] & ~taken) ) {
+                int temp = m1;
+                m1 = m3;
+                m3 = temp;
             }
         }
     }
-    else if(result.size == 4) {
-        if( (NEIGHBORS[result.get(0)] & ~taken) ) {
-            if( !(NEIGHBORS[result.get(1)] & ~taken) ) {
-                int temp = result.get(0);
-                result.set(0, result.get(1));
-                result.set(1, temp);
+    else if(n == 4) {
+        if( (NEIGHBORS[m1] & ~taken) ) {
+            if( !(NEIGHBORS[m2] & ~taken) ) {
+                int temp = m1;
+                m1 = m2;
+                m2 = m4;
+                m4 = temp;
             }
-            else if ( !(NEIGHBORS[result.get(2)] & ~taken) ) {
-                int temp = result.get(0);
-                result.set(0, result.get(2));
-                result.set(2, temp);
+            else if ( !(NEIGHBORS[m3] & ~taken) ) {
+                int temp = m1;
+                m1 = m3;
+                m3 = temp;
+                temp = m2;
+                m2 = m4;
+                m4 = temp;
             }
-            else if ( !(NEIGHBORS[result.get(3)] & ~taken) ) {
-                int temp = result.get(0);
-                result.set(0, result.get(3));
-                result.set(3, temp);
+            else if ( !(NEIGHBORS[m4] & ~taken) ) {
+                int temp = m1;
+                m1 = m4;
+                m4 = temp;
+            }
+        }
+        else if( (NEIGHBORS[m2] & ~taken) ) {
+            if ( !(NEIGHBORS[m3] & ~taken) ) {
+                int temp = m2;
+                m2 = m3;
+                m3 = temp;
+            }
+            else if ( !(NEIGHBORS[m4] & ~taken) ) {
+                int temp = m2;
+                m2 = m4;
+                m4 = temp;
             }
         }
     }
 
-    return result;
+    return m4;
 }
 
 /**
@@ -294,12 +313,10 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
 
     if(temp) {
         m1 = bitScanForward(temp);
-        temp &= temp-1;
-        n++;
+        temp &= temp-1; n++;
       if(temp) {
           m2 = bitScanForward(temp);
-          temp &= temp-1;
-          n++;
+          temp &= temp-1; n++;
         if(temp) {
             result = bitScanForward(temp);
             n++;
@@ -360,6 +377,11 @@ int Board::getLegalMove1(int side) {
         return bitScanForward(legal);
 
     return MOVE_NULL;
+}
+
+bitbrd Board::getLegalExt(int side) {
+    getLegal(side);
+    return legal;
 }
 
 /**
@@ -721,30 +743,6 @@ bitbrd Board::getBlack() {
     return black;
 }
 
-/*
- * Current count of given side's stones.
- */
-int Board::count(int side) {
-    bitbrd i = (side == CBLACK) ? (black) : (black^taken);
-
-    #if defined(__x86_64__)
-        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
-        return (int) i;
-    #elif defined(__i386)
-        int a = (int) (i & 0xFFFFFFFF);
-        int b = (int) ((i>>32) & 0xFFFFFFFF);
-        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
-        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
-        return a+b;
-    #else
-        i = i - ((i >> 1) & 0x5555555555555555);
-        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
-        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
-              0x0101010101010101) >> 56;
-        return (int) i;
-    #endif
-}
-
 int Board::bitScanForward(bitbrd bb) {
     #if defined(__x86_64__)
         asm ("bsf %1, %0" : "=r" (bb) : "r" (bb));
@@ -777,6 +775,30 @@ int Board::bitScanReverse(bitbrd bb) {
         bb |= bb >> 16;
         bb |= bb >> 32;
         return index64[(int)((bb * 0x03f79d71b4cb0a89) >> 58)];
+    #endif
+}
+
+/*
+ * Current count of given side's stones.
+ */
+int Board::count(int side) {
+    bitbrd i = (side == CBLACK) ? (black) : (black^taken);
+
+    #if defined(__x86_64__)
+        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
+    #elif defined(__i386)
+        int a = (int) (i & 0xFFFFFFFF);
+        int b = (int) ((i>>32) & 0xFFFFFFFF);
+        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
+        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
+        return a+b;
+    #else
+        i = i - ((i >> 1) & 0x5555555555555555);
+        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+              0x0101010101010101) >> 56;
+        return (int) i;
     #endif
 }
 

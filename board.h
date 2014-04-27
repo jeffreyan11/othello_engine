@@ -375,12 +375,14 @@ const int BOARD_REGIONS[64] = {
 };
 
 class Board {
-   
+
 private:
     bool checkMove(int index, int side);
     void getLegal(int side);
 
     int countSetBits(bitbrd i);
+    int bitScanForward(bitbrd bb);
+    int bitScanReverse(bitbrd bb);
 
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
@@ -400,32 +402,27 @@ public:
     Board(bitbrd b, bitbrd t, bitbrd l);
     ~Board();
     Board *copy();
-        
+
     bool isDone();
     bool hasMoves(int side);
     bool checkMove(Move *m, Side side);
     void doMove(int index, int side);
     int count(int side);
+    bitbrd getLegalExt(int side);
     MoveList getLegalMoves(int side);
-    MoveList getLegalMoves4(int side);
+    int getLegalMoves4(int side, int &m1, int &m2, int &m3);
     int getLegalMoves3(int side, int &m1, int &m2);
     int getLegalMoves2(int side, int &m1);
     int getLegalMove1(int side);
+
     int numLegalMoves(int side);
     int potentialMobility(int side);
-    bitbrd toBits(int side);
 
     void setBoard(char data[]);
     char *toString();
+    bitbrd toBits(int side);
     bitbrd getTaken();
     bitbrd getBlack();
-    int bitScanForward(bitbrd bb);
-    int bitScanReverse(bitbrd bb);
-
-    /*inline bool operator==(const Board &other) const {
-        return (taken == other.taken) && (black == other.black) &&
-            (legal == other.legal);
-    }*/
 };
 
 #endif

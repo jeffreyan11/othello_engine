@@ -40,7 +40,7 @@ public:
     unsigned int size;
 
     MoveList() {
-        moves = new int[40];
+        moves = new int[30];
         size = 0;
     }
     ~MoveList() { delete[] moves; }
@@ -53,7 +53,7 @@ public:
     void set(int i, int val) { moves[i] = val; }
     void clear() {
         delete[] moves;
-        moves = new int[40];
+        moves = new int[30];
         size = 0;
     }
 };

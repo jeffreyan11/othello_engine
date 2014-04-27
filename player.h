@@ -111,7 +111,7 @@ private:
         int alpha, int beta);
     int heuristic(Board *b);
 
-    int countSetBits(bitbrd b);
+    int countSetBits(bitbrd i);
     bitbrd reflectVertical(bitbrd i);
     bitbrd reflectHorizontal(bitbrd x);
 
