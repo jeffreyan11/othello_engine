@@ -11,6 +11,8 @@ class Endgame {
 private:
     Hash endgame_table;
 
+    int bitScanForward(bitbrd bb);
+
 public:
     int endgameTimeMS;
     int mySide;
@@ -27,9 +29,6 @@ public:
     int endgame3(Board &b, int s, int alpha, int beta, bool passedLast);
     int endgame2(Board &b, int s, int alpha, int beta, bool passedLast);
     int endgame1(Board &b, int s, int alpha);
-
-    int result_solve(Board &b, MoveList &moves, int depth);
-    int rs_h(Board &b, int s, int depth, int alpha, int beta);
 };
 
 #endif
