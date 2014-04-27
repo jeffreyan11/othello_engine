@@ -357,7 +357,7 @@ int Player::heuristic (Board *b) {
     //score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     int myLM = b->numLegalMoves(mySide);
     int oppLM = b->numLegalMoves(oppSide);
-    score += 50 * (myLM - oppLM) / (myLM + oppLM + 1);
+    score += 60 * (myLM - oppLM) / (myLM + oppLM + 1);
     score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
@@ -403,6 +403,20 @@ bitbrd Player::reflectHorizontal(bitbrd x) {
     x = ((x >> 1) & k1) | ((x & k1) << 1);
     x = ((x >> 2) & k2) | ((x & k2) << 2);
     x = ((x >> 4) & k4) | ((x & k4) << 4);
+    return x;
+}
+
+bitbrd Player::reflectDiag(bitbrd x) {
+    bitbrd t;
+    const bitbrd k1 = 0x5500550055005500;
+    const bitbrd k2 = 0x3333000033330000;
+    const bitbrd k4 = 0x0f0f0f0f00000000;
+    t  = k4 & (x ^ (x << 28));
+    x ^=       t ^ (t >> 28) ;
+    t  = k2 & (x ^ (x << 14));
+    x ^=       t ^ (t >> 14) ;
+    t  = k1 & (x ^ (x <<  7));
+    x ^=       t ^ (t >>  7) ;
     return x;
 }
 
@@ -475,7 +489,32 @@ int Player::boardTo24PV(Board *b) {
     int lrw = (int) ((rbw&0xF) + ((rbw>>4)&0xF0));
     int lr = bitsToPI(lrb, lrw);
 
-    return p24Table[ul] + p24Table[ll] + p24Table[ur] + p24Table[lr];
+    bitbrd rotb = reflectDiag(black);
+    bitbrd rotw = reflectDiag(white);
+    int rulb = (int) ((rotb&0xF) + ((rotb>>4)&0xF0));
+    int rulw = (int) ((rotw&0xF) + ((rotw>>4)&0xF0));
+    int rul = bitsToPI(rulb, rulw);
+
+    bitbrd rotvb = reflectVertical(rotb);
+    bitbrd rotvw = reflectVertical(rotw);
+    int rllb = (int) ((rotvb&0xF) + ((rotvb>>4)&0xF0));
+    int rllw = (int) ((rotvw&0xF) + ((rotvw>>4)&0xF0));
+    int rll = bitsToPI(rllb, rllw);
+
+    bitbrd rothb = reflectHorizontal(rotb);
+    bitbrd rothw = reflectHorizontal(rotw);
+    int rurb = (int) ((rothb&0xF) + ((rothb>>4)&0xF0));
+    int rurw = (int) ((rothw&0xF) + ((rothw>>4)&0xF0));
+    int rur = bitsToPI(rurb, rurw);
+
+    bitbrd rotbb = reflectVertical(rothb);
+    bitbrd rotbw = reflectVertical(rothw);
+    int rlrb = (int) ((rotbb&0xF) + ((rotbb>>4)&0xF0));
+    int rlrw = (int) ((rotbw&0xF) + ((rotbw>>4)&0xF0));
+    int rlr = bitsToPI(rlrb, rlrw);
+
+    return p24Table[ul] + p24Table[ll] + p24Table[ur] + p24Table[lr] +
+        p24Table[rul] + p24Table[rll] + p24Table[rur] + p24Table[rlr];
 }
 
 int Player::bitsToPI(int b, int w) {

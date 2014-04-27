@@ -131,7 +131,7 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
     bitbrd legal = b.getLegalExt(s);
-    int moves[depth];
+    int moves[10];
     int n = 0;
 
     if(!legal) {
@@ -177,7 +177,7 @@ int Endgame::endgame_no_tt(Board &b, int s, int depth, int alpha, int beta,
         adj &= adj-1;
     }
 
-    for (unsigned int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(moves[i], s);
 

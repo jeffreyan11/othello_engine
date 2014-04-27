@@ -114,6 +114,7 @@ private:
     int countSetBits(bitbrd i);
     bitbrd reflectVertical(bitbrd i);
     bitbrd reflectHorizontal(bitbrd x);
+    bitbrd reflectDiag(bitbrd x);
 
     int boardToEPV(Board *b);
     int boardTo33PV(Board *b);
