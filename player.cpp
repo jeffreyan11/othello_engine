@@ -115,7 +115,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(empties <= endgameDepth &&
             (msLeft >= endgameTime[empties] || msLeft == -1)) {
         // timing
-        endgameSolver.endgameTimeMS = msLeft / 2;
+        endgameSolver.endgameTimeMS = (msLeft + endgameTime[empties]) / 4;
         if(msLeft == -1)
             endgameSolver.endgameTimeMS = 100000000;
         cerr << "Endgame solver: depth " << empties << endl;
@@ -259,6 +259,13 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         return alpha;
+    }
+
+    // internal sort
+    if(depth >= 5) {
+        MoveList scores;
+        pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
+        sort(legalMoves, scores, 0, legalMoves.size-1);
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {

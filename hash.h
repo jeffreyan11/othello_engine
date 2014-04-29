@@ -5,6 +5,8 @@
 #include "common.h"
 #include <iostream>
 
+#define USE_HASH64 false
+
 struct BoardData {
     bitbrd taken;
     bitbrd black;
@@ -47,11 +49,16 @@ private:
     int size;
 
     //void process(int index);
+    #if USE_HASH64
+    bitbrd hash(const Board *b);
+    #else
     uint32_t hash(const Board *b);
+    #endif
 
 public:
     //TODO for testing
     int keys;
+    void test();
 
     Hash();
     Hash(int isize);

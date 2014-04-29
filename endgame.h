@@ -6,6 +6,8 @@
 #include "board.h"
 #include "hash.h"
 
+#define END_SHLLW 10
+
 class Endgame {
 
 private:

@@ -363,7 +363,6 @@ int Board::getLegalMoves2(int side, int &m1) {
 */
 int Board::getLegalMove1(int side) {
     getLegal(side);
-
     if(legal)
         return bitScanForward(legal);
 

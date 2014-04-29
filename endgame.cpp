@@ -52,6 +52,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
     }
 
     cerr << "Endgame table has: " << endgame_table.keys << " keys." << endl;
+    //endgame_table.test();
 
     return tempMove;
 }
@@ -64,11 +65,11 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     int score;
 
     // attempt hashtable move cutoff
-    int killer = endgame_table.get(&b);
-    if(killer != -1) {
+    int hashed = endgame_table.get(&b);
+    if(hashed != -1) {
         Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(killer, s);
-        score = (depth > 10) ?
+        copy.doMove(hashed, s);
+        score = (depth > END_SHLLW) ?
             -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
             -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
 
@@ -97,17 +98,17 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         copy.doMove(legalMoves.get(i), s);
 
         if (i != 0) {
-            score = (depth > 10) ?
+            score = (depth > END_SHLLW) ?
                 -endgame_h(copy, -s, depth-1, -alpha-1, -alpha, false) :
                 -endgame_shallow(copy, -s, depth-1, -alpha-1, -alpha, false);
             if (alpha < score && score < beta) {
-                score = (depth > 10) ?
+                score = (depth > END_SHLLW) ?
                     -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
                     -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
             }
         }
         else {
-            score = (depth > 10) ?
+            score = (depth > END_SHLLW) ?
                 -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
                 -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
         }
@@ -126,13 +127,13 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 }
 
 /**
- * @brief Endgame solver, to be used with 10 or less empty squares.
+ * @brief Endgame solver, to be used with about 10 or less empty squares.
 */
 int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
     bitbrd legal = b.getLegalExt(s);
-    int moves[10];
+    int moves[END_SHLLW];
     int n = 0;
 
     if(!legal) {
@@ -179,6 +180,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         adj &= adj-1;
     }
 
+    // search all moves
     for (int i = 0; i < n; i++) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(moves[i], s);
@@ -410,7 +412,6 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
         alpha = score;
     return alpha;
 }
-
 
 
 int Endgame::bitScanForward(bitbrd bb) {
