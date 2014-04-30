@@ -53,6 +53,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
 
     cerr << "Endgame table has: " << endgame_table.keys << " keys." << endl;
     //endgame_table.test();
+    cerr << "Score: " << alpha << endl;
 
     return tempMove;
 }
@@ -65,7 +66,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     int score;
 
     // attempt hashtable move cutoff
-    int hashed = endgame_table.get(&b);
+    /*int hashed = endgame_table.get(&b);
     if(hashed != -1) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(hashed, s);
@@ -77,9 +78,11 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             alpha = score;
         if (alpha >= beta)
             return alpha;
-    }
+    }*/
 
-    MoveList legalMoves = b.getLegalMoves(s);
+    MoveList priority;
+    MoveList legalMoves = b.getLegalMovesOrdered(s, priority);
+    sort(legalMoves, priority, 0, legalMoves.size-1);
 
     if(legalMoves.size <= 0) {
         if(passedLast)
@@ -93,7 +96,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     }
 
     int tempMove = -1;
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
+    for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(legalMoves.get(i), s);
 
@@ -133,8 +136,6 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
     bitbrd legal = b.getLegalExt(s);
-    int moves[END_SHLLW];
-    int n = 0;
 
     if(!legal) {
         if(passedLast)
@@ -148,36 +149,77 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     }
 
     // create array of legal moves
+    int moves[END_SHLLW];
+    int priority[END_SHLLW];
+    int n = 0;
+
     bitbrd corner = legal & 0x8100000000000081;
     bitbrd csq = legal & 0x2400810000810024;
     bitbrd adj = legal & 0x42C300000000C342;
     legal &= 0x183C7EFFFF7E3C18;
+    bitbrd empty = ~b.getTaken();
     if(corner) {
-        moves[n] = bitScanForward(corner); n++;
-        corner &= corner-1;
+        moves[n] = bitScanForward(corner);
+        if(!(NEIGHBORS[moves[n]] & empty))
+            priority[n] = 7;
+        else priority[n] = 3;
+        corner &= corner-1; n++;
       if(corner) {
-          moves[n] = bitScanForward(corner); n++;
-          corner &= corner-1;
+          moves[n] = bitScanForward(corner);
+          if(!(NEIGHBORS[moves[n]] & empty))
+              priority[n] = 7;
+          else priority[n] = 3;
+          corner &= corner-1; n++;
         if(corner) {
-            moves[n] = bitScanForward(corner); n++;
-            corner &= corner-1;
+            moves[n] = bitScanForward(corner);
+            if(!(NEIGHBORS[moves[n]] & empty))
+                priority[n] = 7;
+            else priority[n] = 3;
+            corner &= corner-1; n++;
           if(corner) {
-              moves[n] = bitScanForward(corner); n++;
+              moves[n] = bitScanForward(corner);
+              if(!(NEIGHBORS[moves[n]] & empty))
+                  priority[n] = 7;
+              else priority[n] = 3;
+              n++;
           }
         }
       }
     }
     while(csq) {
-        moves[n] = bitScanForward(csq); n++;
-        csq &= csq-1;
+        moves[n] = bitScanForward(csq);
+        if(!(NEIGHBORS[moves[n]] & empty))
+            priority[n] = 6;
+        else priority[n] = 2;
+        csq &= csq-1; n++;
     }
     while(legal) {
-        moves[n] = bitScanForward(legal); n++;
-        legal &= legal-1;
+        moves[n] = bitScanForward(legal);
+        if(!(NEIGHBORS[moves[n]] & empty))
+            priority[n] = 5;
+        else priority[n] = 1;
+        legal &= legal-1; n++;
     }
     while(adj) {
-        moves[n] = bitScanForward(adj); n++;
-        adj &= adj-1;
+        moves[n] = bitScanForward(adj);
+        if(!(NEIGHBORS[moves[n]] & empty))
+            priority[n] = 4;
+        else priority[n] = 0;
+        adj &= adj-1; n++;
+    }
+
+    // sort
+    for(int i = 1; i < n; i++) {
+        int j = i;
+        int temp1 = moves[i];
+        int temp2 = priority[i];
+        while(j > 0 && priority[j-1] < priority[j]) {
+            priority[j] = priority[j-1];
+            moves[j] = moves[j-1];
+            j--;
+        }
+        moves[j] = temp1;
+        priority[j] = temp2;
     }
 
     // search all moves
@@ -421,4 +463,50 @@ int Endgame::bitScanForward(bitbrd bb) {
     #else
         return index64[(int)(((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58)];
     #endif
+}
+
+void Endgame::sort(MoveList &moves, MoveList &scores, int left, int right) {
+    /*int pivot = (left + right) / 2;
+
+    if (left < right) {
+        pivot = partition(moves, scores, left, right, pivot);
+        sort(moves, scores, left, pivot-1);
+        sort(moves, scores, pivot+1, right);
+    }*/
+    for(unsigned int i = 1; i < moves.size; i++) {
+        unsigned int j = i;
+        while(j > 0 && scores.get(j-1) < scores.get(j)) {
+            swap(moves, scores, j, j-1);
+            j--;
+        }
+    }
+}
+
+void Endgame::swap(MoveList &moves, MoveList &scores, int i, int j) {
+    int less1 = moves.get(j);
+    moves.set(j, moves.get(i));
+    moves.set(i, less1);
+
+    int less2 = scores.get(j);
+    scores.set(j, scores.get(i));
+    scores.set(i, less2);
+}
+
+int Endgame::partition(MoveList &moves, MoveList &scores, int left, int right,
+    int pindex) {
+
+    int index = left;
+    int pivot = scores.get(pindex);
+
+    swap(moves, scores, pindex, right);
+
+    for (int i = left; i < right; i++) {
+        if (scores.get(i) > pivot) {
+            swap(moves, scores, i, index);
+            index++;
+        }
+    }
+    swap(moves, scores, index, right);
+
+    return index;
 }

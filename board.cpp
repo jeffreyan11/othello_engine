@@ -207,6 +207,68 @@ MoveList Board::getLegalMoves(int side) {
 }
 
 /**
+ * @brief Returns a list of all legal moves, with priorities for sorting.
+*/
+MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
+    MoveList result;
+    getLegal(side);
+    bitbrd temp = legal;
+    bitbrd corner = temp & 0x8100000000000081;
+    bitbrd csq = temp & 0x2400810000810024;
+    bitbrd adj = temp & 0x42C300000000C342;
+    temp &= 0x183C7EFFFF7E3C18;
+    if(corner) {
+        result.add(bitScanForward(corner));
+        if(!(NEIGHBORS[result.last()] & ~taken))
+            priority.add(7);
+        else priority.add(3);
+        corner &= corner-1;
+      if(corner) {
+          result.add(bitScanForward(corner));
+          if(!(NEIGHBORS[result.last()] & ~taken))
+              priority.add(7);
+          else priority.add(3);
+          corner &= corner-1;
+        if(corner) {
+            result.add(bitScanForward(corner));
+            if(!(NEIGHBORS[result.last()] & ~taken))
+                priority.add(7);
+            else priority.add(3);
+            corner &= corner-1;
+          if(corner) {
+              result.add(bitScanForward(corner));
+              if(!(NEIGHBORS[result.last()] & ~taken))
+                  priority.add(7);
+              else priority.add(3);
+          }
+        }
+      }
+    }
+    while(csq) {
+        result.add(bitScanForward(csq));
+        if(!(NEIGHBORS[result.last()] & ~taken))
+            priority.add(6);
+        else priority.add(2);
+        csq &= csq-1;
+    }
+    while(temp) {
+        result.add(bitScanForward(temp));
+        if(!(NEIGHBORS[result.last()] & ~taken))
+            priority.add(5);
+        else priority.add(1);
+        temp &= temp-1;
+    }
+    while(adj) {
+        result.add(bitScanForward(adj));
+        if(!(NEIGHBORS[result.last()] & ~taken))
+            priority.add(4);
+        else priority.add(0);
+        adj &= adj-1;
+    }
+    return result;
+}
+
+/**
  * @brief Returns a list of all legal moves, given 4 or less empty squares.
 */
 int Board::getLegalMoves4(int side, int &m1, int &m2, int &m3) {
@@ -485,108 +547,8 @@ void Board::getLegal(int side) {
 }
 
 int Board::numLegalMoves(int side) {
-    bitbrd result = 0;
-    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
-    bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
-
-    #if KOGGE_STONE
-    bitbrd other = opp & 0x00FFFFFFFFFFFF00;
-    // north and south
-    bitbrd templ = other & (self << 8);
-    bitbrd tempr = other & (self >> 8);
-    templ |= other & (templ << 8);
-    tempr |= other & (tempr >> 8);
-    bitbrd maskl = other & (other << 8);
-    bitbrd maskr = other & (other >> 8);
-    templ |= maskl & (templ << 16);
-    tempr |= maskr & (tempr >> 16);
-    templ |= maskl & (templ << 16);
-    tempr |= maskr & (tempr >> 16);
-    result |= (templ << 8) | (tempr >> 8);
-
-    other = opp & 0x7E7E7E7E7E7E7E7E;
-    // east and west
-    templ = other & (self << 1);
-    tempr = other & (self >> 1);
-    templ |= other & (templ << 1);
-    tempr |= other & (tempr >> 1);
-    maskl = other & (other << 1);
-    maskr = other & (other >> 1);
-    templ |= maskl & (templ << 2);
-    tempr |= maskr & (tempr >> 2);
-    templ |= maskl & (templ << 2);
-    tempr |= maskr & (tempr >> 2);
-    result |= (templ << 1) | (tempr >> 1);
-
-    // ne and sw
-    templ = other & (self << 7);
-    tempr = other & (self >> 7);
-    templ |= other & (templ << 7);
-    tempr |= other & (tempr >> 7);
-    maskl = other & (other << 7);
-    maskr = other & (other >> 7);
-    templ |= maskl & (templ << 14);
-    tempr |= maskr & (tempr >> 14);
-    templ |= maskl & (templ << 14);
-    tempr |= maskr & (tempr >> 14);
-    result |= (templ << 7) | (tempr >> 7);
-
-    // nw and se
-    templ = other & (self << 9);
-    tempr = other & (self >> 9);
-    templ |= other & (templ << 9);
-    tempr |= other & (tempr >> 9);
-    maskl = other & (other << 9);
-    maskr = other & (other >> 9);
-    templ |= maskl & (templ << 18);
-    tempr |= maskr & (tempr >> 18);
-    templ |= maskl & (templ << 18);
-    tempr |= maskr & (tempr >> 18);
-    result |= (templ << 9) | (tempr >> 9);
-
-    #else
-    bitbrd other = opp & 0x00FFFFFFFFFFFF00;
-    // north and south
-    bitbrd tempM = (((self << 8) | (self >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    result = ((tempM << 8) | (tempM >> 8));
-
-    other = opp & 0x7E7E7E7E7E7E7E7E;
-    // east and west
-    tempM = (((self << 1) | (self >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    result |= ((tempM << 1) | (tempM >> 1));
-
-    // ne and sw
-    tempM = (((self << 7) | (self >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    result |= ((tempM << 7) | (tempM >> 7));
-
-    // nw and se
-    tempM = (((self << 9) | (self >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    result |= ((tempM << 9) | (tempM >> 9));
-    #endif
-
-    result &= ~taken;
-
-    return countSetBits(result);
+    getLegal(side);
+    return countSetBits(legal);
 }
 
 int Board::potentialMobility(int side) {

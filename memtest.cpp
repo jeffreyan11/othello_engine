@@ -70,6 +70,7 @@ void ffo(std::string file) {
     e.endgameTimeMS = 100000000;
     e.mySide = CBLACK;
     int result = e.endgame(b, lm, empties);
+    cerr << "Best move: " << result << endl;
 }
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
@@ -80,17 +81,17 @@ int main(int argc, char **argv) {
     //Board b;
     //cerr << perft(b, 11, CBLACK, false) << endl;
 
-    //ffo("ffotest/end40.pos");
+    ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
 
-    Player p(BLACK);
+    /*Player p(BLACK);
     Player p2(WHITE);
 
     Move *m = p.doMove(NULL, -1);
     for(int i = 0; i < 18; i++) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
-    }
+    }*/
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(

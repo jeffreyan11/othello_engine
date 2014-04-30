@@ -222,6 +222,10 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, int s,
 
 /**
  * @brief Helper function for the principal variation search.
+ * 
+ * Uses alpha-beta pruning with a null-window search, a transposition table that
+ * stores moves which previously caused a beta cutoff, and an internal sorting
+ * search of depth 2.
 */
 int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     int alpha, int beta) {
@@ -310,7 +314,7 @@ int Player::heuristic (Board *b) {
     #if USE_EDGE_TABLE
     score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
     score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-    score += (mySide == BLACK) ? boardToE2XPV(b) : -boardToE2XPV(b);
+    score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
     score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
     #else
     bitbrd bm = b->toBits(mySide);
@@ -325,7 +329,7 @@ int Player::heuristic (Board *b) {
     //score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     int myLM = b->numLegalMoves(mySide);
     int oppLM = b->numLegalMoves(oppSide);
-    score += 60 * (myLM - oppLM) / (myLM + oppLM + 1);
+    score += 80 * (myLM - oppLM) / (myLM + oppLM + 1);
     score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
@@ -525,12 +529,12 @@ int Player::bitsToPI(int b, int w) {
 }
 
 void Player::sort(MoveList &moves, MoveList &scores, int left, int right) {
-    int index = left;
+    int pivot = (left + right) / 2;
 
     if (left < right) {
-        index = partition(moves, scores, left, right, index);
-        sort(moves, scores, left, index-1);
-        sort(moves, scores, index+1, right);
+        pivot = partition(moves, scores, left, right, pivot);
+        sort(moves, scores, left, pivot-1);
+        sort(moves, scores, pivot+1, right);
     }
 }
 
@@ -553,7 +557,7 @@ int Player::partition(MoveList &moves, MoveList &scores, int left, int right,
     swap(moves, scores, pindex, right);
 
     for (int i = left; i < right; i++) {
-        if (scores.get(i) >= pivot) {
+        if (scores.get(i) > pivot) {
             swap(moves, scores, i, index);
             index++;
         }

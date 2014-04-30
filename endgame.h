@@ -15,6 +15,11 @@ private:
 
     int bitScanForward(bitbrd bb);
 
+    void sort(MoveList &moves, MoveList &scores, int left, int right);
+    void swap(MoveList &moves, MoveList &scores, int i, int j);
+    int partition(MoveList &moves, MoveList &scores, int left, int
+        right, int pindex);
+
 public:
     int endgameTimeMS;
     int mySide;

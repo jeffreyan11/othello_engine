@@ -50,6 +50,7 @@ public:
         size++;
     }
     int get(int i) { return moves[i]; }
+    int last() { return moves[size-1]; }
     void set(int i, int val) { moves[i] = val; }
     void clear() {
         delete[] moves;
