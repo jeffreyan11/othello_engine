@@ -69,6 +69,7 @@ public:
 
     void add(const Board *b, int ptm, int move, int turn);
     int get(const Board *b, int ptm);
+    int get(const Board *b, int ptm, int &score);
     void clean(int turn);
 };
 

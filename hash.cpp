@@ -31,8 +31,8 @@ Hash::~Hash() {
 }
 
 /**
- * @brief Adds key b and item move into the hashtable.
- * Assumes that no hash with key is in the table.
+ * @brief Adds key (b,ptm) and item move into the hashtable.
+ * Assumes that this key has been checked with get and is not in the table.
 */
 void Hash::add(const Board *b, int ptm, int move, int turn) {
     keys++;
@@ -55,6 +55,10 @@ void Hash::add(const Board *b, int ptm, int move, int turn) {
     }
     node->next = new HashLL(b->taken, b->black, ptm, move, turn);
 }
+
+/**
+ * @brief Get the move, if any, associated with (b,ptm).
+*/
 int Hash::get(const Board *b, int ptm) {
     #if USE_HASH64
     bitbrd h = hash(b);
@@ -71,6 +75,34 @@ int Hash::get(const Board *b, int ptm) {
         if(node->cargo.taken == b->taken && node->cargo.black == b->black
                     && node->cargo.ptm == ptm)
             return node->cargo.move;
+        node = node->next;
+    }
+    while(node != NULL);
+
+    return -1;
+}
+
+/**
+ * @brief Only for the endgame, where turn is used to store exact score.
+*/
+int Hash::get(const Board *b, int ptm, int &score) {
+    #if USE_HASH64
+    bitbrd h = hash(b);
+    #else
+    uint32_t h = hash(b);
+    #endif
+    unsigned int index = (unsigned int)(h % size);
+    HashLL *node = table[index];
+
+    if(node == NULL)
+        return -1;
+
+    do {
+        if(node->cargo.taken == b->taken && node->cargo.black == b->black
+                    && node->cargo.ptm == ptm) {
+            score = node->cargo.turn;
+            return node->cargo.move;
+        }
         node = node->next;
     }
     while(node != NULL);

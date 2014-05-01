@@ -11,10 +11,10 @@ Endgame::~Endgame() {
 */
 int Endgame::endgame(Board &b, MoveList &moves, int depth) {
     // if best move for this position has already been found and stored
-    int temp = endgame_table.get(&b, mySide);
+    /*int temp = endgame_table.get(&b, mySide);
     if(temp != -1) {
         return temp;
-    }
+    }*/
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -67,13 +67,13 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     int score;
 
     // attempt hashtable move cutoff
-    int hashed = endgame_table.get(&b, s);
+    int hashed = endgame_table.get(&b, s, score);
     if(hashed != -1) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(hashed, s);
-        score = (depth > END_SHLLW) ?
-            -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-            -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
+        //score = (depth > END_SHLLW) ?
+        //    -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
+        //    -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
@@ -125,7 +125,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             break;
     }
     if(tempMove != -1)
-        endgame_table.add(&b, s, tempMove, 65);
+        endgame_table.add(&b, s, tempMove, alpha);
 
     return alpha;
 }
