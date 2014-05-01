@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
 
     ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
+    //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
     Player p2(WHITE);

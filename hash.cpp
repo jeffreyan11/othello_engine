@@ -34,7 +34,7 @@ Hash::~Hash() {
  * @brief Adds key b and item move into the hashtable.
  * Assumes that no hash with key is in the table.
 */
-void Hash::add(const Board *b, int move, int turn) {
+void Hash::add(const Board *b, int ptm, int move, int turn) {
     keys++;
     #if USE_HASH64
     bitbrd h = hash(b);
@@ -44,7 +44,7 @@ void Hash::add(const Board *b, int move, int turn) {
     unsigned int index = (unsigned int)(h % size);
     HashLL *node = table[index];
     if(node == NULL) {
-        table[index] = new HashLL(b->taken, b->black, move, turn);
+        table[index] = new HashLL(b->taken, b->black, ptm, move, turn);
         return;
     }
 
@@ -53,9 +53,9 @@ void Hash::add(const Board *b, int move, int turn) {
     while(node->next != NULL) {
         node = node->next;
     }
-    node->next = new HashLL(b->taken, b->black, move, turn);
+    node->next = new HashLL(b->taken, b->black, ptm, move, turn);
 }
-int Hash::get(const Board *b) {
+int Hash::get(const Board *b, int ptm) {
     #if USE_HASH64
     bitbrd h = hash(b);
     #else
@@ -68,7 +68,8 @@ int Hash::get(const Board *b) {
         return -1;
 
     do {
-        if(node->cargo.taken == b->taken && node->cargo.black == b->black)
+        if(node->cargo.taken == b->taken && node->cargo.black == b->black
+                    && node->cargo.ptm == ptm)
             return node->cargo.move;
         node = node->next;
     }

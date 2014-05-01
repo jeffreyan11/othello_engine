@@ -10,19 +10,22 @@
 struct BoardData {
     bitbrd taken;
     bitbrd black;
+    int ptm;
     int move;
     int turn;
 
     BoardData() {
         taken = 0;
         black = 0;
+        ptm = 0;
         move = -1;
         turn = 0;
     }
 
-    BoardData(bitbrd t, bitbrd b, int m, int tu) {
+    BoardData(bitbrd t, bitbrd b, int p, int m, int tu) {
         taken = t;
         black = b;
+        ptm = p;
         move = m;
         turn = tu;
     }
@@ -34,9 +37,9 @@ public:
     HashLL *next;
     BoardData cargo;
 
-    HashLL(bitbrd t, bitbrd b, int m, int tu) {
+    HashLL(bitbrd t, bitbrd b, int ptm, int m, int tu) {
         next = NULL;
-        cargo = BoardData(t, b, m, tu);
+        cargo = BoardData(t, b, ptm, m, tu);
     }
 
     ~HashLL() {}
@@ -64,8 +67,8 @@ public:
     Hash(int isize);
     ~Hash();
 
-    void add(const Board *b, int move, int turn);
-    int get(const Board *b);
+    void add(const Board *b, int ptm, int move, int turn);
+    int get(const Board *b, int ptm);
     void clean(int turn);
 };
 

@@ -238,7 +238,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     int score;
     int ttScore = NEG_INFTY;
 
-    int killerMove = killer_table.get(b);
+    int killerMove = killer_table.get(b, s);
     if(killerMove != -1) {
         Board copy = Board(b->taken, b->black, b->legal);
         copy.doMove(killerMove, s);
@@ -290,7 +290,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
             topScore = ttScore;
         if (alpha >= beta) {
             if(depth >= 4 && depth <= maxDepth-3)
-                killer_table.add(b, legalMoves.get(i),
+                killer_table.add(b, s, legalMoves.get(i),
                     turn+attemptingDepth-depth);
             break;
         }

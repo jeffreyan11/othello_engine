@@ -213,58 +213,15 @@ MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
     MoveList result;
     getLegal(side);
     bitbrd temp = legal;
-    bitbrd corner = temp & 0x8100000000000081;
-    bitbrd csq = temp & 0x2400810000810024;
-    bitbrd adj = temp & 0x42C300000000C342;
-    temp &= 0x183C7EFFFF7E3C18;
-    if(corner) {
-        result.add(bitScanForward(corner));
-        if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add(7);
-        else priority.add(3);
-        corner &= corner-1;
-      if(corner) {
-          result.add(bitScanForward(corner));
-          if(!(NEIGHBORS[result.last()] & ~taken))
-              priority.add(7);
-          else priority.add(3);
-          corner &= corner-1;
-        if(corner) {
-            result.add(bitScanForward(corner));
-            if(!(NEIGHBORS[result.last()] & ~taken))
-                priority.add(7);
-            else priority.add(3);
-            corner &= corner-1;
-          if(corner) {
-              result.add(bitScanForward(corner));
-              if(!(NEIGHBORS[result.last()] & ~taken))
-                  priority.add(7);
-              else priority.add(3);
-          }
-        }
-      }
-    }
-    while(csq) {
-        result.add(bitScanForward(csq));
-        if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add(6);
-        else priority.add(2);
-        csq &= csq-1;
-    }
+
     while(temp) {
         result.add(bitScanForward(temp));
         if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add(5);
-        else priority.add(1);
+            priority.add( 10 + SQ_VAL[result.last()] );
+        else priority.add( SQ_VAL[result.last()] );
         temp &= temp-1;
     }
-    while(adj) {
-        result.add(bitScanForward(adj));
-        if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add(4);
-        else priority.add(0);
-        adj &= adj-1;
-    }
+
     return result;
 }
 
