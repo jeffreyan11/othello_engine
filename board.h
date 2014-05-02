@@ -427,7 +427,7 @@ public:
     void doMove(int index, int side);
     bitbrd getDoMove(int index, int side);
     void makeMove(int index, bitbrd changeMask, int side);
-    void undoMove(bitbrd changed, int index, int side);
+    void undoMove(int index, bitbrd changed, int side);
     int count(int side);
     bitbrd getLegalExt(int side);
     MoveList getLegalMoves(int side);

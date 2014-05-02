@@ -53,12 +53,27 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
         region_parity ^= QUADRANT_ID[moves.get(i)];
 
         if (i != 0) {
-            score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+else score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
+
+            if (alpha < score && score < beta) {
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
+else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+            }
         }
-        else
-            score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+        else {
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
+else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+        }
 
         cerr << "Searched " << moves.get(i) << " alpha: " << score << endl;
         region_parity ^= QUADRANT_ID[moves.get(i)];
@@ -371,7 +386,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
     Board copy = Board(b.taken, b.black, b.legal);
     copy.doMove(legalMove1, s);
 
-    score = -endgame2(copy, -s, -beta, -alpha, false);
+    score = -endgame2(copy, -s, -beta, -alpha);
 
     if (alpha < score)
         alpha = score;
@@ -382,7 +397,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         copy = Board(b.taken, b.black, b.legal);
         copy.doMove(legalMove2, s);
 
-        score = -endgame2(copy, -s, -alpha-1, -alpha, false);
+        score = -endgame2(copy, -s, -alpha-1, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -393,7 +408,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             copy = Board(b.taken, b.black, b.legal);
             copy.doMove(legalMove3, s);
 
-            score = -endgame2(copy, -s, -alpha-1, -alpha, false);
+            score = -endgame2(copy, -s, -alpha-1, -alpha);
 
             if (alpha < score)
                 alpha = score;
@@ -406,18 +421,20 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 /**
  * @brief Endgame solver, to be used with exactly 2 empty squares.
 */
-int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
+int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     int score = NEG_INFTY;
     bitbrd empty = ~b.getTaken();
     int legalMove1 = bitScanForward(empty);
     empty &= empty-1;
     int legalMove2 = bitScanForward(empty);
 
+    //cerr << "eg2: " << legalMove1 << " " << legalMove2 << endl;
+
     bitbrd changeMask = b.getDoMove(legalMove1, s);
     if(changeMask) {
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.makeMove(legalMove1, changeMask, s);
-        score = -endgame1(copy, -s, -beta);
+        b.makeMove(legalMove1, changeMask, s);
+        score = -endgame1(b, -s, -beta);
+        b.undoMove(legalMove1, changeMask, s);
 
         if (alpha < score)
             alpha = score;
@@ -427,25 +444,44 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
 
     changeMask = b.getDoMove(legalMove2, s);
     if(changeMask) {
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.makeMove(legalMove2, changeMask, s);
-        score = -endgame1(copy, -s, -beta);
+        b.makeMove(legalMove2, changeMask, s);
+        score = -endgame1(b, -s, -beta);
+        b.undoMove(legalMove2, changeMask, s);
 
         if (alpha < score)
             alpha = score;
-        if (alpha >= beta)
-            return alpha;
     }
     else {
         if(score == NEG_INFTY) {
-            // if no legal moves
-            if(passedLast)
-                return (b.count(s) - b.count(-s));
+            // if no legal moves... try other player
+            changeMask = b.getDoMove(legalMove1, -s);
+            if(changeMask) {
+                b.makeMove(legalMove1, changeMask, -s);
+                score = endgame1(b, s, alpha);
+                b.undoMove(legalMove1, changeMask, -s);
 
-            score = -endgame2(b, -s, -beta, -alpha, true);
-            if (alpha < score)
-                alpha = score;
-            return alpha;
+                if (beta > score)
+                    beta = score;
+                if (alpha >= beta)
+                    return beta;
+            }
+
+            changeMask = b.getDoMove(legalMove2, -s);
+            if(changeMask) {
+                b.makeMove(legalMove2, changeMask, -s);
+                score = endgame1(b, s, alpha);
+                b.undoMove(legalMove2, changeMask, -s);
+
+                if (beta > score)
+                    beta = score;
+            }
+            else {
+                // if both players passed, game over
+                if(score == NEG_INFTY)
+                    return (b.count(s) - b.count(-s));
+            }
+
+            return beta;
         }
     }
 
@@ -466,19 +502,19 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
         if(!otherMask)
             return (b.count(s) - b.count(-s));
 
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.makeMove(legalMove, otherMask, -s);
+        b.makeMove(legalMove, otherMask, -s);
+        score = 2*b.count(s) - 64;
+        b.undoMove(legalMove, otherMask, -s);
 
-        score = 2*copy.count(s) - 64;
         if (alpha < score)
             alpha = score;
         return alpha;
     }
 
-    Board copy = Board(b.taken, b.black, b.legal);
-    copy.makeMove(legalMove, changeMask, s);
+    b.makeMove(legalMove, changeMask, s);
+    score = 2*b.count(s) - 64;
+    b.undoMove(legalMove, changeMask, s);
 
-    score = 2*copy.count(s) - 64;
     if (alpha < score)
         alpha = score;
     return alpha;

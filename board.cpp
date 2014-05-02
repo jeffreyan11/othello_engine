@@ -238,25 +238,15 @@ bitbrd Board::getDoMove(int index, int side) {
     return changeMask;
 }
 
+// Note: does not update legal
 void Board::makeMove(int index, bitbrd changeMask, int side) {
-    changeMask |= MOVEMASK[index];
-
-    // update taken, black, legal
-    taken |= changeMask;
-    if(side == CBLACK)
-        black |= changeMask;
-    else
-        black &= ~changeMask;
-
-    legal = 0xFFFF000000000000;
+    taken |= MOVEMASK[index];
+    black ^= changeMask | ((side == CBLACK) * MOVEMASK[index]);
 }
 
-void Board::undoMove(bitbrd changed, int index, int side) {
-    taken ^= changed | MOVEMASK[index];
-    if(side == CBLACK)
-        black ^= changed | MOVEMASK[index];
-    else
-        black ^= changed;
+void Board::undoMove(int index, bitbrd changed, int side) {
+    taken ^= MOVEMASK[index];
+    black ^= changed | ((side == CBLACK) * MOVEMASK[index]);
 }
 
 /**

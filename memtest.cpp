@@ -9,6 +9,8 @@ bitbrd cstack[20];
 int movestack[20];
 int top;
 
+void ffo(std::string file);
+
 /*
  DEPTH  #LEAF NODES   #FULL-DEPTH  #HIGHER
 ==========================================
@@ -68,6 +70,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
     for(unsigned int i = 0; i < lm.size; i++) {
         cstack[top] = b.getDoMove(lm.get(i), side);
         movestack[top] = lm.get(i);
+        b.makeMove(movestack[top], cstack[top], side);
         top++;
 
         nodes += perftu(b, depth-1, -side, false);
@@ -77,6 +80,38 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
     }
 
     return nodes;
+}
+
+// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
+int main(int argc, char **argv) {
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
+
+    //Board b;
+    //top = 0;
+    //cerr << perftu(b, 11, CBLACK, false) << endl;
+
+    ffo("ffotest/error.pos");
+    //ffo("ffotest/end40.pos");
+    //ffo("ffotest/end41.pos");
+    //ffo("ffotest/end42.pos");
+    //ffo("ffotest/end43.pos");
+    //ffo("ffotest/end59.pos");
+
+    /*Player p(BLACK);
+    Player p2(WHITE);
+
+    Move *m = p.doMove(NULL, -1);
+    for(int i = 0; i < 18; i++) {
+        m = p2.doMove(m, -1);
+        m = p.doMove(m, -1);
+    }*/
+
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(
+        end_time-start_time);
+
+    cerr << time_span.count() << endl;
 }
 
 void ffo(std::string file) {
@@ -115,35 +150,4 @@ void ffo(std::string file) {
     e.mySide = side;
     int result = e.endgame(b, lm, empties);
     cerr << "Best move: " << result << endl;
-}
-
-// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
-int main(int argc, char **argv) {
-    using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-
-    /*Board b;
-    top = 0;
-    cerr << perft(b, 10, CBLACK, false) << endl;*/
-
-    ffo("ffotest/end40.pos");
-    //ffo("ffotest/end41.pos");
-    //ffo("ffotest/end42.pos");
-    //ffo("ffotest/end43.pos");
-    //ffo("ffotest/end59.pos");
-
-    /*Player p(BLACK);
-    Player p2(WHITE);
-
-    Move *m = p.doMove(NULL, -1);
-    for(int i = 0; i < 18; i++) {
-        m = p2.doMove(m, -1);
-        m = p.doMove(m, -1);
-    }*/
-
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
-
-    cerr << time_span.count() << endl;
 }

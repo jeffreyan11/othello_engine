@@ -51,7 +51,7 @@ public:
             bool passedLast);
     int endgame4(Board &b, int s, int alpha, int beta, bool passedLast);
     int endgame3(Board &b, int s, int alpha, int beta, bool passedLast);
-    int endgame2(Board &b, int s, int alpha, int beta, bool passedLast);
+    int endgame2(Board &b, int s, int alpha, int beta);
     int endgame1(Board &b, int s, int alpha);
 };
 
