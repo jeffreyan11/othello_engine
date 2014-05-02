@@ -425,6 +425,9 @@ public:
     bool hasMoves(int side);
     bool checkMove(Move *m, Side side);
     void doMove(int index, int side);
+    bitbrd getDoMove(int index, int side);
+    void makeMove(int index, bitbrd changeMask, int side);
+    void undoMove(bitbrd changed, int index, int side);
     int count(int side);
     bitbrd getLegalExt(int side);
     MoveList getLegalMoves(int side);
@@ -432,7 +435,7 @@ public:
     int getLegalMoves4(int side, int &m1, int &m2, int &m3);
     int getLegalMoves3(int side, int &m1, int &m2);
     int getLegalMoves2(int side, int &m1);
-    int getLegalMove1(int side);
+    int getLegalMove1();
 
     int numLegalMoves(int side);
     int potentialMobility(int side);

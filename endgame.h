@@ -6,9 +6,10 @@
 #include "board.h"
 #include "hash.h"
 
-#define END_SHLLW 10
+#define END_SHLLW 11
+#define USE_BESTMOVE_TABLE true
 
-/*const int QUADRANT_ID[64] = {
+const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
 1, 1, 1, 1, 2, 2, 2, 2,
 1, 1, 1, 1, 2, 2, 2, 2,
@@ -17,12 +18,17 @@
 4, 4, 4, 4, 8, 8, 8, 8,
 4, 4, 4, 4, 8, 8, 8, 8,
 4, 4, 4, 4, 8, 8, 8, 8
-};*/
+};
 
 class Endgame {
 
 private:
-    Hash endgame_table;
+    #if USE_BESTMOVE_TABLE
+    Hash *endgame_table;
+    #endif
+    Hash killer_table;
+
+    int region_parity;
 
     int bitScanForward(bitbrd bb);
 

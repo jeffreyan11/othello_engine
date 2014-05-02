@@ -167,6 +167,99 @@ void Board::doMove(int index, int side) {
 }
 
 /**
+ * @brief This function returns the mask of changed bits.
+ */
+bitbrd Board::getDoMove(int index, int side) {
+    bitbrd changeMask = 0;
+    bitbrd pos = (side == CWHITE) ? ~black : ~(taken^black);
+    bitbrd self = (side == CBLACK) ? black : taken^black;
+
+    switch(BOARD_REGIONS[index]) {
+    case 2:
+        changeMask = southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 4:
+        changeMask = northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 6:
+        changeMask = northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        break;
+    case 8:
+        changeMask = northFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        break;
+    case 1:
+        changeMask = southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    case 3:
+        changeMask = southFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        break;
+    case 7:
+        changeMask = northFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        break;
+    case 9:
+        changeMask = northFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        break;
+    case 5:
+        changeMask = northFill(index, self, pos);
+        changeMask |= southFill(index, self, pos);
+        changeMask |= eastFill(index, self, pos);
+        changeMask |= westFill(index, self, pos);
+        changeMask |= neFill(index, self, pos);
+        changeMask |= nwFill(index, self, pos);
+        changeMask |= swFill(index, self, pos);
+        changeMask |= seFill(index, self, pos);
+        break;
+    }
+
+    return changeMask;
+}
+
+void Board::makeMove(int index, bitbrd changeMask, int side) {
+    changeMask |= MOVEMASK[index];
+
+    // update taken, black, legal
+    taken |= changeMask;
+    if(side == CBLACK)
+        black |= changeMask;
+    else
+        black &= ~changeMask;
+
+    legal = 0xFFFF000000000000;
+}
+
+void Board::undoMove(bitbrd changed, int index, int side) {
+    taken ^= changed | MOVEMASK[index];
+    if(side == CBLACK)
+        black ^= changed | MOVEMASK[index];
+    else
+        black ^= changed;
+}
+
+/**
  * @brief Returns a list of all legal moves.
 */
 MoveList Board::getLegalMoves(int side) {
@@ -380,12 +473,8 @@ int Board::getLegalMoves2(int side, int &m1) {
 /**
  * @brief Returns the legal move, if any, for 1 square left on the board.
 */
-int Board::getLegalMove1(int side) {
-    getLegal(side);
-    if(legal)
-        return bitScanForward(legal);
-
-    return MOVE_NULL;
+int Board::getLegalMove1() {
+    return bitScanForward(~taken);
 }
 
 bitbrd Board::getLegalExt(int side) {

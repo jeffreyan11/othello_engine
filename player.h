@@ -144,6 +144,8 @@ private:
     Openings openingBook;
     #endif
 
+    Hash killer_table;
+
     int turn;
     int totalTimePM;
 
@@ -184,8 +186,6 @@ public:
     Board game;
     int mySide;
     int oppSide;
-
-    Hash killer_table;
 
     Player(Side side);
     ~Player();

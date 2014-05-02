@@ -5,6 +5,10 @@
 #include "board.h"
 #include "endgame.h"
 
+bitbrd cstack[20];
+int movestack[20];
+int top;
+
 /*
  DEPTH  #LEAF NODES   #FULL-DEPTH  #HIGHER
 ==========================================
@@ -33,15 +37,43 @@ unsigned long long perft(Board &b, int depth, int side, bool passed) {
     if(lm.size == 0) {
         if(passed)
             return 1;
-        Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(MOVE_NULL, side);
-        nodes += perft(copy, depth-1, -side, true);
+
+        nodes += perft(b, depth-1, -side, true);
+        return nodes;
     }
 
     for(unsigned int i = 0; i < lm.size; i++) {
         Board copy = Board(b.taken, b.black, b.legal);
         copy.doMove(lm.get(i), side);
         nodes += perft(copy, depth-1, -side, false);
+    }
+
+    return nodes;
+}
+unsigned long long perftu(Board &b, int depth, int side, bool passed) {
+    if(depth == 0)
+        return 1;
+
+    unsigned long long nodes = 0;
+    MoveList lm = b.getLegalMoves(side);
+
+    if(lm.size == 0) {
+        if(passed)
+            return 1;
+
+        nodes += perftu(b, depth-1, -side, true);
+        return nodes;
+    }
+
+    for(unsigned int i = 0; i < lm.size; i++) {
+        cstack[top] = b.getDoMove(lm.get(i), side);
+        movestack[top] = lm.get(i);
+        top++;
+
+        nodes += perftu(b, depth-1, -side, false);
+
+        top--;
+        b.undoMove(cstack[top], movestack[top], side);
     }
 
     return nodes;
@@ -58,17 +90,28 @@ void ffo(std::string file) {
         for(int i = 0; i < 64; i++)
             board[i] = read[i];
 
-        //getline(cfile, line);
+        getline(cfile, line);
+    }
+
+    const char *read_color = line.c_str();
+    int side = 0;
+    if(read_color[0] == 'B') {
+        cerr << "Solving for black" << endl;
+        side = CBLACK;
+    }
+    else {
+        cerr << "Solving for white" << endl;
+        side = CWHITE;
     }
 
     Board b;
     b.setBoard(board);
-    MoveList lm = b.getLegalMoves(CBLACK);
+    MoveList lm = b.getLegalMoves(side);
     int empties = 64 - b.count(CBLACK) - b.count(CWHITE);
 
     Endgame e;
     e.endgameTimeMS = 100000000;
-    e.mySide = CBLACK;
+    e.mySide = side;
     int result = e.endgame(b, lm, empties);
     cerr << "Best move: " << result << endl;
 }
@@ -78,11 +121,14 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    //Board b;
-    //cerr << perft(b, 11, CBLACK, false) << endl;
+    /*Board b;
+    top = 0;
+    cerr << perft(b, 10, CBLACK, false) << endl;*/
 
-    ffo("ffotest/end40.pos");
-    //ffo("ffotest/end41.pos");
+    //ffo("ffotest/end40.pos");
+    ffo("ffotest/end41.pos");
+    //ffo("ffotest/end42.pos");
+    //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
