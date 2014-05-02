@@ -96,11 +96,11 @@ void ffo(std::string file) {
     const char *read_color = line.c_str();
     int side = 0;
     if(read_color[0] == 'B') {
-        cerr << "Solving for black" << endl;
+        cerr << "Solving for black: ";
         side = CBLACK;
     }
     else {
-        cerr << "Solving for white" << endl;
+        cerr << "Solving for white: ";
         side = CWHITE;
     }
 
@@ -108,6 +108,7 @@ void ffo(std::string file) {
     b.setBoard(board);
     MoveList lm = b.getLegalMoves(side);
     int empties = 64 - b.count(CBLACK) - b.count(CWHITE);
+    cerr << empties << " empty" << endl;
 
     Endgame e;
     e.endgameTimeMS = 100000000;
@@ -125,8 +126,8 @@ int main(int argc, char **argv) {
     top = 0;
     cerr << perft(b, 10, CBLACK, false) << endl;*/
 
-    //ffo("ffotest/end40.pos");
-    ffo("ffotest/end41.pos");
+    ffo("ffotest/end40.pos");
+    //ffo("ffotest/end41.pos");
     //ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");

@@ -453,30 +453,6 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
     return result;
 }
 
-/**
- * @brief Returns the legal moves for 2 squares left on the board.
-*/
-int Board::getLegalMoves2(int side, int &m1) {
-    getLegal(side);
-    bitbrd temp = legal;
-
-    if(temp) {
-        m1 = bitScanForward(temp);
-        temp &= temp-1;
-        if(temp)
-            return bitScanForward(temp);
-    }
-
-    return MOVE_NULL;
-}
-
-/**
- * @brief Returns the legal move, if any, for 1 square left on the board.
-*/
-int Board::getLegalMove1() {
-    return bitScanForward(~taken);
-}
-
 bitbrd Board::getLegalExt(int side) {
     getLegal(side);
     return legal;
@@ -652,9 +628,6 @@ char *Board::toString() {
 
 bitbrd Board::getTaken() {
     return taken;
-}
-bitbrd Board::getBlack() {
-    return black;
 }
 
 int Board::bitScanForward(bitbrd bb) {

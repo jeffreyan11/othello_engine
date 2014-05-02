@@ -385,8 +385,6 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         copy.doMove(legalMove2, s);
 
         score = -endgame2(copy, -s, -alpha-1, -alpha, false);
-        if (alpha < score && score < beta)
-            score = -endgame2(copy, -s, -beta, -alpha, false);
 
         if (alpha < score)
             alpha = score;
@@ -398,8 +396,6 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             copy.doMove(legalMove3, s);
 
             score = -endgame2(copy, -s, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgame2(copy, -s, -beta, -alpha, false);
 
             if (alpha < score)
                 alpha = score;
@@ -413,24 +409,16 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
  * @brief Endgame solver, to be used with exactly 2 empty squares.
 */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
-    int score;
-    int legalMove1 = MOVE_NULL;
-    int legalMove2 = b.getLegalMoves2(s, legalMove1);
+    int score = NEG_INFTY;
+    bitbrd empty = ~b.getTaken();
+    int legalMove1 = bitScanForward(empty);
+    empty &= empty-1;
+    int legalMove2 = bitScanForward(empty);
 
-    if(legalMove1 == MOVE_NULL) {
-        if(passedLast)
-            return (b.count(s) - b.count(-s));
-
-        score = -endgame2(b, -s, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
-    }
-
-    if(legalMove2 != MOVE_NULL) {
+    bitbrd changeMask = b.getDoMove(legalMove1, s);
+    if(changeMask) {
         Board copy = Board(b.taken, b.black, b.legal);
-        copy.doMove(legalMove2, s);
+        copy.makeMove(legalMove1, changeMask, s);
         score = -endgame1(copy, -s, -beta);
 
         if (alpha < score)
@@ -439,12 +427,28 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
             return alpha;
     }
 
-    Board copy = Board(b.taken, b.black, b.legal);
-    copy.doMove(legalMove1, s);
-    score = -endgame1(copy, -s, -beta);
+    changeMask = b.getDoMove(legalMove2, s);
+    if(changeMask) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.makeMove(legalMove2, changeMask, s);
+        score = -endgame1(copy, -s, -beta);
 
-    if (alpha < score)
-        alpha = score;
+        if (alpha < score)
+            alpha = score;
+        if (alpha >= beta)
+            return alpha;
+    }
+
+    // if no legal moves
+    if(score == NEG_INFTY) {
+        if(passedLast)
+            return (b.count(s) - b.count(-s));
+
+        score = -endgame2(b, -s, -beta, -alpha, true);
+        if (alpha < score)
+            alpha = score;
+        return alpha;
+    }
 
     return alpha;
 }
@@ -454,7 +458,8 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
 */
 int Endgame::endgame1(Board &b, int s, int alpha) {
     int score;
-    int legalMove = b.getLegalMove1();
+
+    int legalMove = bitScanForward(~b.getTaken());
     bitbrd changeMask = b.getDoMove(legalMove, s);
 
     if(!changeMask) {
