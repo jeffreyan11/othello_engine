@@ -208,11 +208,9 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
                 p = 100 + SQ_VAL[moves[n]];
             else {
                 p = SQ_VAL[moves[n]];
-
                 if(QUADRANT_ID[moves[n]] & region_parity)
                     p += 10;
             }
-
             priority[n] = p;
 
             legal &= legal-1; n++;
@@ -438,16 +436,17 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta, bool passedLast) {
         if (alpha >= beta)
             return alpha;
     }
+    else {
+        if(score == NEG_INFTY) {
+            // if no legal moves
+            if(passedLast)
+                return (b.count(s) - b.count(-s));
 
-    // if no legal moves
-    if(score == NEG_INFTY) {
-        if(passedLast)
-            return (b.count(s) - b.count(-s));
-
-        score = -endgame2(b, -s, -beta, -alpha, true);
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+            score = -endgame2(b, -s, -beta, -alpha, true);
+            if (alpha < score)
+                alpha = score;
+            return alpha;
+        }
     }
 
     return alpha;
