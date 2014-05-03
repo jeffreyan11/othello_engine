@@ -27,7 +27,6 @@ private:
     int endgameDepth;
     int attemptingDepth;
 
-    Eval *evaluater;
     Endgame endgameSolver;
 
     #if USE_OPENING_BOOK
@@ -55,6 +54,7 @@ public:
     Board game;
     int mySide;
     int oppSide;
+    Eval *evaluater;
 
     Player(Side side);
     ~Player();

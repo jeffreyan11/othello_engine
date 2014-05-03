@@ -119,7 +119,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             endgameSolver.endgameTimeMS = 100000000;
         cerr << "Endgame solver: depth " << empties << endl;
 
-        myMove = endgameSolver.endgame(game, legalMoves, empties);
+        myMove = endgameSolver.endgame(game, legalMoves, empties, evaluater);
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);

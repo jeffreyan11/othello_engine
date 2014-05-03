@@ -50,6 +50,40 @@ int Eval::heuristic(Board *b, int turn) {
     return score;
 }
 
+int Eval::end_heuristic(Board *b) {
+    int score;
+    int myCoins = b->count(mySide);
+    if(myCoins == 0)
+        return -9001;
+
+    score = 2*(myCoins - b->count(oppSide));
+
+    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
+    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
+    //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
+    score += (mySide == BLACK) ? 5*boardTo33PV(b) : -2*boardTo33PV(b);
+
+    score += 8 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    score += 10 * (15 - b->numLegalMoves(oppSide));
+    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+
+    return score;
+}
+
+int Eval::mob(Board *b) {
+    int score;
+
+    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
+    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
+    //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
+    score += (mySide == BLACK) ? 5*boardTo33PV(b) : -2*boardTo33PV(b);
+
+    score -= 10 * (b->numLegalMoves(mySide) + b->numLegalMoves(oppSide));
+    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+
+    return score;
+}
+
 int Eval::countSetBits(bitbrd i) {
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));

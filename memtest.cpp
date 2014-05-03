@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
     //cerr << perftu(b, 11, CBLACK, false) << endl;
 
     ffo("ffotest/end40.pos");
-    //ffo("ffotest/end41.pos");
-    //ffo("ffotest/end42.pos");
+    ffo("ffotest/end41.pos");
+    ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");
 
@@ -144,9 +144,10 @@ void ffo(std::string file) {
     int empties = 64 - b.count(CBLACK) - b.count(CWHITE);
     cerr << empties << " empty" << endl;
 
+    Player p(BLACK);
     Endgame e;
     e.endgameTimeMS = 100000000;
     e.mySide = side;
-    int result = e.endgame(b, lm, empties);
+    int result = e.endgame(b, lm, empties, p.evaluater);
     cerr << "Best move: " << result << endl;
 }

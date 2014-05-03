@@ -15,7 +15,7 @@ Endgame::~Endgame() {
 /**
  * @brief Solves the endgame for perfect play.
 */
-int Endgame::endgame(Board &b, MoveList &moves, int depth) {
+int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
     #if USE_BESTMOVE_TABLE
     // if best move for this position has already been found and stored
     int temp = endgame_table->get(&b, mySide);
@@ -26,6 +26,8 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth) {
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
+
+    evaluater = eval;
 
     // initialize region parity
     region_parity = 0;
@@ -122,6 +124,10 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     MoveList priority;
     MoveList legalMoves = b.getLegalMovesOrdered(s, priority);
+    sort(legalMoves, priority, 0, legalMoves.size-1);
+    priority.clear();
+
+    pvs(b, legalMoves, priority, s, 2, NEG_INFTY, INFTY);
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
     if(legalMoves.size <= 0) {
@@ -506,6 +512,95 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
 
     if (alpha < score)
         alpha = score;
+    return alpha;
+}
+
+//--------------------------------PVS Search------------------------------------
+
+/**
+ * @brief Performs a principal variation null-window search.
+*/
+int Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
+    int depth, int alpha, int beta) {
+
+    int score;
+    int tempMove = moves.get(0);
+
+    for (unsigned int i = 0; i < moves.size; i++) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(moves.get(i), s);
+        int ttScore = NEG_INFTY;
+        if (i != 0) {
+            score = -pvs_h(copy, ttScore, -s, depth-1, -alpha-1, -alpha);
+            if (alpha < score && score < beta) {
+                score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -score);
+            }
+        }
+        else {
+            score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        }
+        scores.add(ttScore);
+        if (score > alpha) {
+            alpha = score;
+            tempMove = moves.get(i);
+        }
+        if (alpha >= beta)
+            break;
+    }
+    return tempMove;
+}
+
+/**
+ * @brief Helper function for the principal variation search.
+ * 
+ * Uses alpha-beta pruning with a null-window search, a transposition table that
+ * stores moves which previously caused a beta cutoff, and an internal sorting
+ * search of depth 2.
+*/
+int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
+    int alpha, int beta) {
+
+    if (depth <= 0) {
+        topScore = (s == mySide) ? evaluater->end_heuristic(&b) :
+                -evaluater->end_heuristic(&b);
+        return topScore;
+    }
+
+    int score;
+    int ttScore = NEG_INFTY;
+
+    MoveList legalMoves = b.getLegalMoves(s);
+    if(legalMoves.size <= 0) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(MOVE_NULL, s);
+        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+        if(ttScore > topScore)
+            topScore = ttScore;
+        return alpha;
+    }
+
+    for (unsigned int i = 0; i < legalMoves.size; i++) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(legalMoves.get(i), s);
+
+        if (i != 0) {
+            score = -pvs_h(copy, ttScore, -s, depth-1, -alpha-1, -alpha);
+            if (alpha < score && score < beta)
+                score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        }
+        else
+            score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+        if(ttScore > topScore)
+            topScore = ttScore;
+        if (alpha >= beta)
+            break;
+    }
     return alpha;
 }
 

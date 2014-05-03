@@ -147,6 +147,8 @@ public:
     ~Eval();
 
     int heuristic(Board *b, int turn);
+    int end_heuristic(Board *b);
+    int mob(Board *b);
 };
 
 #endif

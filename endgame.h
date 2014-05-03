@@ -5,6 +5,7 @@
 #include "common.h"
 #include "board.h"
 #include "hash.h"
+#include "eval.h"
 
 #define END_SHLLW 11
 #define USE_BESTMOVE_TABLE true
@@ -28,10 +29,16 @@ private:
     #endif
     Hash killer_table;
 
+    Eval *evaluater;
+
     int region_parity;
 
-    int bitScanForward(bitbrd bb);
+    int pvs(Board &b, MoveList &moves, MoveList &scores, int side, int depth,
+        int alpha, int beta);
+    int pvs_h(Board &b, int &topScore, int side, int depth,
+        int alpha, int beta);
 
+    int bitScanForward(bitbrd bb);
     void sort(MoveList &moves, MoveList &scores, int left, int right);
     void swap(MoveList &moves, MoveList &scores, int i, int j);
     int partition(MoveList &moves, MoveList &scores, int left, int
@@ -44,7 +51,7 @@ public:
     Endgame();
     ~Endgame();
 
-    int endgame(Board &b, MoveList &moves, int depth);
+    int endgame(Board &b, MoveList &moves, int depth, Eval *eval);
     int endgame_h(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
     int endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
