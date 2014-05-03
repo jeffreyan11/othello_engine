@@ -620,6 +620,10 @@ bitbrd Board::getTaken() {
     return taken;
 }
 
+int Board::countEmpty() {
+    return countSetBits(~taken);
+}
+
 int Board::bitScanForward(bitbrd bb) {
     #if defined(__x86_64__)
         asm ("bsf %1, %0" : "=r" (bb) : "r" (bb));

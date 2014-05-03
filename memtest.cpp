@@ -82,7 +82,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
     return nodes;
 }
 
-// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp
+// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp eval.cpp
 int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -91,8 +91,7 @@ int main(int argc, char **argv) {
     //top = 0;
     //cerr << perftu(b, 11, CBLACK, false) << endl;
 
-    ffo("ffotest/error.pos");
-    //ffo("ffotest/end40.pos");
+    ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
     //ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");

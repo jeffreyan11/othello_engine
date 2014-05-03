@@ -2,7 +2,7 @@
 
 Endgame::Endgame() {
     #if USE_BESTMOVE_TABLE
-    endgame_table = new Hash(8000);
+    endgame_table = new Hash(4000);
     #endif
 }
 
@@ -108,21 +108,12 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     if(hashed != -1) {
         if (alpha < score)
             alpha = score;
-        if (alpha >= beta)
-            return alpha;
+        return alpha;
     }
     #endif
     // attempt killer heuristic cutoff
     int killer = killer_table.get(&b, s, score);
     if(killer != -1) {
-        //Board copy = Board(b.taken, b.black, b.legal);
-        //copy.doMove(killer, s);
-        /*region_parity ^= QUADRANT_ID[killer];
-        score = (depth > END_SHLLW) ?
-            -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-            -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
-
-        region_parity ^= QUADRANT_ID[killer];*/
         if (alpha < score)
             alpha = score;
         if (alpha >= beta)
@@ -428,8 +419,6 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     empty &= empty-1;
     int legalMove2 = bitScanForward(empty);
 
-    //cerr << "eg2: " << legalMove1 << " " << legalMove2 << endl;
-
     bitbrd changeMask = b.getDoMove(legalMove1, s);
     if(changeMask) {
         b.makeMove(legalMove1, changeMask, s);
@@ -520,6 +509,7 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
     return alpha;
 }
 
+//--------------------------------Utilities-------------------------------------
 
 int Endgame::bitScanForward(bitbrd bb) {
     #if defined(__x86_64__)
