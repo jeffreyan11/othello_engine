@@ -4,6 +4,11 @@ Eval::Eval(int s) {
     mySide = s;
     oppSide = -s;
 
+    edgeTable = new int[6561];
+    s33Table = new int[19683];
+    p24Table = new int[6561];
+    pE2XTable = new int[59049];
+
     readEdgeTable();
     readStability33Table();
     readPattern24Table();
@@ -11,6 +16,10 @@ Eval::Eval(int s) {
 }
 
 Eval::~Eval() {
+    delete[] edgeTable;
+    delete[] s33Table;
+    delete[] p24Table;
+    delete[] pE2XTable;
 }
 
 int Eval::heuristic(Board *b, int turn) {
@@ -58,28 +67,14 @@ int Eval::end_heuristic(Board *b) {
 
     score = 2*(myCoins - b->count(oppSide));
 
-    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
-    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
+    //score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
+    score += (mySide == BLACK) ? boardToEPV(b) : -boardToEPV(b);
     //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
-    score += (mySide == BLACK) ? 5*boardTo33PV(b) : -2*boardTo33PV(b);
+    score += (mySide == BLACK) ? 6*boardTo33PV(b) : -6*boardTo33PV(b);
 
-    score += 8 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    score += 10 * (15 - b->numLegalMoves(oppSide));
-    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
-
-    return score;
-}
-
-int Eval::mob(Board *b) {
-    int score;
-
-    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
-    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-    //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
-    score += (mySide == BLACK) ? 5*boardTo33PV(b) : -2*boardTo33PV(b);
-
-    score -= 10 * (b->numLegalMoves(mySide) + b->numLegalMoves(oppSide));
-    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    //score += 10 * (15 - b->numLegalMoves(oppSide));
+    score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }

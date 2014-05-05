@@ -300,7 +300,7 @@ MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
     while(temp) {
         result.add(bitScanForward(temp));
         if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add( 10 + SQ_VAL[result.last()] );
+            priority.add( 100 + SQ_VAL[result.last()] );
         else priority.add( SQ_VAL[result.last()] );
         temp &= temp-1;
     }
@@ -707,8 +707,9 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor])
-            return (result ^ NORTHRAYI[anchor]);
+        // use multiplication to reduce branching
+        return ((self & MOVEMASK[anchor]) && true) *
+                (result ^ NORTHRAYI[anchor]);
     }
     return 0;
 }
@@ -740,8 +741,8 @@ bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor])
-            return (result ^ WESTRAYI[anchor]);
+        return ((self & MOVEMASK[anchor]) && true) *
+                (result ^ WESTRAYI[anchor]);
     }
     return 0;
 }
@@ -751,8 +752,8 @@ bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor])
-            return (result ^ NERAYI[anchor]);
+        return ((self & MOVEMASK[anchor]) && true) *
+                (result ^ NERAYI[anchor]);
     }
     return 0;
 }
@@ -762,8 +763,8 @@ bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if(block) {
         int anchor = bitScanReverse(block);
-        if(self & MOVEMASK[anchor])
-            return (result ^ NWRAYI[anchor]);
+        return ((self & MOVEMASK[anchor]) && true) *
+                (result ^ NWRAYI[anchor]);
     }
     return 0;
 }

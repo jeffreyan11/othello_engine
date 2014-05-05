@@ -76,7 +76,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
         nodes += perftu(b, depth-1, -side, false);
 
         top--;
-        b.undoMove(cstack[top], movestack[top], side);
+        b.undoMove(movestack[top], cstack[top], side);
     }
 
     return nodes;
@@ -84,16 +84,21 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
 
 // g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp eval.cpp
 int main(int argc, char **argv) {
+    top = 0;
+
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    //Board b;
-    //top = 0;
-    //cerr << perftu(b, 11, CBLACK, false) << endl;
+    Board b;
+    cerr << perft(b, 11, CBLACK, false) << endl;
 
-    ffo("ffotest/end40.pos");
-    ffo("ffotest/end41.pos");
-    ffo("ffotest/end42.pos");
+    //ffo("ffoeasy/end40.pos");
+    //ffo("ffoeasy/end41.pos");
+    //ffo("ffoeasy/end42.pos");
+
+    //ffo("ffotest/end40.pos");
+    //ffo("ffotest/end41.pos");
+    //ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");
 

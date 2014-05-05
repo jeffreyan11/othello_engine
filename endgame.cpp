@@ -42,6 +42,10 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
     int beta = 64;
     int tempMove = moves.get(0);
 
+    /*MoveList scores;
+    pvs(b, moves, scores, mySide, 2, NEG_INFTY, INFTY);
+    sort(moves, scores, 0, moves.size-1);*/
+
     for (unsigned int i = 0; i < moves.size; i++) {
         auto end_time = high_resolution_clock::now();
         duration<double> time_span = duration_cast<duration<double>>(
@@ -124,11 +128,6 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     MoveList priority;
     MoveList legalMoves = b.getLegalMovesOrdered(s, priority);
-    sort(legalMoves, priority, 0, legalMoves.size-1);
-    priority.clear();
-
-    pvs(b, legalMoves, priority, s, 2, NEG_INFTY, INFTY);
-    sort(legalMoves, priority, 0, legalMoves.size-1);
 
     if(legalMoves.size <= 0) {
         if(passedLast)
@@ -140,6 +139,22 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             alpha = score;
         return alpha;
     }
+
+    sort(legalMoves, priority, 0, legalMoves.size-1);
+
+    //MoveList scores;
+    /*for(unsigned int i = 0; i < legalMoves.size; i++) {
+        Board copy = Board(b.taken, b.black, b.legal);
+        copy.doMove(legalMoves.get(i), s);
+        scores.add(evaluater->mob(&copy));
+    }
+    sort(legalMoves, scores, 0, legalMoves.size-1);*/
+
+    /*pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
+    for(unsigned int i = 0; i < legalMoves.size; i++) {
+        priority.set(i, scores.get(i)+10*priority.get(i));
+    }
+    sort(legalMoves, priority, 0, legalMoves.size-1);*/
 
     #if USE_BESTMOVE_TABLE
     int tempMove = -1;
@@ -394,7 +409,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         copy = Board(b.taken, b.black, b.legal);
         copy.doMove(legalMove2, s);
 
-        score = -endgame2(copy, -s, -alpha-1, -alpha);
+        score = -endgame2(copy, -s, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -405,7 +420,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             copy = Board(b.taken, b.black, b.legal);
             copy.doMove(legalMove3, s);
 
-            score = -endgame2(copy, -s, -alpha-1, -alpha);
+            score = -endgame2(copy, -s, -beta, -alpha);
 
             if (alpha < score)
                 alpha = score;
@@ -532,20 +547,16 @@ int Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
         int ttScore = NEG_INFTY;
         if (i != 0) {
             score = -pvs_h(copy, ttScore, -s, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta) {
+            if (alpha < score && score < beta)
                 score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -score);
-            }
         }
-        else {
-            score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
-        }
+        else score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+
         scores.add(ttScore);
         if (score > alpha) {
             alpha = score;
             tempMove = moves.get(i);
         }
-        if (alpha >= beta)
-            break;
     }
     return tempMove;
 }
@@ -591,8 +602,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
             if (alpha < score && score < beta)
                 score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
         }
-        else
-            score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        else score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;

@@ -121,10 +121,10 @@ private:
     int mySide;
     int oppSide;
 
-    int edgeTable[6561];
-    int s33Table[19683];
-    int p24Table[6561];
-    int pE2XTable[59049];
+    int *edgeTable;
+    int *s33Table;
+    int *p24Table;
+    int *pE2XTable;
 
     int countSetBits(bitbrd i);
     bitbrd reflectVertical(bitbrd i);
@@ -148,7 +148,6 @@ public:
 
     int heuristic(Board *b, int turn);
     int end_heuristic(Board *b);
-    int mob(Board *b);
 };
 
 #endif

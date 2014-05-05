@@ -9,10 +9,10 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 12;
+    maxDepth = 16;
     minDepth = 6;
     sortDepth = 4;
-    endgameDepth = 20;
+    endgameDepth = 21;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     endgameSolver.mySide = mySide;
