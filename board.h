@@ -396,7 +396,6 @@ class Board {
 
 private:
     bool checkMove(int index, int side);
-    void getLegal(int side);
 
     int countSetBits(bitbrd i);
     int bitScanForward(bitbrd bb);
@@ -414,10 +413,9 @@ private:
 public:
     bitbrd taken;
     bitbrd black;
-    bitbrd legal;
 
     Board();
-    Board(bitbrd b, bitbrd t, bitbrd l);
+    Board(bitbrd b, bitbrd t);
     ~Board();
     Board *copy();
 
@@ -428,7 +426,7 @@ public:
     bitbrd getDoMove(int index, int side);
     void makeMove(int index, bitbrd changeMask, int side);
     void undoMove(int index, bitbrd changed, int side);
-    bitbrd getLegalExt(int side);
+    bitbrd getLegal(int side);
     MoveList getLegalMoves(int side);
     MoveList getLegalMovesOrdered(int side, MoveList &priority);
     int getLegalMoves4(int side, int &m1, int &m2, int &m3);

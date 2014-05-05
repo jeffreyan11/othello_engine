@@ -196,7 +196,7 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, int s,
         if(time_span.count() * moves.size * 1000 > totalTimePM * (i+1))
             return MOVE_BROKEN;
 
-        Board copy = Board(b->taken, b->black, b->legal);
+        Board copy = Board(b->taken, b->black);
         copy.doMove(moves.get(i), s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
@@ -240,7 +240,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
 
     int killerMove = killer_table.get(b, s);
     if(killerMove != -1) {
-        Board copy = Board(b->taken, b->black, b->legal);
+        Board copy = Board(b->taken, b->black);
         copy.doMove(killerMove, s);
         score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
 
@@ -254,7 +254,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
 
     MoveList legalMoves = b->getLegalMoves(s);
     if(legalMoves.size <= 0) {
-        Board copy = Board(b->taken, b->black, b->legal);
+        Board copy = Board(b->taken, b->black);
         copy.doMove(MOVE_NULL, s);
         score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
 
@@ -273,7 +273,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b->taken, b->black, b->legal);
+        Board copy = Board(b->taken, b->black);
         copy.doMove(legalMoves.get(i), s);
 
         if (i != 0) {

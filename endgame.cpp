@@ -54,7 +54,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         if(time_span.count() * 1500 * moves.size > endgameTimeMS * (i+1))
             return MOVE_BROKEN;
 
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(moves.get(i), mySide);
         region_parity ^= QUADRANT_ID[moves.get(i)];
 
@@ -144,7 +144,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     //MoveList scores;
     /*for(unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
         scores.add(evaluater->mob(&copy));
     }
@@ -160,7 +160,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     int tempMove = -1;
     #endif
     for(unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
 
@@ -206,7 +206,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     int score;
-    bitbrd legal = b.getLegalExt(s);
+    bitbrd legal = b.getLegal(s);
 
     if(!legal) {
         if(passedLast)
@@ -271,7 +271,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
 
     // search all moves
     for (int i = 0; i < n; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(moves[i], s);
         region_parity ^= QUADRANT_ID[moves[i]];
 
@@ -322,7 +322,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
         return alpha;
     }
 
-    Board copy = Board(b.taken, b.black, b.legal);
+    Board copy = Board(b.taken, b.black);
     copy.doMove(legalMove1, s);
 
     score = -endgame3(copy, -s, -beta, -alpha, false);
@@ -333,7 +333,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
         return alpha;
 
     if(legalMove2 != MOVE_NULL) {
-        copy = Board(b.taken, b.black, b.legal);
+        copy = Board(b.taken, b.black);
         copy.doMove(legalMove2, s);
 
         score = -endgame3(copy, -s, -alpha-1, -alpha, false);
@@ -346,7 +346,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
             return alpha;
 
         if(legalMove3 != MOVE_NULL) {
-            copy = Board(b.taken, b.black, b.legal);
+            copy = Board(b.taken, b.black);
             copy.doMove(legalMove3, s);
 
             score = -endgame3(copy, -s, -alpha-1, -alpha, false);
@@ -359,7 +359,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
                 return alpha;
 
             if(legalMove4 != MOVE_NULL) {
-                copy = Board(b.taken, b.black, b.legal);
+                copy = Board(b.taken, b.black);
                 copy.doMove(legalMove3, s);
 
                 score = -endgame3(copy, -s, -alpha-1, -alpha, false);
@@ -395,7 +395,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         return alpha;
     }
 
-    Board copy = Board(b.taken, b.black, b.legal);
+    Board copy = Board(b.taken, b.black);
     copy.doMove(legalMove1, s);
 
     score = -endgame2(copy, -s, -beta, -alpha);
@@ -406,7 +406,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         return alpha;
 
     if(legalMove2 != MOVE_NULL) {
-        copy = Board(b.taken, b.black, b.legal);
+        copy = Board(b.taken, b.black);
         copy.doMove(legalMove2, s);
 
         score = -endgame2(copy, -s, -beta, -alpha);
@@ -417,7 +417,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             return alpha;
 
         if(legalMove3 != MOVE_NULL) {
-            copy = Board(b.taken, b.black, b.legal);
+            copy = Board(b.taken, b.black);
             copy.doMove(legalMove3, s);
 
             score = -endgame2(copy, -s, -beta, -alpha);
@@ -542,7 +542,7 @@ int Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
     int tempMove = moves.get(0);
 
     for (unsigned int i = 0; i < moves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(moves.get(i), s);
         int ttScore = NEG_INFTY;
         if (i != 0) {
@@ -582,7 +582,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
 
     MoveList legalMoves = b.getLegalMoves(s);
     if(legalMoves.size <= 0) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(MOVE_NULL, s);
         score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
 
@@ -594,7 +594,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
         if (i != 0) {

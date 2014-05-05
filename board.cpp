@@ -7,16 +7,14 @@
 Board::Board() {
     taken = 0x0000001818000000;
     black = 0x0000000810000000;
-    legal = 0x0000102004080000;
 }
 
 /**
- * @brief A constructor allowing specification of taken, black, legal.
+ * @brief A constructor allowing specification of taken, black.
 */
-Board::Board(bitbrd t, bitbrd b, bitbrd l) {
+Board::Board(bitbrd t, bitbrd b) {
     taken = t;
     black = b;
-    legal = l;
 }
 
 /**
@@ -29,7 +27,7 @@ Board::~Board() {
  * @brief Returns a copy of this board.
  */
 Board *Board::copy() {
-    Board *newBoard = new Board(taken, black, legal);
+    Board *newBoard = new Board(taken, black);
     return newBoard;
 }
  
@@ -56,8 +54,7 @@ bool Board::checkMove(Move *m, Side side) {
     // Passing is only legal if you have no moves.
     if (m == NULL) return !hasMoves((side == BLACK) ? CBLACK : CWHITE);
 
-    if(legal == 0xFFFF000000000000)
-        getLegal(side);
+    bitbrd legal = getLegal(side);
 
     return legal & MOVEMASK[m->getX() + 8 * m->getY()];
 }
@@ -66,9 +63,7 @@ bool Board::checkMove(Move *m, Side side) {
  * @brief Overloaded function for internal use with getLegalMoves().
 */
 bool Board::checkMove(int index, int side) {
-    if(legal == 0xFFFF000000000000)
-        getLegal(side);
-
+    bitbrd legal = getLegal(side);
     return legal & MOVEMASK[index];
 }
 
@@ -82,7 +77,6 @@ bool Board::checkMove(int index, int side) {
 void Board::doMove(int index, int side) {
     // A NULL move means pass.
     if (index == MOVE_NULL) {
-        legal = 0xFFFF000000000000;
         return;
     }
 
@@ -156,14 +150,12 @@ void Board::doMove(int index, int side) {
 
     changeMask |= MOVEMASK[index];
 
-    // update taken, black, legal
+    // update taken, black
     taken |= changeMask;
     if(side == CBLACK)
         black |= changeMask;
     else
         black &= ~changeMask;
-
-    legal = 0xFFFF000000000000;
 }
 
 /**
@@ -238,7 +230,6 @@ bitbrd Board::getDoMove(int index, int side) {
     return changeMask;
 }
 
-// Note: does not update legal
 void Board::makeMove(int index, bitbrd changeMask, int side) {
     taken |= MOVEMASK[index];
     black ^= changeMask | ((side == CBLACK) * MOVEMASK[index]);
@@ -254,8 +245,7 @@ void Board::undoMove(int index, bitbrd changed, int side) {
 */
 MoveList Board::getLegalMoves(int side) {
     MoveList result;
-    getLegal(side);
-    bitbrd temp = legal;
+    bitbrd temp = getLegal(side);
     bitbrd corner = temp & 0x8100000000000081;
     bitbrd csq = temp & 0x2400810000810024;
     bitbrd adj = temp & 0x42C300000000C342;
@@ -294,8 +284,7 @@ MoveList Board::getLegalMoves(int side) {
 */
 MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
     MoveList result;
-    getLegal(side);
-    bitbrd temp = legal;
+    bitbrd temp = getLegal(side);
 
     while(temp) {
         result.add(bitScanForward(temp));
@@ -313,8 +302,7 @@ MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
 */
 int Board::getLegalMoves4(int side, int &m1, int &m2, int &m3) {
     int m4 = MOVE_NULL;
-    getLegal(side);
-    bitbrd temp = legal;
+    bitbrd temp = getLegal(side);
     int n = 0;
 
     if(temp) {
@@ -400,8 +388,7 @@ int Board::getLegalMoves4(int side, int &m1, int &m2, int &m3) {
 */
 int Board::getLegalMoves3(int side, int &m1, int &m2) {
     int result = MOVE_NULL;
-    getLegal(side);
-    bitbrd temp = legal;
+    bitbrd temp = getLegal(side);
     int n = 0;
 
     if(temp) {
@@ -443,19 +430,14 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
     return result;
 }
 
-bitbrd Board::getLegalExt(int side) {
-    getLegal(side);
-    return legal;
-}
-
 /**
- * @brief Stores all legal moves for a side in the bitbrd object legal, for
- * quick retrieval later by checkMove().
+ * @brief Returns a bitmask with a 1 set in every square that is a legal move
+ * for the given side.
  * 
  * This method operates by checking in all eight directions, first for the line
  * of pieces of the opposite color, then for the anchor once the line ends.
 */
-void Board::getLegal(int side) {
+bitbrd Board::getLegal(int side) {
     bitbrd result = 0;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
@@ -555,12 +537,11 @@ void Board::getLegal(int side) {
     result |= ((tempM << 9) | (tempM >> 9));
     #endif
 
-    legal = result & ~taken;
+    return result & ~taken;
 }
 
 int Board::numLegalMoves(int side) {
-    getLegal(side);
-    return countSetBits(legal);
+    return countSetBits(getLegal(side));
 }
 
 int Board::potentialMobility(int side) {
@@ -590,7 +571,6 @@ bitbrd Board::toBits(int side) {
 void Board::setBoard(char data[]) {
     taken = 0;
     black = 0;
-    legal = 0xFFFF000000000000;
     for (int i = 0; i < 64; i++) {
         if (data[i] == 'b' || data[i] == 'B' || data[i] == 'X') {
             taken |= MOVEMASK[i];

@@ -45,7 +45,7 @@ unsigned long long perft(Board &b, int depth, int side, bool passed) {
     }
 
     for(unsigned int i = 0; i < lm.size; i++) {
-        Board copy = Board(b.taken, b.black, b.legal);
+        Board copy = Board(b.taken, b.black);
         copy.doMove(lm.get(i), side);
         nodes += perft(copy, depth-1, -side, false);
     }
@@ -89,12 +89,12 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    Board b;
-    cerr << perft(b, 11, CBLACK, false) << endl;
+    //Board b;
+    //cerr << perft(b, 11, CBLACK, false) << endl;
 
-    //ffo("ffoeasy/end40.pos");
-    //ffo("ffoeasy/end41.pos");
-    //ffo("ffoeasy/end42.pos");
+    ffo("ffoeasy/end40.pos");
+    ffo("ffoeasy/end41.pos");
+    ffo("ffoeasy/end42.pos");
 
     //ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
