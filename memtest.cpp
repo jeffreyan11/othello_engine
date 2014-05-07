@@ -93,8 +93,8 @@ int main(int argc, char **argv) {
     //cerr << perft(b, 11, CBLACK, false) << endl;
 
     ffo("ffoeasy/end40.pos");
-    ffo("ffoeasy/end41.pos");
-    ffo("ffoeasy/end42.pos");
+    //ffo("ffoeasy/end41.pos");
+    //ffo("ffoeasy/end42.pos");
 
     //ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");

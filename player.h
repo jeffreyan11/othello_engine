@@ -13,10 +13,10 @@ using namespace std;
 
 #define USE_OPENING_BOOK false
 
-const int endgameTime[22] = {25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
+const int endgameTime[23] = {25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
 50, 75, 100, 200, 500,
 1500, 4000, 12000, 30000, 75000,
-200000, 500000};
+200000, 500000, 1200000};
 
 class Player {
 

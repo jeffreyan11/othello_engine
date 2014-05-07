@@ -275,7 +275,7 @@ int Eval::bitsToPI(int b, int w) {
 void Eval::readEdgeTable() {
     std::string line;
     std::string file;
-        file = "edgetable.txt";
+        file = "patterns/edgetable.txt";
     std::ifstream edgetable(file);
 
     if(edgetable.is_open()) {
@@ -296,7 +296,7 @@ void Eval::readEdgeTable() {
 void Eval::readStability33Table() {
     std::string line;
     std::string file;
-        file = "s33table.txt";
+        file = "patterns/s33table.txt";
     std::ifstream s33table(file);
 
     if(s33table.is_open()) {
@@ -317,7 +317,7 @@ void Eval::readStability33Table() {
 void Eval::readPattern24Table() {
     std::string line;
     std::string file;
-        file = "p24table.txt";
+        file = "patterns/p24table.txt";
     std::ifstream p24table(file);
 
     if(p24table.is_open()) {
@@ -335,7 +335,7 @@ void Eval::readPattern24Table() {
 void Eval::readPatternE2XTable() {
     std::string line;
     std::string file;
-        file = "pE2Xtable.txt";
+        file = "patterns/pE2Xtable.txt";
     std::ifstream pE2Xtable(file);
 
     if(pE2Xtable.is_open()) {

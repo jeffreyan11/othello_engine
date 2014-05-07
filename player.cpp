@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 16;
+    maxDepth = 12;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 21;
@@ -162,8 +162,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while( (
-        (msLeft/empties > time_span.count()*1000.0*25) || msLeft == -1) && attemptingDepth <= maxDepth );
+    } while( ((msLeft/empties > time_span.count()*1000.0*25) || msLeft == -1)
+            && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
     turn++;
