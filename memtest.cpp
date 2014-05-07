@@ -89,10 +89,10 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    //Board b;
-    //cerr << perft(b, 11, CBLACK, false) << endl;
+    Board b;
+    cerr << perft(b, 11, CBLACK, false) << endl;
 
-    ffo("ffoeasy/end40.pos");
+    //ffo("ffoeasy/end40.pos");
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 

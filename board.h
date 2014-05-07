@@ -4,6 +4,7 @@
 #include "common.h"
 using namespace std;
 
+#define USE_MMX false
 #define KOGGE_STONE true
 
 /**

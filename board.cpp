@@ -442,7 +442,143 @@ bitbrd Board::getLegal(int side) {
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
 
-    #if KOGGE_STONE
+#if USE_MMX
+                        /* mm7: P, mm6: O */
+        bitbrd mask_7e = 0x7e7e7e7e7e7e7e7eULL;
+
+  __asm__ volatile(
+        "movl   %3, %%esi\n\t"          "movq   %1, %%xmm7\n\t"
+        "movl   %4, %%edi\n\t"          "movq   %2, %%xmm6\n\t"
+                        /* shift=+1 */                  /* shift=+8 */
+        "movl   %%esi, %%eax\n\t"       "movq   %%xmm7, %%xmm0\n\t"
+        "movq   %5, %%xmm5\n\t"
+        "shrl   $1, %%eax\n\t"          "psrlq  $8, %%xmm0\n\t"
+        "andl   $2122219134, %%edi\n\t" "pand   %%xmm6, %%xmm5\n\t"
+        "andl   %%edi, %%eax\n\t"       "pand   %%xmm6, %%xmm0\n\t"       /* 0 m7&o6 m6&o5 .. m1&o0 */
+        "movl   %%eax, %%edx\n\t"       "movq   %%xmm0, %%xmm1\n\t"
+        "shrl   $1, %%eax\n\t"          "psrlq  $8, %%xmm0\n\t"
+        "movl   %%edi, %%ecx\n\t"       "movq   %%xmm6, %%xmm3\n\t"
+        "andl   %%edi, %%eax\n\t"       "pand   %%xmm6, %%xmm0\n\t"       /* 0 0 m7&o6&o5 .. m2&o1&o0 */
+        "shrl   $1, %%ecx\n\t"          "psrlq  $8, %%xmm3\n\t"
+        "orl    %%edx, %%eax\n\t"       "por    %%xmm1, %%xmm0\n\t"       /* 0 m7&o6 (m6&o5)|(m7&o6&o5) .. (m1&o0) */
+        "andl   %%edi, %%ecx\n\t"       "pand   %%xmm6, %%xmm3\n\t"       /* 0 o7&o6 o6&o5 o5&o4 o4&o3 .. */
+        "movl   %%eax, %%edx\n\t"       "movq   %%xmm0, %%xmm4\n\t"
+        "shrl   $2, %%eax\n\t"          "psrlq  $16, %%xmm0\n\t"
+        "andl   %%ecx, %%eax\n\t"       "pand   %%xmm3, %%xmm0\n\t"       /* 0 0 0 m7&o6&o5&o4 (m6&o5&o4&o3)|(m7&o6&o5&o4&o3) .. */
+        "orl    %%eax, %%edx\n\t"       "por    %%xmm0, %%xmm4\n\t"
+        "shrl   $2, %%eax\n\t"          "psrlq  $16, %%xmm0\n\t"
+        "andl   %%ecx, %%eax\n\t"       "pand   %%xmm3, %%xmm0\n\t"       /* 0 0 0 0 0 m7&o6&..&o2 (m6&o5&..&o1)|(m7&o6&..&o1) .. */
+        "orl    %%edx, %%eax\n\t"       "por    %%xmm0, %%xmm4\n\t"
+        "shrl   $1, %%eax\n\t"          "psrlq  $8, %%xmm4\n\t"          /* result of +8 */
+        /* shift=-1 */                          /* shift=-8 */
+        "movq   %%xmm7, %%xmm0\n\t"
+        "addl   %%esi, %%esi\n\t"       "psllq  $8, %%xmm0\n\t"
+        "andl   %%edi, %%esi\n\t"       "pand   %%xmm6, %%xmm0\n\t"
+        "movl   %%esi, %%edx\n\t"       "movq   %%xmm0, %%xmm1\n\t"
+        "addl   %%esi, %%esi\n\t"       "psllq  $8, %%xmm0\n\t"
+        "andl   %%edi, %%esi\n\t"       "pand   %%xmm6, %%xmm0\n\t"
+        "orl    %%esi, %%edx\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "addl   %%ecx, %%ecx\n\t"       "psllq  $8, %%xmm3\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "leal   (,%%edx,4), %%esi\n\t"  "psllq  $16, %%xmm0\n\t"
+        "andl   %%ecx, %%esi\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%esi, %%edx\n\t"       "por    %%xmm0, %%xmm1\n\t"
+        "shll   $2, %%esi\n\t"          "psllq  $16, %%xmm0\n\t"
+        "andl   %%ecx, %%esi\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%edx, %%esi\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "addl   %%esi, %%esi\n\t"       "psllq  $8, %%xmm0\n\t"
+        "orl    %%eax, %%esi\n\t"       "por    %%xmm0, %%xmm4\n\t"
+        /* Serialize */                         /* shift=+7 */
+        "movq   %%xmm7, %%xmm0\n\t"
+        "movd   %%esi, %%xmm1\n\t"
+        "psrlq  $7, %%xmm0\n\t"
+        "psllq  $32, %%xmm1\n\t"
+        "pand   %%xmm5, %%xmm0\n\t"
+        "por    %%xmm1, %%xmm4\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "psrlq  $7, %%xmm0\n\t"
+        "pand   %%xmm5, %%xmm0\n\t"
+        "movq   %%xmm5, %%xmm3\n\t"
+        "por    %%xmm1, %%xmm0\n\t"
+        "psrlq  $7, %%xmm3\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "pand   %%xmm5, %%xmm3\n\t"
+        "psrlq  $14, %%xmm0\n\t"
+        "pand   %%xmm3, %%xmm0\n\t"
+        "movl   %1, %%esi\n\t"          "por    %%xmm0, %%xmm1\n\t"
+        "movl   %2, %%edi\n\t"          "psrlq  $14, %%xmm0\n\t"
+        "andl   $2122219134, %%edi\n\t" "pand   %%xmm3, %%xmm0\n\t"
+        "movl   %%edi, %%ecx\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "shrl   $1, %%ecx\n\t"          "psrlq  $7, %%xmm0\n\t"
+        "andl   %%edi, %%ecx\n\t"       "por    %%xmm0, %%xmm4\n\t"
+                        /* shift=+1 */                  /* shift=-7 */
+        "movl   %%esi, %%eax\n\t"       "movq   %%xmm7, %%xmm0\n\t"
+        "shrl   $1, %%eax\n\t"          "psllq  $7, %%xmm0\n\t"
+        "andl   %%edi, %%eax\n\t"       "pand   %%xmm5, %%xmm0\n\t"
+        "movl   %%eax, %%edx\n\t"       "movq   %%xmm0, %%xmm1\n\t"
+        "shrl   $1, %%eax\n\t"          "psllq  $7, %%xmm0\n\t"
+        "andl   %%edi, %%eax\n\t"       "pand   %%xmm5, %%xmm0\n\t"
+        "orl    %%edx, %%eax\n\t"       "por    %%xmm1, %%xmm0\n\t"
+                                        "psllq  $7, %%xmm3\n\t"
+        "movl   %%eax, %%edx\n\t"       "movq   %%xmm0, %%xmm1\n\t"
+        "shrl   $2, %%eax\n\t"          "psllq  $14, %%xmm0\n\t"
+        "andl   %%ecx, %%eax\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%eax, %%edx\n\t"       "por    %%xmm0, %%xmm1\n\t"
+        "shrl   $2, %%eax\n\t"          "psllq  $14, %%xmm0\n\t"
+        "andl   %%ecx, %%eax\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%edx, %%eax\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "shrl   $1, %%eax\n\t"          "psllq  $7, %%xmm0\n\t"
+        "por    %%xmm0, %%xmm4\n\t"
+        /* shift=-1 */                  /* shift=+9 */
+        "movq   %%xmm7, %%xmm0\n\t"
+        "addl   %%esi, %%esi\n\t"       "psrlq  $9, %%xmm0\n\t"
+        "andl   %%edi, %%esi\n\t"       "pand   %%xmm5, %%xmm0\n\t"
+        "movl   %%esi, %%edx\n\t"       "movq   %%xmm0, %%xmm1\n\t"
+        "addl   %%esi, %%esi\n\t"       "psrlq  $9, %%xmm0\n\t"
+        "andl   %%edi, %%esi\n\t"       "pand   %%xmm5, %%xmm0\n\t"
+        "movq   %%xmm5, %%xmm3\n\t"
+        "orl    %%esi, %%edx\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "psrlq  $9, %%xmm3\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "addl   %%ecx, %%ecx\n\t"       "pand   %%xmm5, %%xmm3\n\t"
+        "leal   (,%%edx,4), %%esi\n\t"  "psrlq  $18, %%xmm0\n\t"
+        "andl   %%ecx, %%esi\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%esi, %%edx\n\t"       "por    %%xmm0, %%xmm1\n\t"
+        "shll   $2, %%esi\n\t"          "psrlq  $18, %%xmm0\n\t"
+        "andl   %%ecx, %%esi\n\t"       "pand   %%xmm3, %%xmm0\n\t"
+        "orl    %%edx, %%esi\n\t"       "por    %%xmm1, %%xmm0\n\t"
+        "addl   %%esi, %%esi\n\t"       "psrlq  $9, %%xmm0\n\t"
+        "orl    %%eax, %%esi\n\t"       "por    %%xmm0, %%xmm4\n\t"
+        /* Serialize */                 /* shift=-9 */
+        "movq   %%xmm7, %%xmm0\n\t"
+        "movd   %%esi, %%xmm1\n\t"
+        "psllq  $9, %%xmm0\n\t"
+        "por    %%xmm1, %%xmm4\n\t"
+        "pand   %%xmm5, %%xmm0\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "psllq  $9, %%xmm0\n\t"
+        "pand   %%xmm5, %%xmm0\n\t"
+        "por    %%xmm1, %%xmm0\n\t"
+        "psllq  $9, %%xmm3\n\t"
+        "movq   %%xmm0, %%xmm1\n\t"
+        "psllq  $18, %%xmm0\n\t"
+        "pand   %%xmm3, %%xmm0\n\t"
+        "por    %%xmm0, %%xmm1\n\t"
+        "psllq  $18, %%xmm0\n\t"
+        "pand   %%xmm3, %%xmm0\n\t"
+        "por    %%xmm1, %%xmm0\n\t"
+        "psllq  $9, %%xmm0\n\t"
+        "por    %%xmm0, %%xmm4\n\t"
+        /* xmm4 is the pseudo-feasible moves at this point. */
+        /* Let xmm7 be the feasible moves, i.e., xmm4 restricted to empty squares. */
+        "por    %%xmm6, %%xmm7\n\t"
+        "pandn  %%xmm4, %%xmm7\n\t"
+        "movq   %%xmm7, %0\n\t"
+    : "=g" (result) : "m" (self), "m" (opp), "g" (self >> 32), "g" (opp >> 32), "m" (mask_7e) : "eax", "edx", "ecx", "esi", "edi" );
+
+    return result;
+
+    #elif KOGGE_STONE
     bitbrd other = opp & 0x00FFFFFFFFFFFF00;
     // north and south
     bitbrd templ = other & (self << 8);
