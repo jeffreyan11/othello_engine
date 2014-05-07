@@ -4,6 +4,7 @@
 #include <fstream>
 #include "board.h"
 
+#define TSPLITS 2
 #define USE_EDGE_TABLE true
 
 const bitbrd CORNERS = 0x8100000000000081;
@@ -121,20 +122,20 @@ private:
     int mySide;
     int oppSide;
 
-    int *edgeTable;
+    int **edgeTable;
+    int **p24Table;
+    int **pE2XTable;
     int *s33Table;
-    int *p24Table;
-    int *pE2XTable;
 
     int countSetBits(bitbrd i);
     bitbrd reflectVertical(bitbrd i);
     bitbrd reflectHorizontal(bitbrd x);
     bitbrd reflectDiag(bitbrd x);
 
-    int boardToEPV(Board *b);
+    int boardToEPV(Board *b, int turn);
+    int boardTo24PV(Board *b, int turn);
+    int boardToE2XPV(Board *b, int turn);
     int boardTo33PV(Board *b);
-    int boardTo24PV(Board *b);
-    int boardToE2XPV(Board *b);
     int bitsToPI(int b, int w);
 
     void readEdgeTable();

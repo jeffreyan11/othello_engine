@@ -4,10 +4,17 @@ Eval::Eval(int s) {
     mySide = s;
     oppSide = -s;
 
-    edgeTable = new int[6561];
+    edgeTable = new int *[TSPLITS];
+    p24Table = new int *[TSPLITS];
+    pE2XTable = new int *[TSPLITS];
+
+    for(int i = 0; i < TSPLITS; i++) {
+        edgeTable[i] = new int[6561];
+        p24Table[i] = new int[6561];
+        pE2XTable[i] = new int[59049];
+    }
+
     s33Table = new int[19683];
-    p24Table = new int[6561];
-    pE2XTable = new int[59049];
 
     readEdgeTable();
     readStability33Table();
@@ -16,6 +23,12 @@ Eval::Eval(int s) {
 }
 
 Eval::~Eval() {
+    for(int i = 0; i < TSPLITS; i++) {
+        delete[] edgeTable[i];
+        delete[] p24Table[i];
+        delete[] pE2XTable[i];
+    }
+
     delete[] edgeTable;
     delete[] s33Table;
     delete[] p24Table;
@@ -36,9 +49,11 @@ int Eval::heuristic(Board *b, int turn) {
         score = 2*(myCoins - b->count(oppSide));
 
     #if USE_EDGE_TABLE
-    score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
-    score += (mySide == BLACK) ? 2*boardToEPV(b) : -2*boardToEPV(b);
-    score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
+    score += (mySide == BLACK) ?
+            3*boardTo24PV(b, turn) : -3*boardTo24PV(b, turn);
+    score += (mySide == BLACK) ? 2*boardToEPV(b, turn) : -2*boardToEPV(b, turn);
+    score += (mySide == BLACK) ?
+            2*boardToE2XPV(b, turn) : -2*boardToE2XPV(b, turn);
     score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
     #else
     bitbrd bm = b->toBits(mySide);
@@ -68,7 +83,7 @@ int Eval::end_heuristic(Board *b) {
     score = 2*(myCoins - b->count(oppSide));
 
     //score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
-    score += (mySide == BLACK) ? boardToEPV(b) : -boardToEPV(b);
+    score += (mySide == BLACK) ? boardToEPV(b, 50) : -boardToEPV(b, 50);
     //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
     score += (mySide == BLACK) ? 6*boardTo33PV(b) : -6*boardTo33PV(b);
 
@@ -136,7 +151,8 @@ bitbrd Eval::reflectDiag(bitbrd x) {
     return x;
 }
 
-int Eval::boardToEPV(Board *b) {
+int Eval::boardToEPV(Board *b, int turn) {
+    int index = (turn - 10) / 25;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
@@ -147,7 +163,8 @@ int Eval::boardToEPV(Board *b) {
     int c8 = bitsToPI(
       (int)(((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
       (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
-    int result = edgeTable[r1] + edgeTable[r8] + edgeTable[c1] + edgeTable[c8];
+    int result = edgeTable[index][r1] + edgeTable[index][r8] +
+            edgeTable[index][c1] + edgeTable[index][c8];
     return result;
 }
 
@@ -180,7 +197,8 @@ int Eval::boardTo33PV(Board *b) {
     return result;
 }
 
-int Eval::boardTo24PV(Board *b) {
+int Eval::boardTo24PV(Board *b, int turn) {
+    int index = (turn - 10) / 25;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
@@ -229,11 +247,13 @@ int Eval::boardTo24PV(Board *b) {
     int rlrw = (int) ((rotbw&0xF) + ((rotbw>>4)&0xF0));
     int rlr = bitsToPI(rlrb, rlrw);
 
-    return p24Table[ul] + p24Table[ll] + p24Table[ur] + p24Table[lr] +
-        p24Table[rul] + p24Table[rll] + p24Table[rur] + p24Table[rlr];
+    return p24Table[index][ul] + p24Table[index][ll] + p24Table[index][ur] +
+        p24Table[index][lr] + p24Table[index][rul] + p24Table[index][rll] +
+        p24Table[index][rur] + p24Table[index][rlr];
 }
 
-int Eval::boardToE2XPV(Board *b) {
+int Eval::boardToE2XPV(Board *b, int turn) {
+    int index = (turn - 10) / 25;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1b = (int) ( (black & 0xFF) +
@@ -264,7 +284,8 @@ int Eval::boardToE2XPV(Board *b) {
         ((white & 0x4000) >> 6) + ((white & 0x40000000000000) >> 45) );
     int c8 = bitsToPI(c8b, c8w);
 
-    int result = pE2XTable[r1] + pE2XTable[r8] + pE2XTable[c1] + pE2XTable[c8];
+    int result = pE2XTable[index][r1] + pE2XTable[index][r8] +
+            pE2XTable[index][c1] + pE2XTable[index][c8];
     return result;
 }
 
@@ -279,16 +300,17 @@ void Eval::readEdgeTable() {
     std::ifstream edgetable(file);
 
     if(edgetable.is_open()) {
-        int i = 0;
-        while(getline(edgetable, line)) {
-            for(int j = 0; j < 9; j++) {
-                std::string::size_type sz = 0;
-                edgeTable[9*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
+        for(int n = 0; n < TSPLITS; n++) {
+            for(int i = 0; i < 729; i++) {
+                getline(edgetable, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    edgeTable[n][9*i+j] = std::stoi(line, &sz, 0);
+                    line = line.substr(sz);
+                }
             }
-
-            i++;
         }
+
         edgetable.close();
     }
 }
@@ -300,15 +322,13 @@ void Eval::readStability33Table() {
     std::ifstream s33table(file);
 
     if(s33table.is_open()) {
-        int i = 0;
-        while(getline(s33table, line)) {
+        for(int i = 0; i < 729; i++) {
+            getline(s33table, line);
             for(int j = 0; j < 27; j++) {
                 std::string::size_type sz = 0;
                 s33Table[27*i+j] = std::stoi(line, &sz, 0);
                 line = line.substr(sz);
             }
-
-            i++;
         }
         s33table.close();
     }
@@ -321,12 +341,14 @@ void Eval::readPattern24Table() {
     std::ifstream p24table(file);
 
     if(p24table.is_open()) {
-        int i = 0;
-        while(getline(p24table, line)) {
-            std::string::size_type sz = 0;
-            p24Table[i] = std::stoi(line, &sz, 0);
+        for(int n = 0; n < TSPLITS; n++) {
+            for(int i = 0; i < 6561; i++) {
+                getline(p24table, line);
+                std::string::size_type sz = 0;
+                p24Table[n][i] = std::stoi(line, &sz, 0);
 
-            i++;
+                i++;
+            }
         }
         p24table.close();
     }
@@ -339,15 +361,16 @@ void Eval::readPatternE2XTable() {
     std::ifstream pE2Xtable(file);
 
     if(pE2Xtable.is_open()) {
-        int i = 0;
-        while(getline(pE2Xtable, line)) {
-            for(int j = 0; j < 9; j++) {
-                std::string::size_type sz = 0;
-                pE2XTable[9*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
+        for(int n = 0; n < TSPLITS; n++) {
+            for(int i = 0; i < 6561; i++) {
+                getline(pE2Xtable, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    pE2XTable[n][9*i+j] = std::stoi(line, &sz, 0);
+                    line = line.substr(sz);
+                }
             }
-
-            i++;
         }
+        pE2Xtable.close();
     }
 }
