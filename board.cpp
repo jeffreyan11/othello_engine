@@ -442,96 +442,105 @@ bitbrd Board::getLegal(int side) {
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
 
-#if false//USE_SSE && defined(__x86_64__)
+#if USE_SSE && defined(__x86_64__)
     bitbrd mask_7e = 0x7e7e7e7e7e7e7e7eULL;
 
     asm volatile(
-    "movq   %1, %%xmm7\n\t" // self
-    "movq   %2, %%xmm6\n\t" // opp
+    "movq   %2, %%xmm14\n\t" // opp
     "movq   %3, %%xmm5\n\t" // mask = 0x7E7E7E7E7E7E7E7E
-    /* shift=+1 */                  /* shift=+8 */
-    "movq   %%xmm7, %%xmm8\n\t"     "movq   %%xmm7, %%xmm0\n\t"
-    "pand   %%xmm6, %%xmm5\n\t"                             // opp & mask
-    "psrlq  $1, %%xmm8\n\t"         "psrlq  $8, %%xmm0\n\t" // self << x
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm6, %%xmm0\n\t" // (self<<x)&opp
-    "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psrlq  $1, %%xmm8\n\t"         "psrlq  $8, %%xmm0\n\t"
-    "movq   %%xmm5, %%xmm11\n\t"    "movq   %%xmm6, %%xmm3\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm6, %%xmm0\n\t"
-    "psrlq  $1, %%xmm11\n\t"        "psrlq  $8, %%xmm3\n\t"
-    "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm11\n\t"    "pand   %%xmm6, %%xmm3\n\t"
-    "movq   %%xmm8, %%xmm12\n\t"    "movq   %%xmm0, %%xmm4\n\t"
-    "psrlq  $2, %%xmm8\n\t"         "psrlq  $16, %%xmm0\n\t"
-    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
-    "psrlq  $2, %%xmm8\n\t"         "psrlq  $16, %%xmm0\n\t"
-    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
-    "psrlq  $1, %%xmm12\n\t"        "psrlq  $8, %%xmm4\n\t"
-    /* shift=-1 */                          /* shift=-8 */
-    "movq   %%xmm7, %%xmm8\n\t"     "movq   %%xmm7, %%xmm0\n\t"
-    "psllq  $1, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm6, %%xmm0\n\t"
-    "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psllq  $1, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm6, %%xmm0\n\t"
-    "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "psllq  $1, %%xmm11\n\t"        "psllq  $8, %%xmm3\n\t"
-    "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psllq  $2, %%xmm8\n\t"         "psllq  $16, %%xmm0\n\t"
-    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm8, %%xmm9\n\t"     "por    %%xmm0, %%xmm1\n\t"
-    "psllq  $2, %%xmm8\n\t"         "psllq  $16, %%xmm0\n\t"
-    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "psllq  $1, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
-    "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
+    "movq   %1, %%xmm15\n\t" // self
+    "pand   %%xmm14, %%xmm5\n\t" // opp & mask
 
+    /* shift=+1 */                  /* shift=+8 */
     /* shift=+7 */                  /* shift=+9 */
-    "movq   %%xmm7, %%xmm8\n\t"     "movq   %%xmm7, %%xmm0\n\t"
-    "psrlq  $7, %%xmm8\n\t"         "psrlq  $9, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm5, %%xmm0\n\t"
+    "movq   %%xmm15, %%xmm8\n\t"    "movq   %%xmm15, %%xmm0\n\t"        //18
+    "movq   %%xmm15, %%rax\n\t"     "movq   %%xmm15, %%xmm2\n\t"         //79
+    "movq   %%xmm5, %%rbx\n\t"
+    "psrlq  $7, %%xmm8\n\t"         "psrlq  $8, %%xmm0\n\t"             //18
+    "shrq   $1, %%rax\n\t"          "psrlq  $9, %%xmm2\n\t"              //79
+    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm14, %%xmm0\n\t"
+    "andq   %%rbx, %%rax\n\t"       "pand   %%xmm5, %%xmm2\n\t"
     "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psrlq  $7, %%xmm8\n\t"         "psrlq  $9, %%xmm0\n\t"
-    "movq   %%xmm5, %%xmm11\n\t"    "movq   %%xmm5, %%xmm3\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm5, %%xmm0\n\t"
-    "psrlq  $7, %%xmm11\n\t"        "psrlq  $9, %%xmm3\n\t"
+    "movq   %%rax, %%rcx\n\t"       "movq   %%xmm2, %%xmm6\n\t"
+    "psrlq  $7, %%xmm8\n\t"         "psrlq  $8, %%xmm0\n\t"
+    "shrq   $1, %%rax\n\t"          "psrlq  $9, %%xmm2\n\t"
+    "movq   %%xmm5, %%xmm11\n\t"    "movq   %%xmm14, %%xmm3\n\t"
+    "movq   %%rbx, %%rdx\n\t"       "movq   %%xmm5, %%xmm13\n\t"
+    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm14, %%xmm0\n\t"
+    "andq   %%rbx, %%rax\n\t"       "pand   %%xmm5, %%xmm2\n\t"
+    "psrlq  $7, %%xmm11\n\t"        "psrlq  $8, %%xmm3\n\t"
+    "shrq   $1, %%rdx\n\t"          "psrlq  $9, %%xmm13\n\t"
     "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm11\n\t"    "pand   %%xmm5, %%xmm3\n\t"
-    "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psrlq  $14, %%xmm8\n\t"        "psrlq  $18, %%xmm0\n\t"
+    "orq    %%rcx, %%rax\n\t"       "por    %%xmm6, %%xmm2\n\t"
+    "pand   %%xmm5, %%xmm11\n\t"    "pand   %%xmm14, %%xmm3\n\t"
+    "andq   %%rbx, %%rdx\n\t"       "pand   %%xmm5, %%xmm13\n\t"
+    "movq   %%xmm8, %%xmm12\n\t"    "movq   %%xmm0, %%xmm4\n\t"
+    "movq   %%rax, %%rcx\n\t"       "movq   %%xmm2, %%xmm6\n\t"
+    "psrlq  $14, %%xmm8\n\t"        "psrlq  $16, %%xmm0\n\t"
+    "shrq   $2, %%rax\n\t"          "psrlq  $18, %%xmm2\n\t"
     "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm8, %%xmm9\n\t"     "por    %%xmm0, %%xmm1\n\t"
-    "psrlq  $14, %%xmm8\n\t"        "psrlq  $18, %%xmm0\n\t"
-    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
-    "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "psrlq  $7, %%xmm8\n\t"         "psrlq  $9, %%xmm0\n\t"
+    "andq   %%rdx, %%rax\n\t"       "pand   %%xmm13, %%xmm2\n\t"
     "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
+    "orq    %%rax, %%rcx\n\t"       "por    %%xmm2, %%xmm6\n\t"
+    "psrlq  $14, %%xmm8\n\t"        "psrlq  $16, %%xmm0\n\t"
+    "shrq   $2, %%rax\n\t"          "psrlq  $18, %%xmm2\n\t"
+    "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
+    "andq   %%rdx, %%rax\n\t"       "pand   %%xmm13, %%xmm2\n\t"
+    "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
+    "orq    %%rcx, %%rax\n\t"       "por    %%xmm6, %%xmm2\n\t"
+    "psrlq  $7, %%xmm12\n\t"        "psrlq  $8, %%xmm4\n\t"
+    "shrq   $1, %%rax\n\t"          "psrlq  $9, %%xmm2\n\t"
+    "movq   %%rax, %%rsi\n\t"       "por    %%xmm2, %%xmm4\n\t"
+
+    /* shift=-1 */                  /* shift=-8 */
     /* shift=-7 */                  /* shift=-9 */
-    "movq   %%xmm7, %%xmm8\n\t"     "movq   %%xmm7, %%xmm0\n\t"
-    "psllq  $7, %%xmm8\n\t"         "psllq  $9, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm5, %%xmm0\n\t"
+    "movq   %%xmm15, %%xmm8\n\t"    "movq   %%xmm15, %%xmm0\n\t"
+    "movq   %%xmm15, %%rax\n\t"     "movq   %%xmm15, %%xmm2\n\t"
+    "psllq  $7, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
+    "leaq   (,%%rax,2), %%rax\n\t"  "psllq  $9, %%xmm2\n\t"
+    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm14, %%xmm0\n\t"
+    "andq   %%rbx, %%rax\n\t"       "pand   %%xmm5, %%xmm2\n\t"
     "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psllq  $7, %%xmm8\n\t"         "psllq  $9, %%xmm0\n\t"
-    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm5, %%xmm0\n\t"
+    "movq   %%rax, %%rcx\n\t"       "movq   %%xmm2, %%xmm6\n\t"
+    "psllq  $7, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
+    "leaq   (,%%rax,2), %%rax\n\t"  "psllq  $9, %%xmm2\n\t"
+    "pand   %%xmm5, %%xmm8\n\t"     "pand   %%xmm14, %%xmm0\n\t"
+    "andq   %%rbx, %%rax\n\t"       "pand   %%xmm5, %%xmm2\n\t"
     "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "psllq  $7, %%xmm11\n\t"        "psllq  $9, %%xmm3\n\t"
+    "orq    %%rcx, %%rax\n\t"       "por    %%xmm6, %%xmm2\n\t"
+    "psllq  $7, %%xmm11\n\t"        "psllq  $8, %%xmm3\n\t"
+    "leaq   (,%%rdx,2), %%rdx\n\t"  "psllq  $9, %%xmm13\n\t"
     "movq   %%xmm8, %%xmm9\n\t"     "movq   %%xmm0, %%xmm1\n\t"
-    "psllq  $14, %%xmm8\n\t"        "psllq  $18, %%xmm0\n\t"
+    "movq   %%rax, %%rcx\n\t"       "movq   %%xmm2, %%xmm6\n\t"
+    "psllq  $14, %%xmm8\n\t"        "psllq  $16, %%xmm0\n\t"
+    "leaq   (,%%rax,4), %%rax\n\t"  "psllq  $18, %%xmm2\n\t"
     "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
+    "andq   %%rdx, %%rax\n\t"       "pand   %%xmm13, %%xmm2\n\t"
     "por    %%xmm8, %%xmm9\n\t"     "por    %%xmm0, %%xmm1\n\t"
-    "psllq  $14, %%xmm8\n\t"        "psllq  $18, %%xmm0\n\t"
+    "orq    %%rax, %%rcx\n\t"       "por    %%xmm2, %%xmm6\n\t"
+    "psllq  $14, %%xmm8\n\t"        "psllq  $16, %%xmm0\n\t"
+    "shlq   $2, %%rax\n\t"          "psllq  $18, %%xmm2\n\t"
     "pand   %%xmm11, %%xmm8\n\t"    "pand   %%xmm3, %%xmm0\n\t"
+    "andq   %%rdx, %%rax\n\t"       "pand   %%xmm13, %%xmm2\n\t"
     "por    %%xmm9, %%xmm8\n\t"     "por    %%xmm1, %%xmm0\n\t"
-    "psllq  $7, %%xmm8\n\t"         "psllq  $9, %%xmm0\n\t"
+    "orq    %%rcx, %%rax\n\t"       "por    %%xmm6, %%xmm2\n\t"
+    "psllq  $7, %%xmm8\n\t"         "psllq  $8, %%xmm0\n\t"
+    "leaq   (,%%rax,2), %%rax\n\t"  "psllq  $9, %%xmm2\n\t"
     "por    %%xmm8, %%xmm12\n\t"    "por    %%xmm0, %%xmm4\n\t"
-    /* Serialize, & with empty squares. */
+    "orq    %%rax, %%rsi\n\t"
+    "nop\n\t"
+    "movq   %%rsi, %%xmm9\n\t"
+                                    "por    %%xmm2, %%xmm4\n\t"
+    "por    %%xmm9, %%xmm12\n\t"
+    /* Combine, & with empty squares. */
+    "nop\n\t"
     "por    %%xmm12, %%xmm4\n\t"
-    "por    %%xmm6, %%xmm7\n\t"
-    "pandn  %%xmm4, %%xmm7\n\t"
-    "movq   %%xmm7, %0\n\t"
-    : "=g" (result) : "m" (self), "m" (opp), "m" (mask_7e));
+    "por    %%xmm14, %%xmm15\n\t"
+    "pandn  %%xmm4, %%xmm15\n\t"
+    "nop\n\t"
+    "movq   %%xmm15, %0\n\t"
+    : "=g" (result) : "m" (self), "m" (opp), "m" (mask_7e)
+    : "rax", "rbx", "rcx", "rdx", "rsi");
 
     return result;
 
