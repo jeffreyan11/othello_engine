@@ -41,7 +41,7 @@ int Eval::heuristic(Board *b, int turn) {
     if(myCoins == 0)
         return -9001;
 
-    if(turn < 25)
+    if(turn < 20)
         score = 2*(b->count(oppSide) - myCoins);
     else if(turn < 50)
         score = myCoins - b->count(oppSide);
@@ -49,12 +49,12 @@ int Eval::heuristic(Board *b, int turn) {
         score = 2*(myCoins - b->count(oppSide));
 
     #if USE_EDGE_TABLE
-    score += (mySide == BLACK) ?
-            3*boardTo24PV(b, turn) : -3*boardTo24PV(b, turn);
-    score += (mySide == BLACK) ? 2*boardToEPV(b, turn) : -2*boardToEPV(b, turn);
-    score += (mySide == BLACK) ?
-            2*boardToE2XPV(b, turn) : -2*boardToE2XPV(b, turn);
-    score += (mySide == BLACK) ? 2*boardTo33PV(b) : -2*boardTo33PV(b);
+    int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
+            + 2*boardToE2XPV(b, turn) + 3*boardTo33PV(b);
+    if(mySide == CBLACK)
+        score += patterns;
+    else
+        score -= patterns;
     #else
     bitbrd bm = b->toBits(mySide);
     bitbrd bo = b->toBits(oppSide);
@@ -69,7 +69,7 @@ int Eval::heuristic(Board *b, int turn) {
     int myLM = b->numLegalMoves(mySide);
     int oppLM = b->numLegalMoves(oppSide);
     score += 80 * (myLM - oppLM) / (myLM + oppLM + 1);
-    score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }
@@ -152,7 +152,7 @@ bitbrd Eval::reflectDiag(bitbrd x) {
 }
 
 int Eval::boardToEPV(Board *b, int turn) {
-    int index = (turn - 10) / 25;
+    int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
@@ -198,7 +198,7 @@ int Eval::boardTo33PV(Board *b) {
 }
 
 int Eval::boardTo24PV(Board *b, int turn) {
-    int index = (turn - 10) / 25;
+    int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
@@ -253,7 +253,7 @@ int Eval::boardTo24PV(Board *b, int turn) {
 }
 
 int Eval::boardToE2XPV(Board *b, int turn) {
-    int index = (turn - 10) / 25;
+    int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int r1b = (int) ( (black & 0xFF) +
@@ -346,8 +346,6 @@ void Eval::readPattern24Table() {
                 getline(p24table, line);
                 std::string::size_type sz = 0;
                 p24Table[n][i] = std::stoi(line, &sz, 0);
-
-                i++;
             }
         }
         p24table.close();

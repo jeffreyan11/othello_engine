@@ -163,7 +163,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while( ((msLeft/empties > time_span.count()*1000.0*25) || msLeft == -1)
+    } while( ((msLeft/empties > time_span.count()*1000.0*16) || msLeft == -1)
             && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);

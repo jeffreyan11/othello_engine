@@ -4,7 +4,9 @@
 #include <fstream>
 #include "board.h"
 
-#define TSPLITS 2
+#define TSPLITS 4
+#define IOFFSET 6
+#define TURNSPERDIV 13
 #define USE_EDGE_TABLE true
 
 const bitbrd CORNERS = 0x8100000000000081;
