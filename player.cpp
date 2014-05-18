@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 12;
+    maxDepth = 8;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 21;
@@ -138,6 +138,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // sort search
     cerr << "Performing sort search: depth " << sortDepth << endl;
+    attemptingDepth = sortDepth;
     pvs(&game, legalMoves, scores, mySide, sortDepth, NEG_INFTY, INFTY);
     sort(legalMoves, scores, 0, legalMoves.size-1);
     scores.clear();
@@ -231,8 +232,9 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
     int alpha, int beta) {
 
     if (depth <= 0) {
-        topScore = (s == mySide) ? evaluater->heuristic(b, turn) :
-                -evaluater->heuristic(b, turn);
+        topScore = (s == mySide) ?
+                evaluater->heuristic(b, turn+attemptingDepth) :
+                -evaluater->heuristic(b, turn+attemptingDepth);
         return topScore;
     }
 

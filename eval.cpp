@@ -43,10 +43,8 @@ int Eval::heuristic(Board *b, int turn) {
 
     if(turn < 20)
         score = 2*(b->count(oppSide) - myCoins);
-    else if(turn < 50)
-        score = myCoins - b->count(oppSide);
     else
-        score = 2*(myCoins - b->count(oppSide));
+        score = myCoins - b->count(oppSide);
 
     #if USE_EDGE_TABLE
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
@@ -69,7 +67,7 @@ int Eval::heuristic(Board *b, int turn) {
     int myLM = b->numLegalMoves(mySide);
     int oppLM = b->numLegalMoves(oppSide);
     score += 80 * (myLM - oppLM) / (myLM + oppLM + 1);
-    score += 5 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }

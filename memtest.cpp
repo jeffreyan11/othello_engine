@@ -10,6 +10,9 @@ int movestack[20];
 int top;
 
 void ffo(std::string file);
+#if defined(__x86_64__)
+void rdtscll(long long *val);
+#endif
 
 /*
  DEPTH  #LEAF NODES   #FULL-DEPTH  #HIGHER
@@ -89,8 +92,8 @@ int main(int argc, char **argv) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
-    Board b;
-    cerr << perft(b, 11, CBLACK, false) << endl;
+    //Board b;
+    //cerr << perft(b, 11, CBLACK, false) << endl;
 
     //ffo("ffoeasy/end40.pos");
     //ffo("ffoeasy/end41.pos");
@@ -102,14 +105,14 @@ int main(int argc, char **argv) {
     //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");
 
-    /*Player p(BLACK);
+    Player p(BLACK);
     Player p2(WHITE);
 
     Move *m = p.doMove(NULL, -1);
     for(int i = 0; i < 18; i++) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
-    }*/
+    }
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
@@ -156,3 +159,27 @@ void ffo(std::string file) {
     int result = e.endgame(b, lm, empties, p.evaluater);
     cerr << "Best move: " << result << endl;
 }
+
+#if __x86_64__
+
+void rdtscll(long long *val) {
+   __asm__ __volatile__ (
+        "rdtsc;"
+        "movl %%eax,%%ecx;"
+        "movl %%edx,%%eax;"
+        "shlq $32,%%rax;"
+        "addq %%rcx,%%rax;"
+        "movq %%rax, %0;"
+        : "=m" (*val)
+        :
+        : "%rax", "%rcx", "%rdx", "cc"
+        );
+}
+
+#else
+
+#define rdtscll(val) \
+       __asm__ __volatile__ ("rdtsc" : "=A" (val))
+
+#endif
+
