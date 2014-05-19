@@ -257,9 +257,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
 
     MoveList legalMoves = b->getLegalMoves(s);
     if(legalMoves.size <= 0) {
-        Board copy = Board(b->taken, b->black);
-        copy.doMove(MOVE_NULL, s);
-        score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
+        score = -pvs_h(b, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;

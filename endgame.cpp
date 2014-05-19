@@ -440,11 +440,13 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     empty &= empty-1;
     int legalMove2 = bitScanForward(empty);
 
-    bitbrd changeMask = b.getDoMove(legalMove1, s);
-    if(changeMask) {
-        b.makeMove(legalMove1, changeMask, s);
+    bitbrd changeMask1 = b.getDoMove(legalMove1, s);
+    bitbrd changeMask2 = b.getDoMove(legalMove2, s);
+
+    if(changeMask1) {
+        b.makeMove(legalMove1, changeMask1, s);
         score = -endgame1(b, -s, -beta);
-        b.undoMove(legalMove1, changeMask, s);
+        b.undoMove(legalMove1, changeMask1, s);
 
         if (alpha < score)
             alpha = score;
@@ -452,11 +454,10 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             return alpha;
     }
 
-    changeMask = b.getDoMove(legalMove2, s);
-    if(changeMask) {
-        b.makeMove(legalMove2, changeMask, s);
+    if(changeMask2) {
+        b.makeMove(legalMove2, changeMask2, s);
         score = -endgame1(b, -s, -beta);
-        b.undoMove(legalMove2, changeMask, s);
+        b.undoMove(legalMove2, changeMask2, s);
 
         if (alpha < score)
             alpha = score;
@@ -464,7 +465,7 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     else {
         if(score == NEG_INFTY) {
             // if no legal moves... try other player
-            changeMask = b.getDoMove(legalMove1, -s);
+            bitbrd changeMask = b.getDoMove(legalMove1, -s);
             if(changeMask) {
                 b.makeMove(legalMove1, changeMask, -s);
                 score = endgame1(b, s, alpha);
@@ -502,8 +503,6 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
  * @brief Endgame solver, to be used with exactly 1 empty square.
 */
 int Endgame::endgame1(Board &b, int s, int alpha) {
-    int score;
-
     int legalMove = bitScanForward(~b.getTaken());
     bitbrd changeMask = b.getDoMove(legalMove, s);
 
@@ -513,7 +512,7 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
             return (b.count(s) - b.count(-s));
 
         b.makeMove(legalMove, otherMask, -s);
-        score = 2*b.count(s) - 64;
+        int score = 2*b.count(s) - 64;
         b.undoMove(legalMove, otherMask, -s);
 
         if (alpha < score)
@@ -522,7 +521,7 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
     }
 
     b.makeMove(legalMove, changeMask, s);
-    score = 2*b.count(s) - 64;
+    int score = 2*b.count(s) - 64;
     b.undoMove(legalMove, changeMask, s);
 
     if (alpha < score)
