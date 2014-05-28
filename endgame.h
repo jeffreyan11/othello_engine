@@ -9,6 +9,7 @@
 
 #define END_SHLLW 11
 #define USE_BESTMOVE_TABLE true
+#define USE_STABILITY true
 
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
@@ -39,6 +40,7 @@ private:
         int alpha, int beta);
 
     int bitScanForward(bitbrd bb);
+    int countSetBitsLow(bitbrd i);
     void sort(MoveList &moves, MoveList &scores, int left, int right);
     void swap(MoveList &moves, MoveList &scores, int i, int j);
     int partition(MoveList &moves, MoveList &scores, int left, int

@@ -128,6 +128,7 @@ private:
     int **p24Table;
     int **pE2XTable;
     int *s33Table;
+    int *s44Table;
 
     int countSetBits(bitbrd i);
     bitbrd reflectVertical(bitbrd i);
@@ -137,13 +138,15 @@ private:
     int boardToEPV(Board *b, int turn);
     int boardTo24PV(Board *b, int turn);
     int boardToE2XPV(Board *b, int turn);
-    int boardTo33PV(Board *b);
+    int boardTo33SV(Board *b);
+    int boardTo44SV(Board *b, int s);
     int bitsToPI(int b, int w);
 
     void readEdgeTable();
-    void readStability33Table();
     void readPattern24Table();
     void readPatternE2XTable();
+    void readStability33Table();
+    void readStability44Table();
 
 public:
     Eval(int s);
@@ -151,6 +154,7 @@ public:
 
     int heuristic(Board *b, int turn);
     int end_heuristic(Board *b);
+    int stability(Board *b, int s);
 };
 
 #endif

@@ -4,7 +4,6 @@
 #include "common.h"
 using namespace std;
 
-#define USE_SSE false
 #define KOGGE_STONE true
 
 /**
@@ -426,7 +425,7 @@ public:
     void doMove(int index, int side);
     bitbrd getDoMove(int index, int side);
     void makeMove(int index, bitbrd changeMask, int side);
-    void undoMove(int index, bitbrd changed, int side);
+    void undoMove(int index, bitbrd changeMask, int side);
     bitbrd getLegal(int side);
     MoveList getLegalMoves(int side);
     MoveList getLegalMovesOrdered(int side, MoveList &priority);

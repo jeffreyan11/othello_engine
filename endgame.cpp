@@ -126,6 +126,15 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             return alpha;
     }
 
+    // TODO stability cutoff?
+    #if USE_STABILITY
+    if(alpha >= 30) {
+        int stab_score = evaluater->stability(&b, -s);
+        if(64 - 2*stab_score <= alpha)
+            return alpha;
+    }
+    #endif
+
     MoveList priority;
     MoveList legalMoves = b.getLegalMovesOrdered(s, priority);
 
@@ -205,6 +214,15 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 */
 int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
+    // TODO stability cutoff?
+    #if USE_STABILITY
+    if(alpha >= 20) {
+        int stab_score = evaluater->stability(&b, -s);
+        if(64 - 2*stab_score <= alpha)
+            return alpha;
+    }
+    #endif
+
     int score;
     bitbrd legal = b.getLegal(s);
 
@@ -434,6 +452,12 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
  * @brief Endgame solver, to be used with exactly 2 empty squares.
 */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
+    int curr_score = b.count(s) - b.count(-s);
+    if(curr_score >= beta + 32)
+        return beta;
+    if(curr_score <= alpha - 32)
+        return alpha;
+
     int score = NEG_INFTY;
     bitbrd empty = ~b.getTaken();
     int legalMove1 = bitScanForward(empty);
@@ -489,7 +513,7 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             else {
                 // if both players passed, game over
                 if(score == NEG_INFTY)
-                    return (b.count(s) - b.count(-s));
+                    return b.count(s) - b.count(-s);
             }
 
             return beta;
@@ -503,26 +527,20 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
  * @brief Endgame solver, to be used with exactly 1 empty square.
 */
 int Endgame::endgame1(Board &b, int s, int alpha) {
+    int score = b.count(s) - b.count(-s);
     int legalMove = bitScanForward(~b.getTaken());
     bitbrd changeMask = b.getDoMove(legalMove, s);
 
     if(!changeMask) {
         bitbrd otherMask = b.getDoMove(legalMove, -s);
         if(!otherMask)
-            return (b.count(s) - b.count(-s));
+            return score;
 
-        b.makeMove(legalMove, otherMask, -s);
-        int score = 2*b.count(s) - 64;
-        b.undoMove(legalMove, otherMask, -s);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+        score -= 2*countSetBitsLow(otherMask) + 1;
     }
-
-    b.makeMove(legalMove, changeMask, s);
-    int score = 2*b.count(s) - 64;
-    b.undoMove(legalMove, changeMask, s);
+    else {
+        score += 2*countSetBitsLow(changeMask) + 1;
+    }
 
     if (alpha < score)
         alpha = score;
@@ -581,9 +599,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
 
     MoveList legalMoves = b.getLegalMoves(s);
     if(legalMoves.size <= 0) {
-        Board copy = Board(b.taken, b.black);
-        copy.doMove(MOVE_NULL, s);
-        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        score = -pvs_h(b, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -621,6 +637,25 @@ int Endgame::bitScanForward(bitbrd bb) {
         return (int) bb;
     #else
         return index64[(int)(((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58)];
+    #endif
+}
+
+int Endgame::countSetBitsLow(bitbrd i) {
+    #if defined(__x86_64__)
+        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
+        return (int) i;
+    #elif defined(__i386)
+        int a = (int) (i & 0xFFFFFFFF);
+        int b = (int) (i >> 32);
+        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
+        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
+        return a+b;
+    #else
+        int result = 0;
+        do {
+            result++;
+            i &= i - 1;
+        } while(i);
     #endif
 }
 

@@ -15,11 +15,13 @@ Eval::Eval(int s) {
     }
 
     s33Table = new int[19683];
+    s44Table = new int[65536];
 
     readEdgeTable();
-    readStability33Table();
     readPattern24Table();
     readPatternE2XTable();
+    readStability33Table();
+    readStability44Table();
 }
 
 Eval::~Eval() {
@@ -30,9 +32,10 @@ Eval::~Eval() {
     }
 
     delete[] edgeTable;
-    delete[] s33Table;
     delete[] p24Table;
     delete[] pE2XTable;
+    delete[] s33Table;
+    delete[] s44Table;
 }
 
 int Eval::heuristic(Board *b, int turn) {
@@ -48,7 +51,7 @@ int Eval::heuristic(Board *b, int turn) {
 
     #if USE_EDGE_TABLE
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
-            + 2*boardToE2XPV(b, turn) + 3*boardTo33PV(b);
+            + 2*boardToE2XPV(b, turn) + 3*boardTo33SV(b);
     if(mySide == CBLACK)
         score += patterns;
     else
@@ -83,13 +86,17 @@ int Eval::end_heuristic(Board *b) {
     //score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
     score += (mySide == BLACK) ? boardToEPV(b, 50) : -boardToEPV(b, 50);
     //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
-    score += (mySide == BLACK) ? 6*boardTo33PV(b) : -6*boardTo33PV(b);
+    score += (mySide == BLACK) ? 6*boardTo33SV(b) : -6*boardTo33SV(b);
 
     score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     //score += 10 * (15 - b->numLegalMoves(oppSide));
     score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
+}
+
+int Eval::stability(Board *b, int s) {
+    return boardTo44SV(b, s);
 }
 
 int Eval::countSetBits(bitbrd i) {
@@ -163,35 +170,6 @@ int Eval::boardToEPV(Board *b, int turn) {
       (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
     int result = edgeTable[index][r1] + edgeTable[index][r8] +
             edgeTable[index][c1] + edgeTable[index][c8];
-    return result;
-}
-
-int Eval::boardTo33PV(Board *b) {
-    bitbrd black = b->toBits(BLACK);
-    bitbrd white = b->toBits(WHITE);
-    int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
-    int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
-    int ul = bitsToPI(ulb, ulw);
-
-    bitbrd rvb = reflectVertical(black);
-    bitbrd rvw = reflectVertical(white);
-    int llb = (int) ((rvb&7) + ((rvb>>5)&0x38) + ((rvb>>10)&0x1C0));
-    int llw = (int) ((rvw&7) + ((rvw>>5)&0x38) + ((rvw>>10)&0x1C0));
-    int ll = bitsToPI(llb, llw);
-
-    bitbrd rhb = reflectHorizontal(black);
-    bitbrd rhw = reflectHorizontal(white);
-    int urb = (int) ((rhb&7) + ((rhb>>5)&0x38) + ((rhb>>10)&0x1C0));
-    int urw = (int) ((rhw&7) + ((rhw>>5)&0x38) + ((rhw>>10)&0x1C0));
-    int ur = bitsToPI(urb, urw);
-
-    bitbrd rbb = reflectVertical(rhb);
-    bitbrd rbw = reflectVertical(rhw);
-    int lrb = (int) ((rbb&7) + ((rbb>>5)&0x38) + ((rbb>>10)&0x1C0));
-    int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
-    int lr = bitsToPI(lrb, lrw);
-
-    int result = s33Table[ul] + s33Table[ll] + s33Table[ur] + s33Table[lr];
     return result;
 }
 
@@ -287,6 +265,57 @@ int Eval::boardToE2XPV(Board *b, int turn) {
     return result;
 }
 
+int Eval::boardTo33SV(Board *b) {
+    bitbrd black = b->toBits(BLACK);
+    bitbrd white = b->toBits(WHITE);
+    int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
+    int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
+    int ul = bitsToPI(ulb, ulw);
+
+    bitbrd rvb = reflectVertical(black);
+    bitbrd rvw = reflectVertical(white);
+    int llb = (int) ((rvb&7) + ((rvb>>5)&0x38) + ((rvb>>10)&0x1C0));
+    int llw = (int) ((rvw&7) + ((rvw>>5)&0x38) + ((rvw>>10)&0x1C0));
+    int ll = bitsToPI(llb, llw);
+
+    bitbrd rhb = reflectHorizontal(black);
+    bitbrd rhw = reflectHorizontal(white);
+    int urb = (int) ((rhb&7) + ((rhb>>5)&0x38) + ((rhb>>10)&0x1C0));
+    int urw = (int) ((rhw&7) + ((rhw>>5)&0x38) + ((rhw>>10)&0x1C0));
+    int ur = bitsToPI(urb, urw);
+
+    bitbrd rbb = reflectVertical(rhb);
+    bitbrd rbw = reflectVertical(rhw);
+    int lrb = (int) ((rbb&7) + ((rbb>>5)&0x38) + ((rbb>>10)&0x1C0));
+    int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
+    int lr = bitsToPI(lrb, lrw);
+
+    int result = s33Table[ul] + s33Table[ll] + s33Table[ur] + s33Table[lr];
+    return result;
+}
+
+int Eval::boardTo44SV(Board *b, int s) {
+    bitbrd sbits = b->toBits(s);
+
+    int ul = (int) ((sbits & 0xF) + ((sbits>>4) & 0xF0) +
+            ((sbits>>8) & 0xF00) + ((sbits>>12) & 0xF000));
+
+    bitbrd rv = reflectVertical(sbits);
+    int ll = (int) ((rv & 0xF) + ((rv>>4) & 0xF0) +
+            ((rv>>8) & 0xF00) + ((rv>>12) & 0xF000));
+
+    bitbrd rh = reflectHorizontal(sbits);
+    int ur = (int) ((rh & 0xF) + ((rh>>4) & 0xF0) +
+            ((rh>>8) & 0xF00) + ((rh>>12) & 0xF000));
+
+    bitbrd rb = reflectVertical(rh);
+    int lr = (int) ((rb & 0xF) + ((rb>>4) & 0xF0) +
+            ((rb>>8) & 0xF00) + ((rb>>12) & 0xF000));
+
+    int result = s44Table[ul] + s44Table[ll] + s44Table[ur] + s44Table[lr];
+    return result;
+}
+
 int Eval::bitsToPI(int b, int w) {
     return PIECES_TO_INDEX[b] + 2*PIECES_TO_INDEX[w];
 }
@@ -310,25 +339,6 @@ void Eval::readEdgeTable() {
         }
 
         edgetable.close();
-    }
-}
-
-void Eval::readStability33Table() {
-    std::string line;
-    std::string file;
-        file = "patterns/s33table.txt";
-    std::ifstream s33table(file);
-
-    if(s33table.is_open()) {
-        for(int i = 0; i < 729; i++) {
-            getline(s33table, line);
-            for(int j = 0; j < 27; j++) {
-                std::string::size_type sz = 0;
-                s33Table[27*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
-            }
-        }
-        s33table.close();
     }
 }
 
@@ -368,5 +378,43 @@ void Eval::readPatternE2XTable() {
             }
         }
         pE2Xtable.close();
+    }
+}
+
+void Eval::readStability33Table() {
+    std::string line;
+    std::string file;
+        file = "patterns/s33table.txt";
+    std::ifstream s33table(file);
+
+    if(s33table.is_open()) {
+        for(int i = 0; i < 729; i++) {
+            getline(s33table, line);
+            for(int j = 0; j < 27; j++) {
+                std::string::size_type sz = 0;
+                s33Table[27*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+        }
+        s33table.close();
+    }
+}
+
+void Eval::readStability44Table() {
+    std::string line;
+    std::string file;
+        file = "patterns/s44table.txt";
+    std::ifstream s44table(file);
+
+    if(s44table.is_open()) {
+        for(int i = 0; i < 2048; i++) {
+            getline(s44table, line);
+            for(int j = 0; j < 32; j++) {
+                std::string::size_type sz = 0;
+                s44Table[32*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+        }
+        s44table.close();
     }
 }

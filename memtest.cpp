@@ -11,27 +11,6 @@ int top;
 
 void ffo(std::string file);
 
-#if __x86_64__
-void rdtscll(long long *val) {
-   __asm__ __volatile__ (
-        "rdtsc;"
-        "movl %%eax,%%ecx;"
-        "movl %%edx,%%eax;"
-        "shlq $32,%%rax;"
-        "addq %%rcx,%%rax;"
-        "movq %%rax, %0;"
-        : "=m" (*val)
-        :
-        : "%rax", "%rcx", "%rdx", "cc"
-        );
-}
-#else
-
-#define rdtscll(val) \
-       __asm__ __volatile__ ("rdtsc" : "=A" (*val) : "r" (*val))
-
-#endif
-
 /*
  DEPTH  #LEAF NODES   #FULL-DEPTH  #HIGHER
 ==========================================
@@ -107,12 +86,8 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
 int main(int argc, char **argv) {
     top = 0;
 
-    long long clocks, clocke;
-
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
-
-    rdtscll(&clocks);
 
     //Board b;
     //cerr << perft(b, 11, CBLACK, false) << endl;
@@ -121,9 +96,9 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    ffo("ffotest/end40.pos");
+    //ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
-    //ffo("ffotest/end42.pos");
+    ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
     //ffo("ffotest/end59.pos");
 
@@ -136,13 +111,11 @@ int main(int argc, char **argv) {
         m = p.doMove(m, -1);
     }*/
 
-    rdtscll(&clocke);
-
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
         end_time-start_time);
 
-    cerr << clocke-clocks << " " << time_span.count() << endl;
+    cerr << time_span.count() << endl;
 }
 
 void ffo(std::string file) {
