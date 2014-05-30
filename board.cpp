@@ -282,9 +282,15 @@ MoveList Board::getLegalMoves(int side) {
 /**
  * @brief Returns a list of all legal moves, with priorities for sorting.
 */
-MoveList Board::getLegalMovesOrdered(int side, MoveList &priority) {
+MoveList Board::getLegalMovesOrdered(int side, MoveList &priority, int &hashed) {
     MoveList result;
     bitbrd temp = getLegal(side);
+
+    if(hashed != -1) {
+        result.add(hashed);
+        priority.add(1000);
+        temp ^= MOVEMASK[hashed];
+    }
 
     while(temp) {
         result.add(bitScanForward(temp));

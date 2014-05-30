@@ -82,7 +82,6 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
     return nodes;
 }
 
-// g++ -std=c++0x -O3 -o memtest memtest.cpp player.cpp board.cpp openings.cpp endgame.cpp hash.cpp eval.cpp
 int main(int argc, char **argv) {
     top = 0;
 
@@ -100,6 +99,8 @@ int main(int argc, char **argv) {
     //ffo("ffotest/end41.pos");
     ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
+    //ffo("ffotest/end44.pos");
+    //ffo("ffotest/end45.pos");
     //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);

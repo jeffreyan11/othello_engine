@@ -83,10 +83,10 @@ int Eval::end_heuristic(Board *b) {
 
     score = 2*(myCoins - b->count(oppSide));
 
-    //score += (mySide == BLACK) ? 3*boardTo24PV(b) : -3*boardTo24PV(b);
+    score += (mySide == BLACK) ? 2*boardTo24PV(b, 50) : -2*boardTo24PV(b, 50);
     score += (mySide == BLACK) ? boardToEPV(b, 50) : -boardToEPV(b, 50);
     //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
-    score += (mySide == BLACK) ? 6*boardTo33SV(b) : -6*boardTo33SV(b);
+    //score += (mySide == BLACK) ? 6*boardTo33SV(b) : -6*boardTo33SV(b);
 
     score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     //score += 10 * (15 - b->numLegalMoves(oppSide));

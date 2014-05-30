@@ -428,7 +428,7 @@ public:
     void undoMove(int index, bitbrd changeMask, int side);
     bitbrd getLegal(int side);
     MoveList getLegalMoves(int side);
-    MoveList getLegalMovesOrdered(int side, MoveList &priority);
+    MoveList getLegalMovesOrdered(int side, MoveList &priority, int &hashed);
     int getLegalMoves4(int side, int &m1, int &m2, int &m3);
     int getLegalMoves3(int side, int &m1, int &m2);
 

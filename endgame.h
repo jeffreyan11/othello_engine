@@ -10,6 +10,7 @@
 #define END_SHLLW 11
 #define USE_BESTMOVE_TABLE true
 #define USE_STABILITY true
+#define STAB_ASP 14
 
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
