@@ -4,11 +4,11 @@ Eval::Eval(int s) {
     mySide = s;
     oppSide = -s;
 
-    edgeTable = new int *[TSPLITS];
-    p24Table = new int *[TSPLITS];
-    pE2XTable = new int *[TSPLITS];
+    edgeTable = new int *[TSPLITS+1];
+    p24Table = new int *[TSPLITS+1];
+    pE2XTable = new int *[TSPLITS+1];
 
-    for(int i = 0; i < TSPLITS; i++) {
+    for(int i = 0; i < TSPLITS+1; i++) {
         edgeTable[i] = new int[6561];
         p24Table[i] = new int[6561];
         pE2XTable[i] = new int[59049];
@@ -22,10 +22,13 @@ Eval::Eval(int s) {
     readPatternE2XTable();
     readStability33Table();
     readStability44Table();
+    readEdgeEndtable();
+    readPattern24Endtable();
+    readPatternE2XEndtable();
 }
 
 Eval::~Eval() {
-    for(int i = 0; i < TSPLITS; i++) {
+    for(int i = 0; i < TSPLITS+1; i++) {
         delete[] edgeTable[i];
         delete[] p24Table[i];
         delete[] pE2XTable[i];
@@ -77,15 +80,12 @@ int Eval::heuristic(Board *b, int turn) {
 
 int Eval::end_heuristic(Board *b) {
     int score = 0;
+    int t = 60;
 
-    score += (mySide == BLACK) ? 2*boardTo24PV(b, 50) : -2*boardTo24PV(b, 50);
-    score += (mySide == BLACK) ? boardToEPV(b, 50) : -boardToEPV(b, 50);
-    //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
+    score += (mySide == BLACK) ? 3*boardTo24PV(b, t) : -3*boardTo24PV(b, t);
+    //score += (mySide == BLACK) ? boardToEPV(b, t) : -boardToEPV(b, t);
+    //score += (mySide == BLACK) ? boardToE2XPV(b, t) : -boardToE2XPV(b, t);
     score += (mySide == BLACK) ? 3*boardTo33SV(b) : -3*boardTo33SV(b);
-
-    //score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    //score += 10 * (15 - b->numLegalMoves(oppSide));
-    //score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }
@@ -411,5 +411,60 @@ void Eval::readStability44Table() {
             }
         }
         s44table.close();
+    }
+}
+
+void Eval::readEdgeEndtable() {
+    std::string line;
+    std::string file;
+        file = "patterns/edgeend.txt";
+    std::ifstream edgetable(file);
+
+    if(edgetable.is_open()) {
+        for(int i = 0; i < 729; i++) {
+            getline(edgetable, line);
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                edgeTable[TSPLITS][9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+        }
+
+        edgetable.close();
+    }
+}
+
+void Eval::readPattern24Endtable() {
+    std::string line;
+    std::string file;
+        file = "patterns/p24end.txt";
+    std::ifstream p24table(file);
+
+    if(p24table.is_open()) {
+        for(int i = 0; i < 6561; i++) {
+            getline(p24table, line);
+            std::string::size_type sz = 0;
+            p24Table[TSPLITS][i] = std::stoi(line, &sz, 0);
+        }
+        p24table.close();
+    }
+}
+
+void Eval::readPatternE2XEndtable() {
+    std::string line;
+    std::string file;
+        file = "patterns/pE2Xend.txt";
+    std::ifstream pE2Xtable(file);
+
+    if(pE2Xtable.is_open()) {
+        for(int i = 0; i < 6561; i++) {
+            getline(pE2Xtable, line);
+            for(int j = 0; j < 9; j++) {
+                std::string::size_type sz = 0;
+                pE2XTable[TSPLITS][9*i+j] = std::stoi(line, &sz, 0);
+                line = line.substr(sz);
+            }
+        }
+        pE2Xtable.close();
     }
 }

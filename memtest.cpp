@@ -96,11 +96,12 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end42.pos");
 
     //ffo("ffotest/end40.pos");
-    //ffo("ffotest/end41.pos");
+    ffo("ffotest/end41.pos");
     //ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
-    ffo("ffotest/end44.pos");
+    //ffo("ffotest/end44.pos");
     //ffo("ffotest/end45.pos");
+    //ffo("ffotest/end46.pos");
     //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);

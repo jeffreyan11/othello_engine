@@ -147,6 +147,9 @@ private:
     void readPatternE2XTable();
     void readStability33Table();
     void readStability44Table();
+    void readEdgeEndtable();
+    void readPattern24Endtable();
+    void readPatternE2XEndtable();
 
 public:
     Eval(int s);

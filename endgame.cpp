@@ -201,6 +201,9 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
                 -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
         }
 
+        //if(depth > 18)
+        //    cerr << "d: " << depth << " a: " << score << endl;
+
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
         #endif
