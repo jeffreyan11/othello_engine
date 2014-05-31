@@ -10,7 +10,9 @@
 #define END_SHLLW 11
 #define USE_BESTMOVE_TABLE true
 #define USE_STABILITY true
-#define STAB_ASP 14
+#define STAB_ASP 16
+#define STAB_UP 48
+#define USE_REGION_PAR false
 
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
@@ -33,7 +35,9 @@ private:
 
     Eval *evaluater;
 
+    #if USE_REGION_PAR
     int region_parity;
+    #endif
 
     int pvs(Board &b, MoveList &moves, MoveList &scores, int side, int depth,
         int alpha, int beta);

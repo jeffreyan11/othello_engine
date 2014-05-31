@@ -76,21 +76,16 @@ int Eval::heuristic(Board *b, int turn) {
 }
 
 int Eval::end_heuristic(Board *b) {
-    int score;
-    int myCoins = b->count(mySide);
-    if(myCoins == 0)
-        return -9001;
-
-    score = 2*(myCoins - b->count(oppSide));
+    int score = 0;
 
     score += (mySide == BLACK) ? 2*boardTo24PV(b, 50) : -2*boardTo24PV(b, 50);
     score += (mySide == BLACK) ? boardToEPV(b, 50) : -boardToEPV(b, 50);
     //score += (mySide == BLACK) ? 2*boardToE2XPV(b) : -2*boardToE2XPV(b);
-    //score += (mySide == BLACK) ? 6*boardTo33SV(b) : -6*boardTo33SV(b);
+    score += (mySide == BLACK) ? 3*boardTo33SV(b) : -3*boardTo33SV(b);
 
-    score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
+    //score += 5 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
     //score += 10 * (15 - b->numLegalMoves(oppSide));
-    score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    //score += 6 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
 
     return score;
 }

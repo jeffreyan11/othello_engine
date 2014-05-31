@@ -29,6 +29,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
 
     evaluater = eval;
 
+    #if USE_REGION_PAR
     // initialize region parity
     region_parity = 0;
     bitbrd empty = ~b.getTaken();
@@ -36,6 +37,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         region_parity ^= QUADRANT_ID[bitScanForward(empty)];
         empty &= empty-1;
     }
+    #endif
 
     int score;
     int alpha = -64;
@@ -56,7 +58,9 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
 
         Board copy = Board(b.taken, b.black);
         copy.doMove(moves.get(i), mySide);
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves.get(i)];
+        #endif
 
         if (i != 0) {
 if(depth > END_SHLLW || depth <= 4)
@@ -82,7 +86,9 @@ else score = -endgame4(copy, -mySide, -beta, -alpha, false);
         }
 
         cerr << "Searched " << moves.get(i) << " alpha: " << score << endl;
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves.get(i)];
+        #endif
         if (alpha < score) {
             alpha = score;
             tempMove = moves.get(i);
@@ -120,7 +126,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     // TODO stability cutoff?
     #if USE_STABILITY
-    if(alpha >= 28 && alpha <= 48) {
+    if(alpha >= 24 && alpha < STAB_UP) {
         int stab_score = evaluater->stability(&b, -s);
         if(64 - 2*stab_score - STAB_ASP <= alpha)
             return alpha;
@@ -153,19 +159,21 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
-    //MoveList scores;
-    /*for(unsigned int i = 0; i < legalMoves.size; i++) {
+    MoveList scores;
+
+    pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
+
+    for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
-        scores.add(evaluater->mob(&copy));
+        scores.set(i, scores.get(i)
+                - 16*copy.numLegalMoves(-s) - 4*copy.potentialMobility(-s));
     }
-    sort(legalMoves, scores, 0, legalMoves.size-1);*/
 
-    /*pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
     for(unsigned int i = 0; i < legalMoves.size; i++) {
-        priority.set(i, scores.get(i)+5*priority.get(i));
+        priority.set(i, scores.get(i)+4*priority.get(i));
     }
-    sort(legalMoves, priority, 0, legalMoves.size-1);*/
+    sort(legalMoves, priority, 0, legalMoves.size-1);
 
     #if USE_BESTMOVE_TABLE
     int tempMove = -1;
@@ -173,7 +181,9 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
+        #endif
 
         if (i != 0) {
             score = (depth > END_SHLLW) ?
@@ -191,7 +201,9 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
                 -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
         }
 
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
+        #endif
         if (alpha < score) {
             alpha = score;
             #if USE_BESTMOVE_TABLE
@@ -219,7 +231,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     // TODO stability cutoff?
     #if USE_STABILITY
-    if(alpha >= 16 && alpha <= 48) {
+    if(alpha >= 12 && alpha < STAB_UP) {
         int stab_score = evaluater->stability(&b, -s);
         if(64 - 2*stab_score - STAB_ASP <= alpha)
             return alpha;
@@ -246,6 +258,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     int n = 0;
 
     bitbrd empty = ~b.getTaken();
+    #if USE_REGION_PAR
     if(region_parity) {
         do {
             moves[n] = bitScanForward(legal);
@@ -265,6 +278,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         } while(legal);
     }
     else {
+    #endif
         do {
             moves[n] = bitScanForward(legal);
 
@@ -274,7 +288,9 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
 
             legal &= legal-1; n++;
         } while(legal);
+    #if USE_REGION_PAR
     }
+    #endif
 
     // sort
     for(int i = 1; i < n; i++) {
@@ -294,7 +310,9 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     for (int i = 0; i < n; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(moves[i], s);
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves[i]];
+        #endif
 
         if (i != 0) {
             if(depth > 5)
@@ -312,7 +330,9 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
             else score = -endgame4(copy, -s, -beta, -alpha, false);
         }
 
+        #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves[i]];
+        #endif
         if (score >= beta)
             return score;
         if (alpha < score)
@@ -541,12 +561,9 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
     if(!changeMask) {
         if(score >= alpha) {
             bitbrd otherMask = b.getDoMove(legalMove, -s);
-            if(!otherMask)
-                return score;
-
-            score -= 2*countSetBitsLow(otherMask) + 1;
+            if(otherMask)
+                score -= 2*countSetBitsLow(otherMask) + 1;
         }
-        else return alpha;
     }
     else {
         score += 2*countSetBitsLow(changeMask) + 1;

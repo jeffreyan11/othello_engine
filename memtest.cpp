@@ -97,9 +97,9 @@ int main(int argc, char **argv) {
 
     //ffo("ffotest/end40.pos");
     //ffo("ffotest/end41.pos");
-    ffo("ffotest/end42.pos");
+    //ffo("ffotest/end42.pos");
     //ffo("ffotest/end43.pos");
-    //ffo("ffotest/end44.pos");
+    ffo("ffotest/end44.pos");
     //ffo("ffotest/end45.pos");
     //ffo("ffotest/end59.pos");
 
@@ -147,7 +147,7 @@ void ffo(std::string file) {
     Board b;
     b.setBoard(board);
     MoveList lm = b.getLegalMoves(side);
-    int empties = 64 - b.count(CBLACK) - b.count(CWHITE);
+    int empties = b.countEmpty();
     cerr << empties << " empty" << endl;
 
     Player p(BLACK);
