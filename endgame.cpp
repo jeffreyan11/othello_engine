@@ -109,6 +109,8 @@ else score = -endgame4(copy, -mySide, -beta, -alpha, false);
 
 /**
  * @brief Function for endgame solver. Used when many empty squares remain.
+ * A best move table, stability cutoff, killer heuristic cutoff, sort search,
+ * and fastest first are used to reducing nodes searched.
 */
 int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
@@ -116,8 +118,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     #if USE_BESTMOVE_TABLE
     // play best move, if recorded
-    int hashed = endgame_table->get(&b, s, score);
-    if(hashed != -1) {
+    if(endgame_table->get(&b, s, score) != -1) {
         if (alpha < score)
             alpha = score;
         return alpha;
@@ -160,18 +161,14 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
     MoveList scores;
-
     pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
 
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
-        scores.set(i, scores.get(i)
-                - 16*copy.numLegalMoves(-s) - 4*copy.potentialMobility(-s));
-    }
 
-    for(unsigned int i = 0; i < legalMoves.size; i++) {
-        priority.set(i, scores.get(i)+4*priority.get(i));
+        priority.set(i, scores.get(i) - 16*copy.numLegalMoves(-s)
+                - 4*copy.potentialMobility(-s) + 4*priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
@@ -617,7 +614,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
     int alpha, int beta) {
 
     if (depth <= 0) {
-        topScore = (s == mySide) ? evaluater->end_heuristic(&b) :
+        topScore = (s == CBLACK) ? evaluater->end_heuristic(&b) :
                 -evaluater->end_heuristic(&b);
         return topScore;
     }
@@ -631,8 +628,8 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
 
         if (alpha < score)
             alpha = score;
-        if(ttScore > topScore)
-            topScore = ttScore;
+        topScore = ttScore;
+
         return alpha;
     }
 
@@ -640,12 +637,7 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
-        if (i != 0) {
-            score = -pvs_h(copy, ttScore, -s, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta)
-                score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
-        }
-        else score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
