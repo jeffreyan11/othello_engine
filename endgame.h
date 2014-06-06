@@ -7,7 +7,7 @@
 #include "hash.h"
 #include "eval.h"
 
-#define END_SHLLW 11
+#define END_SHLLW 9
 #define USE_BESTMOVE_TABLE true
 #define USE_STABILITY true
 #define STAB_ASP 16
@@ -39,7 +39,7 @@ private:
     int region_parity;
     #endif
 
-    int pvs(Board &b, MoveList &moves, MoveList &scores, int side, int depth,
+    void pvs(Board &b, MoveList &moves, MoveList &scores, int side, int depth,
         int alpha, int beta);
     int pvs_h(Board &b, int &topScore, int side, int depth,
         int alpha, int beta);

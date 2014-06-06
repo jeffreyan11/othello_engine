@@ -44,16 +44,18 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
     int beta = 64;
     int tempMove = moves.get(0);
 
-    /*MoveList scores;
-    pvs(b, moves, scores, mySide, 2, NEG_INFTY, INFTY);
-    sort(moves, scores, 0, moves.size-1);*/
+    if(depth > END_SHLLW) {
+        MoveList scores;
+        pvs(b, moves, scores, mySide, 2, NEG_INFTY, INFTY);
+        sort(moves, scores, 0, moves.size-1);
+    }
 
     for (unsigned int i = 0; i < moves.size; i++) {
         auto end_time = high_resolution_clock::now();
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * 1500 * moves.size > endgameTimeMS * (i+1))
+        if(time_span.count() * 1000 * moves.size > endgameTimeMS * (i+1))
             return MOVE_BROKEN;
 
         Board copy = Board(b.taken, b.black);
@@ -63,26 +65,29 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         #endif
 
         if (i != 0) {
-if(depth > END_SHLLW || depth <= 4)
+if(depth > 5 || depth <= 3)
     score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
-else if(depth > 5)
-    score = -endgame_shallow(copy, -mySide, depth-1, -alpha-1, -alpha, false);
-else score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
+else if(depth == 5)
+    score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
+else
+    score = -endgame3(copy, -mySide, -alpha-1, -alpha, false);
 
             if (alpha < score && score < beta) {
-if(depth > END_SHLLW || depth <= 4)
+if(depth > 5 || depth <= 3)
     score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-else if(depth > 5)
-    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
-else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+else if(depth == 5)
+    score = -endgame4(copy, -mySide, -beta, -alpha, false);
+else
+    score = -endgame3(copy, -mySide, -beta, -alpha, false);
             }
         }
         else {
-if(depth > END_SHLLW || depth <= 4)
+if(depth > 5 || depth <= 3)
     score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-else if(depth > 5)
-    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
-else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+else if(depth == 5)
+    score = -endgame4(copy, -mySide, -beta, -alpha, false);
+else
+    score = -endgame3(copy, -mySide, -beta, -alpha, false);
         }
 
         cerr << "Searched " << moves.get(i) << " alpha: " << score << endl;
@@ -114,10 +119,13 @@ else score = -endgame4(copy, -mySide, -beta, -alpha, false);
 */
 int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
+    if(depth <= END_SHLLW)
+        return endgame_shallow(b, s, depth, alpha, beta, passedLast);
+
     int score;
 
-    #if USE_BESTMOVE_TABLE
     // play best move, if recorded
+    #if USE_BESTMOVE_TABLE
     if(endgame_table->get(&b, s, score) != -1) {
         if (alpha < score)
             alpha = score;
@@ -160,15 +168,17 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
+    // Use a shallow search for move ordering
     MoveList scores;
     pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
 
+    // Restrict opponent's mobility and potential mobility
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
         priority.set(i, scores.get(i) - 16*copy.numLegalMoves(-s)
-                - 4*copy.potentialMobility(-s) + 4*priority.get(i));
+                - 8*copy.potentialMobility(-s) + 4*priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
@@ -183,23 +193,12 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         #endif
 
         if (i != 0) {
-            score = (depth > END_SHLLW) ?
-                -endgame_h(copy, -s, depth-1, -alpha-1, -alpha, false) :
-                -endgame_shallow(copy, -s, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta) {
-                score = (depth > END_SHLLW) ?
-                    -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-                    -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
-            }
+            score = -endgame_h(copy, -s, depth-1, -alpha-1, -alpha, false);
+            if (alpha < score && score < beta)
+                score = -endgame_h(copy, -s, depth-1, -beta, -alpha, false);
         }
-        else {
-            score = (depth > END_SHLLW) ?
-                -endgame_h(copy, -s, depth-1, -beta, -alpha, false) :
-                -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
-        }
-
-        //if(depth > 18)
-        //    cerr << "d: " << depth << " a: " << score << endl;
+        else
+            score = -endgame_h(copy, -s, depth-1, -beta, -alpha, false);
 
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
@@ -575,44 +574,30 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
 //--------------------------------PVS Search------------------------------------
 
 /**
- * @brief Performs a principal variation null-window search.
+ * @brief Performs an alpha-beta search.
 */
-int Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
-    int depth, int alpha, int beta) {
-
+void Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
+        int depth, int alpha, int beta) {
     int score;
-    int tempMove = moves.get(0);
 
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(moves.get(i), s);
         int ttScore = NEG_INFTY;
-        if (i != 0) {
-            score = -pvs_h(copy, ttScore, -s, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta)
-                score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -score);
-        }
-        else score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+
+        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
 
         scores.add(ttScore);
-        if (score > alpha) {
+        if (score > alpha)
             alpha = score;
-            tempMove = moves.get(i);
-        }
     }
-    return tempMove;
 }
 
 /**
- * @brief Helper function for the principal variation search.
- * 
- * Uses alpha-beta pruning with a null-window search, a transposition table that
- * stores moves which previously caused a beta cutoff, and an internal sorting
- * search of depth 2.
+ * @brief Helper function for the alpha-beta search.
 */
 int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
-    int alpha, int beta) {
-
+        int alpha, int beta) {
     if (depth <= 0) {
         topScore = (s == CBLACK) ? evaluater->end_heuristic(&b) :
                 -evaluater->end_heuristic(&b);

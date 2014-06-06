@@ -78,14 +78,18 @@ int Eval::heuristic(Board *b, int turn) {
     return score;
 }
 
+/**
+ * @brief An evaluation function for endgame move ordering. Always returns a
+ * score from black's point of view.
+*/
 int Eval::end_heuristic(Board *b) {
     int score = 0;
     int t = 60;
 
-    score += (mySide == BLACK) ? 3*boardTo24PV(b, t) : -3*boardTo24PV(b, t);
+    score += 3*boardTo24PV(b, t);
     //score += (mySide == BLACK) ? boardToEPV(b, t) : -boardToEPV(b, t);
     //score += (mySide == BLACK) ? boardToE2XPV(b, t) : -boardToE2XPV(b, t);
-    score += (mySide == BLACK) ? 3*boardTo33SV(b) : -3*boardTo33SV(b);
+    score += 3*boardTo33SV(b);
 
     return score;
 }
