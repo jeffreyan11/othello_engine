@@ -86,10 +86,10 @@ int Eval::end_heuristic(Board *b) {
     int score = 0;
     int t = 60;
 
-    score += 3*boardTo24PV(b, t);
-    //score += (mySide == BLACK) ? boardToEPV(b, t) : -boardToEPV(b, t);
-    //score += (mySide == BLACK) ? boardToE2XPV(b, t) : -boardToE2XPV(b, t);
-    score += 3*boardTo33SV(b);
+    score += 2*boardTo24PV(b, t);
+    //score += boardToEPV(b, t);
+    score += boardToE2XPV(b, t);
+    score += 2*boardTo33SV(b);
 
     return score;
 }

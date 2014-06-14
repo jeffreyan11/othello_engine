@@ -178,7 +178,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         copy.doMove(legalMoves.get(i), s);
 
         priority.set(i, scores.get(i) - 16*copy.numLegalMoves(-s)
-                - 8*copy.potentialMobility(-s) + 4*priority.get(i));
+                - 4*copy.potentialMobility(-s) + 4*priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 

@@ -95,13 +95,13 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    ffo("ffotest/end40.pos");
+    ffo("ffotest/end40.pos");           // 56
     ffo("ffotest/end41.pos");
     ffo("ffotest/end42.pos");
     ffo("ffotest/end43.pos");
     ffo("ffotest/end44.pos");
-    //ffo("ffotest/end45.pos");
-    //ffo("ffotest/end46.pos");
+    //ffo("ffotest/end45.pos");           // 239.272
+    //ffo("ffotest/end46.pos");           // 116.398
     //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
