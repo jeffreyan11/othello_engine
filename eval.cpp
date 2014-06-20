@@ -14,13 +14,11 @@ Eval::Eval(int s) {
         pE2XTable[i] = new int[59049];
     }
 
-    s33Table = new int[19683];
     s44Table = new int[65536];
 
     readEdgeTable();
     readPattern24Table();
     readPatternE2XTable();
-    readStability33Table();
     readStability44Table();
     readEdgeEndtable();
     readPattern24Endtable();
@@ -37,7 +35,6 @@ Eval::~Eval() {
     delete[] edgeTable;
     delete[] p24Table;
     delete[] pE2XTable;
-    delete[] s33Table;
     delete[] s44Table;
 }
 
@@ -54,7 +51,8 @@ int Eval::heuristic(Board *b, int turn) {
 
     #if USE_EDGE_TABLE
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
-            + 2*boardToE2XPV(b, turn) + 3*boardTo33SV(b);
+            + 2*boardToE2XPV(b, turn)
+            + 3*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
     if(mySide == CBLACK)
         score += patterns;
     else
@@ -89,7 +87,8 @@ int Eval::end_heuristic(Board *b) {
     score += 2*boardTo24PV(b, t);
     //score += boardToEPV(b, t);
     score += boardToE2XPV(b, t);
-    score += 2*boardTo33SV(b);
+    //score += 2*boardTo33SV(b);
+    score += 2 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;
 }
@@ -264,7 +263,7 @@ int Eval::boardToE2XPV(Board *b, int turn) {
     return result;
 }
 
-int Eval::boardTo33SV(Board *b) {
+/*int Eval::boardTo33SV(Board *b) {
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
@@ -291,7 +290,7 @@ int Eval::boardTo33SV(Board *b) {
 
     int result = s33Table[ul] + s33Table[ll] + s33Table[ur] + s33Table[lr];
     return result;
-}
+}*/
 
 int Eval::boardTo44SV(Board *b, int s) {
     bitbrd sbits = b->toBits(s);
@@ -380,7 +379,7 @@ void Eval::readPatternE2XTable() {
     }
 }
 
-void Eval::readStability33Table() {
+/*void Eval::readStability33Table() {
     std::string line;
     std::string file;
         file = "patterns/s33table.txt";
@@ -397,7 +396,7 @@ void Eval::readStability33Table() {
         }
         s33table.close();
     }
-}
+}*/
 
 void Eval::readStability44Table() {
     std::string line;

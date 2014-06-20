@@ -5,8 +5,8 @@
 #include <cstdlib>
 
 #define bitbrd uint64_t
-#define NEG_INFTY -99999
-#define INFTY 99999
+#define NEG_INFTY -65536
+#define INFTY 65536
 #define MOVE_NULL 64
 #define MOVE_BROKEN -1
 #define OPENING_NOT_FOUND -3

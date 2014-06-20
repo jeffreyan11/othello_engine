@@ -127,7 +127,6 @@ private:
     int **edgeTable;
     int **p24Table;
     int **pE2XTable;
-    int *s33Table;
     int *s44Table;
 
     int countSetBits(bitbrd i);
@@ -138,14 +137,12 @@ private:
     int boardToEPV(Board *b, int turn);
     int boardTo24PV(Board *b, int turn);
     int boardToE2XPV(Board *b, int turn);
-    int boardTo33SV(Board *b);
     int boardTo44SV(Board *b, int s);
     int bitsToPI(int b, int w);
 
     void readEdgeTable();
     void readPattern24Table();
     void readPatternE2XTable();
-    void readStability33Table();
     void readStability44Table();
     void readEdgeEndtable();
     void readPattern24Endtable();

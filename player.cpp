@@ -9,10 +9,10 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 14;
+    maxDepth = 16;
     minDepth = 6;
     sortDepth = 4;
-    endgameDepth = 23;
+    endgameDepth = 25;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     endgameSolver.mySide = mySide;
@@ -26,6 +26,7 @@ Player::Player(Side side) {
         }
     }
 
+    // initialize the evaluation functions
     evaluater = new Eval(mySide);
 
     #if defined(__x86_64__)
@@ -65,7 +66,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(totalTimePM == -2) {
         totalTimePM = msLeft;
         if(totalTimePM != -1) {
-            totalTimePM /= 24;
+            totalTimePM /= 18;
         }
         else {
             totalTimePM = 10000000;
@@ -77,6 +78,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     auto end_time = high_resolution_clock::now();
     duration<double> time_span;
 
+    // register opponent's move
     if(opponentsMove != NULL) {
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
         turn++;
@@ -166,14 +168,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while( ((msLeft/empties > time_span.count()*1000.0*16) || msLeft == -1)
+    } while( ((msLeft/empties > time_span.count()*1000.0*12) || msLeft == -1)
             && attemptingDepth <= maxDepth );
 
     game.doMove(myMove, mySide);
     turn++;
 
     cerr << "Playing " << myMove << ". Score: " << chosenScore << endl;
-    killer_table.clean(turn);
+    killer_table.clean(turn+1);
     cerr << "Table contains " << killer_table.keys << " keys." << endl;
     cerr << endl;
 
@@ -205,20 +207,17 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, int s,
         int ttScore = NEG_INFTY;
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, -s, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta) {
+            if (alpha < score && score < beta)
                 score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -score);
-            }
         }
-        else {
+        else
             score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
-        }
+
         scores.add(ttScore);
         if (score > alpha) {
             alpha = score;
             tempMove = moves.get(i);
         }
-        if (alpha >= beta)
-            break;
     }
     return tempMove;
 }
