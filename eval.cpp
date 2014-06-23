@@ -7,11 +7,13 @@ Eval::Eval(int s) {
     edgeTable = new int *[TSPLITS+1];
     p24Table = new int *[TSPLITS+1];
     pE2XTable = new int *[TSPLITS+1];
+    p33Table = new int *[TSPLITS+1];
 
     for(int i = 0; i < TSPLITS+1; i++) {
         edgeTable[i] = new int[6561];
         p24Table[i] = new int[6561];
         pE2XTable[i] = new int[59049];
+        p33Table[i] = new int[19683];
     }
 
     s44Table = new int[65536];
@@ -19,6 +21,7 @@ Eval::Eval(int s) {
     readEdgeTable();
     readPattern24Table();
     readPatternE2XTable();
+    readPattern33Table();
     readStability44Table();
     readEdgeEndtable();
     readPattern24Endtable();
@@ -30,28 +33,25 @@ Eval::~Eval() {
         delete[] edgeTable[i];
         delete[] p24Table[i];
         delete[] pE2XTable[i];
+        delete[] p33Table[i];
     }
 
     delete[] edgeTable;
     delete[] p24Table;
     delete[] pE2XTable;
+    delete[] p33Table;
     delete[] s44Table;
 }
 
 int Eval::heuristic(Board *b, int turn) {
-    int score;
-    int myCoins = b->count(mySide);
-    if(myCoins == 0)
+    if(b->count(mySide) == 0)
         return -9001;
 
-    if(turn < 20)
-        score = 2*(b->count(oppSide) - myCoins);
-    else
-        score = myCoins - b->count(oppSide);
+    int score = 0;
 
     #if USE_EDGE_TABLE
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
-            + 2*boardToE2XPV(b, turn)
+            + 2*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
             + 3*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
     if(mySide == CBLACK)
         score += patterns;
@@ -87,7 +87,7 @@ int Eval::end_heuristic(Board *b) {
     score += 2*boardTo24PV(b, t);
     //score += boardToEPV(b, t);
     score += boardToE2XPV(b, t);
-    //score += 2*boardTo33SV(b);
+    //score += boardTo33PV(b, 50);
     score += 2 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;
@@ -263,7 +263,8 @@ int Eval::boardToE2XPV(Board *b, int turn) {
     return result;
 }
 
-/*int Eval::boardTo33SV(Board *b) {
+int Eval::boardTo33PV(Board *b, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
     int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
@@ -288,9 +289,10 @@ int Eval::boardToE2XPV(Board *b, int turn) {
     int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
     int lr = bitsToPI(lrb, lrw);
 
-    int result = s33Table[ul] + s33Table[ll] + s33Table[ur] + s33Table[lr];
+    int result = p33Table[index][ul] + p33Table[index][ll] +
+            p33Table[index][ur] + p33Table[index][lr];
     return result;
-}*/
+}
 
 int Eval::boardTo44SV(Board *b, int s) {
     bitbrd sbits = b->toBits(s);
@@ -379,24 +381,26 @@ void Eval::readPatternE2XTable() {
     }
 }
 
-/*void Eval::readStability33Table() {
+void Eval::readPattern33Table() {
     std::string line;
     std::string file;
-        file = "patterns/s33table.txt";
-    std::ifstream s33table(file);
+        file = "patterns/p33table.txt";
+    std::ifstream p33table(file);
 
-    if(s33table.is_open()) {
-        for(int i = 0; i < 729; i++) {
-            getline(s33table, line);
-            for(int j = 0; j < 27; j++) {
-                std::string::size_type sz = 0;
-                s33Table[27*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
+    if(p33table.is_open()) {
+        for(int n = 0; n < TSPLITS; n++) {
+            for(int i = 0; i < 2187; i++) {
+                getline(p33table, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    p33Table[n][9*i+j] = std::stoi(line, &sz, 0);
+                    line = line.substr(sz);
+                }
             }
         }
-        s33table.close();
+        p33table.close();
     }
-}*/
+}
 
 void Eval::readStability44Table() {
     std::string line;
