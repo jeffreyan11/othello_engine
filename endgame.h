@@ -45,7 +45,7 @@ private:
         int alpha, int beta);
 
     int bitScanForward(bitbrd bb);
-    int countSetBitsLow(bitbrd i);
+    int countSetBits(bitbrd i);
     void sort(MoveList &moves, MoveList &scores, int left, int right);
     void swap(MoveList &moves, MoveList &scores, int i, int j);
     int partition(MoveList &moves, MoveList &scores, int left, int
