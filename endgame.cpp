@@ -561,11 +561,11 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
         if(score >= alpha) {
             bitbrd otherMask = b.getDoMove(legalMove, -s);
             if(otherMask)
-                score -= 2*countSetBitsLow(otherMask) + 1;
+                score -= 2*countSetBits(otherMask) + 1;
         }
     }
     else {
-        score += 2*countSetBitsLow(changeMask) + 1;
+        score += 2*countSetBits(changeMask) + 1;
     }
 
     return score;
@@ -645,8 +645,8 @@ int Endgame::bitScanForward(bitbrd bb) {
     #endif
 }
 
-int Endgame::countSetBitsLow(bitbrd i) {
-    #if defined(__x86_64__)
+int Endgame::countSetBits(bitbrd i) {
+/*    #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
     #elif defined(__i386)
@@ -655,13 +655,13 @@ int Endgame::countSetBitsLow(bitbrd i) {
         asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
         asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
         return a+b;
-    #else
-        int result = 0;
-        do {
-            result++;
-            i &= i - 1;
-        } while(i);
-    #endif
+    #else */
+        i = i - ((i >> 1) & 0x5555555555555555);
+        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
+        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
+              0x0101010101010101) >> 56;
+        return (int) i;
+    // #endif
 }
 
 void Endgame::sort(MoveList &moves, MoveList &scores, int left, int right) {

@@ -656,7 +656,7 @@ int Board::count(int side) {
 }
 
 int Board::countSetBits(bitbrd i) {
-    #if defined(__x86_64__)
+/*    #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
     #elif defined(__i386)
@@ -665,13 +665,13 @@ int Board::countSetBits(bitbrd i) {
         asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
         asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
         return a+b;
-    #else
+    #else */
         i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
         i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
               0x0101010101010101) >> 56;
         return (int) i;
-    #endif
+    // #endif
 }
 
 bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
