@@ -9,7 +9,7 @@
 
 #define END_SHLLW 9
 #define USE_BESTMOVE_TABLE true
-#define USE_STABILITY true
+#define USE_STABILITY false
 #define STAB_ASP 16
 #define STAB_UP 48
 #define USE_REGION_PAR false
