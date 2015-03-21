@@ -14,6 +14,8 @@
 #define STAB_UP 48
 #define USE_REGION_PAR false
 
+#define COUNT_NODES true
+
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
 1, 1, 1, 1, 2, 2, 2, 2,
@@ -54,6 +56,9 @@ private:
 public:
     int endgameTimeMS;
     int mySide;
+    #if COUNT_NODES
+    unsigned long long nodes;
+    #endif
 
     Endgame();
     ~Endgame();

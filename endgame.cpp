@@ -27,6 +27,9 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
+    #if COUNT_NODES
+    nodes = 0;
+    #endif
     evaluater = eval;
 
     #if USE_REGION_PAR
@@ -46,7 +49,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
 
     if(depth > END_SHLLW) {
         MoveList scores;
-        pvs(b, moves, scores, mySide, 2, NEG_INFTY, INFTY);
+        pvs(b, moves, scores, mySide, 4, NEG_INFTY, INFTY);
         sort(moves, scores, 0, moves.size-1);
     }
 
@@ -65,32 +68,26 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         #endif
 
         if (i != 0) {
-if(depth > 5 || depth <= 3)
-    score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
-else if(depth == 5)
-    score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
-else
-    score = -endgame3(copy, -mySide, -alpha-1, -alpha, false);
+            if(depth != 4)
+                score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+            else
+                score = -endgame3(copy, -mySide, -alpha-1, -alpha, false);
 
             if (alpha < score && score < beta) {
-if(depth > 5 || depth <= 3)
-    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-else if(depth == 5)
-    score = -endgame4(copy, -mySide, -beta, -alpha, false);
-else
-    score = -endgame3(copy, -mySide, -beta, -alpha, false);
+                if(depth != 4)
+                    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+                else
+                    score = -endgame3(copy, -mySide, -beta, -alpha, false);
             }
         }
         else {
-if(depth > 5 || depth <= 3)
-    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-else if(depth == 5)
-    score = -endgame4(copy, -mySide, -beta, -alpha, false);
-else
-    score = -endgame3(copy, -mySide, -beta, -alpha, false);
+            if(depth != 4)
+                score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+            else
+                score = -endgame3(copy, -mySide, -beta, -alpha, false);
         }
 
-        cerr << "Searched " << moves.get(i) << " alpha: " << score << endl;
+        cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves.get(i)];
         #endif
@@ -108,6 +105,13 @@ else
     cerr << "Killer table has: " << killer_table.keys << " keys." << endl;
     //endgame_table.test();
     cerr << "Score: " << alpha << endl;
+    #if COUNT_NODES
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(
+        end_time-start_time);
+    cerr << "Nodes searched: " << nodes << " | NPS: " <<
+        (int)((double)nodes / time_span.count()) << endl;
+    #endif
 
     return tempMove;
 }
@@ -115,7 +119,7 @@ else
 /**
  * @brief Function for endgame solver. Used when many empty squares remain.
  * A best move table, stability cutoff, killer heuristic cutoff, sort search,
- * and fastest first are used to reducing nodes searched.
+ * and fastest first are used to reduce nodes searched.
 */
 int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
@@ -156,8 +160,12 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     MoveList legalMoves = b.getLegalMovesOrdered(s, priority, killer);
 
     if(legalMoves.size <= 0) {
-        if(passedLast)
+        if(passedLast) {
+            #if COUNT_NODES
+            nodes++;
+            #endif
             return (b.count(s) - b.count(-s));
+        }
 
         score = -endgame_h(b, -s, depth, -beta, -alpha, true);
 
@@ -166,7 +174,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         return alpha;
     }
 
-    sort(legalMoves, priority, 0, legalMoves.size-1);
+    //sort(legalMoves, priority, 0, legalMoves.size-1);
 
     // Use a shallow search for move ordering
     MoveList scores;
@@ -177,8 +185,8 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
-        priority.set(i, scores.get(i) - 16*copy.numLegalMoves(-s)
-                - 4*copy.potentialMobility(-s) + 4*priority.get(i));
+        priority.set(i, scores.get(i) + 3*copy.numLegalMoves(s) - 18*copy.numLegalMoves(-s)
+                + 4*copy.potentialMobility(s) - 5*copy.potentialMobility(-s) + 5*priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
@@ -228,6 +236,8 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 */
 int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
+    if(depth <= 4)
+        return endgame4(b, s, alpha, beta, passedLast);
     // TODO stability cutoff?
     #if USE_STABILITY
     if(alpha >= 12 && alpha < STAB_UP) {
@@ -241,8 +251,12 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     bitbrd legal = b.getLegal(s);
 
     if(!legal) {
-        if(passedLast)
+        if(passedLast) {
+            #if COUNT_NODES
+            nodes++;
+            #endif
             return (b.count(s) - b.count(-s));
+        }
 
         score = -endgame_shallow(b, -s, depth, -beta, -alpha, true);
 
@@ -314,19 +328,13 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         #endif
 
         if (i != 0) {
-            if(depth > 5)
             score = -endgame_shallow(copy, -s, depth-1, -alpha-1, -alpha, false);
-            else score = -endgame4(copy, -s, -alpha-1, -alpha, false);
             if (alpha < score && score < beta) {
-                if(depth > 5)
                 score = -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
-                else score = -endgame4(copy, -s, -beta, -alpha, false);
             }
         }
         else {
-            if(depth > 5)
             score = -endgame_shallow(copy, -s, depth-1, -beta, -alpha, false);
-            else score = -endgame4(copy, -s, -beta, -alpha, false);
         }
 
         #if USE_REGION_PAR
@@ -352,8 +360,12 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
     int legalMove4 = b.getLegalMoves4(s, legalMove1, legalMove2, legalMove3);
 
     if(legalMove1 == MOVE_NULL) {
-        if(passedLast)
+        if(passedLast) {
+            #if COUNT_NODES
+            nodes++;
+            #endif
             return (b.count(s) - b.count(-s));
+        }
 
         score = -endgame4(b, -s, -beta, -alpha, true);
 
@@ -425,8 +437,12 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
     int legalMove3 = b.getLegalMoves3(s, legalMove1, legalMove2);
 
     if(legalMove1 == MOVE_NULL) {
-        if(passedLast)
+        if(passedLast) {
+            #if COUNT_NODES
+            nodes++;
+            #endif
             return (b.count(s) - b.count(-s));
+        }
 
         score = -endgame3(b, -s, -beta, -alpha, true);
 
@@ -535,6 +551,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             }
             else {
                 // if both players passed, game over
+                #if COUNT_NODES
+                nodes++;
+                #endif
                 if(score == NEG_INFTY)
                     return b.count(s) - b.count(-s);
             }
@@ -551,6 +570,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
 */
 int Endgame::endgame1(Board &b, int s, int alpha) {
     int score = b.count(s) - b.count(-s);
+    #if COUNT_NODES
+    nodes++;
+    #endif
     if(score <= alpha - 18)
         return alpha;
 
@@ -646,7 +668,7 @@ int Endgame::bitScanForward(bitbrd bb) {
 }
 
 int Endgame::countSetBits(bitbrd i) {
-/*    #if defined(__x86_64__)
+    #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
         return (int) i;
     #elif defined(__i386)
@@ -655,13 +677,13 @@ int Endgame::countSetBits(bitbrd i) {
         asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
         asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
         return a+b;
-    #else */
+    #else
         i = i - ((i >> 1) & 0x5555555555555555);
         i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
         i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
               0x0101010101010101) >> 56;
         return (int) i;
-    // #endif
+    #endif
 }
 
 void Endgame::sort(MoveList &moves, MoveList &scores, int left, int right) {

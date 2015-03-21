@@ -88,7 +88,7 @@ int Eval::end_heuristic(Board *b) {
     //score += boardToEPV(b, t);
     score += boardToE2XPV(b, t);
     //score += boardTo33PV(b, 50);
-    score += 2 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+    score += 4 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;
 }

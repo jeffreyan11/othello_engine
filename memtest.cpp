@@ -9,7 +9,7 @@ bitbrd cstack[20];
 int movestack[20];
 int top;
 
-void ffo(std::string file);
+unsigned long long ffo(std::string file);
 
 /*
  DEPTH  #LEAF NODES   #FULL-DEPTH  #HIGHER
@@ -84,6 +84,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
 
 int main(int argc, char **argv) {
     top = 0;
+    unsigned long long total_nodes = 0;
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -95,13 +96,13 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    ffo("ffotest/end40.pos");           // 56
-    ffo("ffotest/end41.pos");
-    ffo("ffotest/end42.pos");
-    ffo("ffotest/end43.pos");
-    ffo("ffotest/end44.pos");
-    //ffo("ffotest/end45.pos");           // 239.272
-    //ffo("ffotest/end46.pos");           // 116.398
+    total_nodes += ffo("ffotest/end40.pos");       //211376860
+    total_nodes += ffo("ffotest/end41.pos");
+    total_nodes += ffo("ffotest/end42.pos");
+    total_nodes += ffo("ffotest/end43.pos");
+    total_nodes += ffo("ffotest/end44.pos");
+    //ffo("ffotest/end45.pos");
+    //ffo("ffotest/end46.pos");
     //ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
@@ -118,9 +119,10 @@ int main(int argc, char **argv) {
         end_time-start_time);
 
     cerr << time_span.count() << endl;
+    cerr << total_nodes << endl;
 }
 
-void ffo(std::string file) {
+unsigned long long ffo(std::string file) {
     std::string line;
     std::ifstream cfile(file);
     char board[64];
@@ -157,5 +159,6 @@ void ffo(std::string file) {
     e.mySide = side;
     int result = e.endgame(b, lm, empties, p.evaluater);
     cerr << "Best move: " << result << endl;
+    return e.nodes;
 }
 
