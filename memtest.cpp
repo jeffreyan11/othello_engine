@@ -96,14 +96,14 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       //159547573
+    total_nodes += ffo("ffotest/end40.pos");       // 82.1892, 138306073
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");
-    //total_nodes += ffo("ffotest/end46.pos");
+    //total_nodes += ffo("ffotest/end45.pos");        // 786626014
+    //total_nodes += ffo("ffotest/end46.pos");        // 182800595
     //total_nodes += ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);

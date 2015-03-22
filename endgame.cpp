@@ -140,8 +140,8 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     // TODO stability cutoff?
     #if USE_STABILITY
     if(alpha >= STAB_THRESHOLD[depth] /*&& alpha < STAB_UP*/) {
-        score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
-        //score = 64 - 2*b.getStability(-s);
+        //score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
+        score = 64 - 2*b.getStability(-s);
         if(score <= alpha)
             return score;
     }
@@ -191,8 +191,8 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
         /*priority.set(i, scores.get(i) + 3*copy.numLegalMoves(s) - 18*copy.numLegalMoves(-s)
                 + 4*copy.potentialMobility(s) - 5*copy.potentialMobility(-s) + 5*priority.get(i));*/
-        priority.set(i, 2*scores.get(i) - 64*copy.numLegalMoves(-s)
-                - 4*copy.potentialMobility(-s) + priority.get(i));
+        priority.set(i, 4*scores.get(i) - 128*copy.numLegalMoves(-s)
+                - 8*copy.potentialMobility(-s) + priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
@@ -250,8 +250,8 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     // TODO stability cutoff?
     #if USE_STABILITY
     if(alpha >= STAB_THRESHOLD[depth]/*&& alpha < STAB_UP*/) {
-        score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
-        //score = 64 - 2*b.getStability(-s);
+        //score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
+        score = 64 - 2*b.getStability(-s);
         if(score <= alpha)
             return score;
     }
@@ -302,14 +302,23 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
             moves[n] = bitScanForward(legal);
 
             if(!(NEIGHBORS[moves[n]] & empty))
-                priority[n] = 100 + SQ_VAL[moves[n]];
-            else priority[n] = SQ_VAL[moves[n]];
+                priority[n] = 100 + 10*SQ_VAL[moves[n]];
+            else priority[n] = 10*SQ_VAL[moves[n]];
 
             legal &= legal-1; n++;
         } while(legal);
     #if USE_REGION_PAR
     }
     #endif
+
+    if(depth > 8) {
+        for(int i = 0; i < n; i++) {
+            Board copy = Board(b.taken, b.black);
+            copy.doMove(moves[i], s);
+
+            priority[i] -= 256*copy.numLegalMoves(-s);
+        }
+    }
 
     // sort
     for(int i = 1; i < n; i++) {

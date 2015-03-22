@@ -295,8 +295,8 @@ MoveList Board::getLegalMovesOrdered(int side, MoveList &priority, int &hashed) 
     while(temp) {
         result.add(bitScanForward(temp));
         if(!(NEIGHBORS[result.last()] & ~taken))
-            priority.add( 100 + SQ_VAL[result.last()] );
-        else priority.add( SQ_VAL[result.last()] );
+            priority.add( 100 + 10*SQ_VAL[result.last()] );
+        else priority.add( 10*SQ_VAL[result.last()] );
         temp &= temp-1;
     }
 
@@ -571,6 +571,122 @@ int Board::potentialMobility(int side) {
 int Board::getStability(int side) {
     bitbrd result = 0;
     bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
+
+    bitbrd border = self & 0xFF818181818181FF;
+
+    // north and south
+    // calculate full lines
+    bitbrd full = taken & (((taken << 8) & (taken >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full = (full << 8) & (full >> 8);
+
+    // propagate edge pieces, anywhere there are own pieces or full lines,
+    // to find single direction stability
+    bitbrd tempM = border;
+    tempM |= (((border << 8) | (border >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    full = tempM;
+
+    tempM = border;
+    tempM |= (((border << 8) | (border >> 8)) & self);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
+    result = (full | tempM);
+
+    // east and west
+    full = taken & (((taken << 1) & (taken >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full = (full << 1) & (full >> 1);
+
+    tempM = border;
+    tempM |= (((border << 1) | (border >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    full = tempM;
+
+    tempM = border;
+    tempM |= (((border << 1) | (border >> 1)) & self);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
+    result &= (full | tempM);
+
+    // ne and sw
+    full = taken & (((taken << 7) & (taken >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full = (full << 7) & (full >> 7);
+
+    tempM = border;
+    tempM |= (((border << 7) | (border >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    full = tempM;
+
+    tempM = border;
+    tempM |= (((border << 7) | (border >> 7)) & self);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
+    result &= (full | tempM);
+
+    // nw and se
+    full = taken & (((taken << 9) & (taken >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full = (full << 9) & (full >> 9);
+
+    tempM = border;
+    tempM = (((border << 9) | (border >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    full = tempM;
+
+    tempM = border;
+    tempM = (((border << 9) | (border >> 9)) & self);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
+    result &= (full | tempM);
+
+    return countSetBits(result & self);
+}
+/*
+int Board::getStability(int side) {
+    bitbrd result = 0;
+    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
     //bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
 
     //bitbrd other = opp & 0x00FFFFFFFFFFFF00;
@@ -658,6 +774,7 @@ int Board::getStability(int side) {
 
     return countSetBits(result & self);
 }
+*/
 
 bitbrd Board::toBits(int side) {
     return (side == CBLACK) ? black : (taken ^ black);
