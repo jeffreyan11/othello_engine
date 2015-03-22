@@ -179,15 +179,20 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     // Use a shallow search for move ordering
     MoveList scores;
-    pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
+    if(depth > 16)
+        pvs(b, legalMoves, scores, s, 4, NEG_INFTY, INFTY);
+    else
+        pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
 
     // Restrict opponent's mobility and potential mobility
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
-        priority.set(i, scores.get(i) + 3*copy.numLegalMoves(s) - 18*copy.numLegalMoves(-s)
-                + 4*copy.potentialMobility(s) - 5*copy.potentialMobility(-s) + 5*priority.get(i));
+        /*priority.set(i, scores.get(i) + 3*copy.numLegalMoves(s) - 18*copy.numLegalMoves(-s)
+                + 4*copy.potentialMobility(s) - 5*copy.potentialMobility(-s) + 5*priority.get(i));*/
+        priority.set(i, 2*scores.get(i) - 64*copy.numLegalMoves(-s)
+                - 4*copy.potentialMobility(-s) + priority.get(i));
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
@@ -281,14 +286,11 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
             moves[n] = bitScanForward(legal);
 
             // move ordering
-            int p;
+            int p = 10 * SQ_VAL[moves[n]];
             if(!(NEIGHBORS[moves[n]] & empty))
-                p = 100 + SQ_VAL[moves[n]];
-            else {
-                p = SQ_VAL[moves[n]];
-                if(QUADRANT_ID[moves[n]] & region_parity)
-                    p += 10;
-            }
+                p += 100;
+            if(QUADRANT_ID[moves[n]] & region_parity)
+                p++;
             priority[n] = p;
 
             legal &= legal-1; n++;
