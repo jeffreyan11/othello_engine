@@ -139,10 +139,11 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     // TODO stability cutoff?
     #if USE_STABILITY
-    if(alpha >= 24 && alpha < STAB_UP) {
-        int stab_score = evaluater->stability(&b, -s);
-        if(64 - 2*stab_score - STAB_ASP <= alpha)
-            return alpha;
+    if(alpha >= STAB_THRESHOLD[depth] /*&& alpha < STAB_UP*/) {
+        score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
+        //score = 64 - 2*b.getStability(-s);
+        if(score <= alpha)
+            return score;
     }
     #endif
 
@@ -238,16 +239,19 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
     if(depth <= 4)
         return endgame4(b, s, alpha, beta, passedLast);
+
+    int score;
+
     // TODO stability cutoff?
     #if USE_STABILITY
-    if(alpha >= 12 && alpha < STAB_UP) {
-        int stab_score = evaluater->stability(&b, -s);
-        if(64 - 2*stab_score - STAB_ASP <= alpha)
-            return alpha;
+    if(alpha >= STAB_THRESHOLD[depth]/*&& alpha < STAB_UP*/) {
+        score = 64 - 2*evaluater->stability(&b, -s) - STAB_ASP;
+        //score = 64 - 2*b.getStability(-s);
+        if(score <= alpha)
+            return score;
     }
     #endif
 
-    int score;
     bitbrd legal = b.getLegal(s);
 
     if(!legal) {
@@ -500,6 +504,8 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     bitbrd empty = ~b.getTaken();
     bitbrd opp = b.toBits(-s);
 
+    // At 2 squares left, it is more efficient to simply try moves on both
+    // squares.
     int lm1 = bitScanForward(empty);
     empty &= empty-1;
     int lm2 = bitScanForward(empty);

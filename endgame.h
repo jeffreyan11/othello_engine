@@ -9,9 +9,9 @@
 
 #define END_SHLLW 9
 #define USE_BESTMOVE_TABLE true
-#define USE_STABILITY false
-#define STAB_ASP 16
-#define STAB_UP 48
+#define USE_STABILITY true
+#define STAB_ASP 0
+#define STAB_UP 64
 #define USE_REGION_PAR false
 
 #define COUNT_NODES true
@@ -25,6 +25,29 @@ const int QUADRANT_ID[64] = {
 4, 4, 4, 4, 8, 8, 8, 8,
 4, 4, 4, 4, 8, 8, 8, 8,
 4, 4, 4, 4, 8, 8, 8, 8
+};
+
+const int STAB_THRESHOLD[45] = {
+/*
+    64, 64, 64, 64, 8,
+    10, 12, 14, 16, 18,
+    20, 22, 24, 26, 28,
+    30, 32, 34, 36, 38,
+    40, 42, 44, 46, 48,
+    50, 52, 54, 56, 58,
+    60, 60, 62, 62, 64,
+    64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64
+*/
+    64, 64, 64, 64, 8,
+    10, 12, 14, 16, 18,
+    20, 22, 24, 26, 28,
+    30, 32, 34, 36, 38,
+    40, 42, 44, 46, 48,
+    50, 52, 54, 56, 58,
+    60, 60, 62, 62, 64,
+    64, 64, 64, 64, 64,
+    64, 64, 64, 64, 64
 };
 
 class Endgame {

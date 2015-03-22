@@ -568,6 +568,97 @@ int Board::potentialMobility(int side) {
     return countSetBits(result);
 }
 
+int Board::getStability(int side) {
+    bitbrd result = 0;
+    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
+    //bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
+
+    //bitbrd other = opp & 0x00FFFFFFFFFFFF00;
+    bitbrd border = self & 0xFF818181818181FF;
+
+    // north and south
+    // calculate full lines
+    bitbrd full = taken & (((taken << 8) & (taken >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full &= (((full << 8) & (full >> 8)) | border);
+    full = (full << 8) & (full >> 8);
+
+    // propagate edge pieces, anywhere there are own pieces or full lines,
+    // to find single direction stability
+    full |= self;
+    bitbrd tempM = border;
+    tempM |= (((border << 8) | (border >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+    result = tempM;
+    //result = ((tempM << 8) | (tempM >> 8));
+
+    //other = opp & 0x7E7E7E7E7E7E7E7E;
+    // east and west
+    full = taken & (((taken << 1) & (taken >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full &= (((full << 1) & (full >> 1)) | border);
+    full = (full << 1) & (full >> 1);
+    full |= self;
+
+    tempM = border;
+    tempM |= (((border << 1) | (border >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+    result &= tempM;
+    //result |= ((tempM << 1) | (tempM >> 1));
+
+    // ne and sw
+    full = taken & (((taken << 7) & (taken >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full &= (((full << 7) & (full >> 7)) | border);
+    full = (full << 7) & (full >> 7);
+    full |= self;
+
+    tempM = border;
+    tempM |= (((border << 7) | (border >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+    result &= tempM;
+    //result |= ((tempM << 7) | (tempM >> 7));
+
+    // nw and se
+    full = taken & (((taken << 9) & (taken >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full &= (((full << 9) & (full >> 9)) | border);
+    full = (full << 9) & (full >> 9);
+    full |= self;
+
+    tempM = border;
+    tempM = (((border << 9) | (border >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+    result &= tempM;
+    //result |= ((tempM << 9) | (tempM >> 9));
+
+    return countSetBits(result & self);
+}
+
 bitbrd Board::toBits(int side) {
     return (side == CBLACK) ? black : (taken ^ black);
 }

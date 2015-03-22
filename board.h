@@ -434,6 +434,7 @@ public:
 
     int numLegalMoves(int side);
     int potentialMobility(int side);
+    int getStability(int side);
 
     void setBoard(char data[]);
     char *toString();
