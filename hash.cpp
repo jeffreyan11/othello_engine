@@ -57,7 +57,7 @@ void Hash::add(const Board *b, int ptm, int move, int turn) {
 }
 
 /**
- * @brief Get the move, if any, associated with (b,ptm).
+ * @brief Get the move, if any, associated with a board b and player to move.
 */
 int Hash::get(const Board *b, int ptm) {
     #if USE_HASH64

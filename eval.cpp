@@ -53,25 +53,31 @@ int Eval::heuristic(Board *b, int turn) {
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
             + 2*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
             + 3*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+            //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
     if(mySide == CBLACK)
         score += patterns;
     else
         score -= patterns;
     #else
-    bitbrd bm = b->toBits(mySide);
-    bitbrd bo = b->toBits(oppSide);
-    score += 50 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+    //bitbrd bm = b->toBits(mySide);
+    //bitbrd bo = b->toBits(oppSide);
+    //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
     //if(turn > 35)
     //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
-    score -= 12 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-    score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
+    //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
     #endif
 
     //score += 9 * (b->numLegalMoves(mySide) - b->numLegalMoves(oppSide));
-    int myLM = b->numLegalMoves(mySide);
-    int oppLM = b->numLegalMoves(oppSide);
-    score += 80 * (myLM - oppLM) / (myLM + oppLM + 1);
-    score += 4 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    if(turn < 21) {
+        int myLM = b->numLegalMoves(mySide);
+        int oppLM = b->numLegalMoves(oppSide);
+        score += 120 * (myLM - oppLM) / (oppLM + 1);
+    }
+    else {
+        //score += 80 * (myLM - oppLM) / (oppLM + 1);
+        score += 10 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+    }
 
     return score;
 }
@@ -88,6 +94,7 @@ int Eval::end_heuristic(Board *b) {
     //score += boardToEPV(b, t);
     score += boardToE2XPV(b, t);
     //score += boardTo33PV(b, 50);
+    //score += 10 * (b->getStability(CBLACK) - b->getStability(CWHITE));
     score += 4 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;

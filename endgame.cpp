@@ -68,23 +68,53 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         #endif
 
         if (i != 0) {
-            if(depth != 4)
-                score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
-            else
-                score = -endgame3(copy, -mySide, -alpha-1, -alpha, false);
+            switch(depth) {
+                case 5:
+                    score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
+                    break;
+                case 4:
+                    score = -endgame3(copy, -mySide, -alpha-1, -alpha, false);
+                    break;
+                case 3:
+                    score = -endgame2(copy, -mySide, -alpha-1, -alpha);
+                    break;
+                default:
+                    score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+                    break;
+            }
 
             if (alpha < score && score < beta) {
-                if(depth != 4)
-                    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-                else
-                    score = -endgame3(copy, -mySide, -beta, -alpha, false);
+                switch(depth) {
+                    case 5:
+                        score = -endgame4(copy, -mySide, -beta, -alpha, false);
+                        break;
+                    case 4:
+                        score = -endgame3(copy, -mySide, -beta, -alpha, false);
+                        break;
+                    case 3:
+                        score = -endgame2(copy, -mySide, -beta, -alpha);
+                        break;
+                    default:
+                        score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+                        break;
+                }
             }
         }
         else {
-            if(depth != 4)
-                score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
-            else
-                score = -endgame3(copy, -mySide, -beta, -alpha, false);
+            switch(depth) {
+                case 5:
+                    score = -endgame4(copy, -mySide, -beta, -alpha, false);
+                    break;
+                case 4:
+                    score = -endgame3(copy, -mySide, -beta, -alpha, false);
+                    break;
+                case 3:
+                    score = -endgame2(copy, -mySide, -beta, -alpha);
+                    break;
+                default:
+                    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+                    break;
+            }
         }
 
         cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
@@ -175,7 +205,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         return alpha;
     }
 
-    //sort(legalMoves, priority, 0, legalMoves.size-1);
+    sort(legalMoves, priority, 0, legalMoves.size-1);
 
     // Use a shallow search for move ordering
     MoveList scores;
@@ -316,7 +346,8 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
             Board copy = Board(b.taken, b.black);
             copy.doMove(moves[i], s);
 
-            priority[i] -= 256*copy.numLegalMoves(-s);
+            priority[i] += -512*copy.numLegalMoves(-s) +
+                64*(evaluater->stability(&copy, s) - evaluater->stability(&copy, -s));
         }
     }
 
@@ -506,10 +537,10 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     int curr_score = b.count(s) - b.count(-s);
-    if(curr_score >= beta + 33)
-        return beta;
-    if(curr_score <= alpha - 33)
-        return alpha;
+    //if(curr_score >= beta + 33)
+    //    return beta;
+    //if(curr_score <= alpha - 33)
+    //    return alpha;
 
     int score = NEG_INFTY;
     bitbrd empty = ~b.getTaken();
@@ -568,11 +599,12 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             }
             else {
                 // if both players passed, game over
-                #if COUNT_NODES
-                nodes++;
-                #endif
-                if(score == NEG_INFTY)
+                if(score == NEG_INFTY) {
+                    #if COUNT_NODES
+                    nodes++;
+                    #endif
                     return b.count(s) - b.count(-s);
+                }
             }
 
             return beta;
@@ -590,8 +622,8 @@ int Endgame::endgame1(Board &b, int s, int alpha) {
     #if COUNT_NODES
     nodes++;
     #endif
-    if(score <= alpha - 18)
-        return alpha;
+    //if(score <= alpha - 18)
+    //    return alpha;
 
     int legalMove = bitScanForward(~b.getTaken());
     bitbrd changeMask = b.getDoMove(legalMove, s);

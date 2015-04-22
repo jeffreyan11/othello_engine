@@ -96,21 +96,23 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 82.1892, 138306073
+    total_nodes += ffo("ffotest/end40.pos");       // 76.7655, 154706128
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 786626014
-    //total_nodes += ffo("ffotest/end46.pos");        // 182800595
+    //total_nodes += ffo("ffotest/end45.pos");        // 634977783
+    //total_nodes += ffo("ffotest/end46.pos");        // 112350331
+    //total_nodes += ffo("ffotest/end47.pos");        // 38407680
+    //total_nodes += ffo("ffotest/end48.pos");
     //total_nodes += ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
     Player p2(WHITE);
 
     Move *m = p.doMove(NULL, -1);
-    for(int i = 0; i < 18; i++) {
+    for(int i = 0; i < 15; i++) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
     }*/
