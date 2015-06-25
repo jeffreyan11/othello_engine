@@ -93,9 +93,9 @@ int Eval::end_heuristic(Board *b) {
     score += 2*boardTo24PV(b, t);
     //score += boardToEPV(b, t);
     score += boardToE2XPV(b, t);
-    //score += boardTo33PV(b, 50);
+    //score += boardTo33PV(b, t);
     //score += 10 * (b->getStability(CBLACK) - b->getStability(CWHITE));
-    score += 4 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+    score += 4*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;
 }
