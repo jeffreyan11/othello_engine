@@ -166,11 +166,15 @@ void checkGames() {
 
         for(int j = 0; j < 46; j++) {
             if(!tracker.checkMove(game->moves[j], side)) {
-                errors++;
-                games[i] = NULL;
-                /*cerr << "error at " << i << " " << j << endl;
-                cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;*/
-                break;
+                // If one side must pass it is not indicated in the database?
+                side = -side;
+                if(!tracker.checkMove(game->moves[j], side)) {
+                    errors++;
+                    games[i] = NULL;
+                    cerr << "error at " << i << " " << j << endl;
+                    cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;
+                    break;
+                }
             }
             tracker.doMove(game->moves[j], side);
             side = -side;
@@ -209,12 +213,20 @@ void searchFeatures() {
         int side = CBLACK;
         // play opening moves
         for(int j = 0; j < 10; j++) {
+            // If one side must pass it is not indicated in the database?
+            if(!tracker.checkMove(game->moves[j], side)) {
+                side = -side;
+            }
             tracker.doMove(game->moves[j], side);
             side = -side;
         }
 
         // starting recording statistics
         for(int j = 10; j < 46; j++) {
+            // If one side must pass it is not indicated in the database?
+            if(!tracker.checkMove(game->moves[j], side)) {
+                side = -side;
+            }
             tracker.doMove(game->moves[j], side);
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);
@@ -274,7 +286,7 @@ int main(int argc, char **argv) {
     readThorGame("WTH_7708/WTH_1986.wtb");
     readThorGame("WTH_7708/WTH_1985.wtb");
     readThorGame("WTH_7708/WTH_1984.wtb");
-    readGame("gamedb042714.txt", 8200);
+    //readGame("gamedb042714.txt", 8200);
 
     checkGames();
 
@@ -289,16 +301,21 @@ int main(int argc, char **argv) {
 void readThorGame(string file) {
     unsigned int prevSize = totalSize;
 
+    // Thor games are stored as a binary stream
     std::ifstream is (file, std::ifstream::binary);
     if(is) {
+        // 16 byte header for each file, then each game record is 68 bytes
         char *header = new char[16];
         char *buffer = new char[68];
 
         is.read(header, 16);
 
-        totalSize = (unsigned char)(header[5]);
-        totalSize <<= 8;
-        totalSize += (unsigned char)(header[4]);
+        //cout << "Century: " << (unsigned)(header[0]) << endl;
+        //cout << "Year: " << (unsigned)(header[1]) << endl;
+
+        // We are only interested in the number of games, which is stored as a
+        // longint (4 bytes), starting at header[7] or header[1] as an int array
+        totalSize = ((unsigned int *)(header))[1];
 
         cout << "Reading " << totalSize << " games." << endl;
 

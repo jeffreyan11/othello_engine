@@ -5,3 +5,6 @@ all:
 	$(CC) $(CFLAGS) -o evalbuilder evalbuilder.cpp board.cpp
 	$(CC) $(CFLAGS) -o endeval endeval.cpp board.cpp endgame.cpp hash.cpp
 	$(CC) $(CFLAGS) -o blur blur.cpp
+
+clean:
+	rm -f *.o evalbuilder endeval blur
