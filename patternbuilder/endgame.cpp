@@ -133,6 +133,14 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         return alpha;
     }
 
+    for(unsigned int i = 0; i < legalMoves.size; i++) {
+        Board copy = Board(b.taken, b.black);
+        copy.doMove(legalMoves.get(i), s);
+
+        priority.set(i, priority.get(i) - 128*copy.numLegalMoves(-s)
+                - 8*copy.potentialMobility(-s));
+    }
+
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
     #if USE_BESTMOVE_TABLE
@@ -251,6 +259,15 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     #if USE_REGION_PAR
     }
     #endif
+
+    if(depth > 7) {
+        for(int i = 0; i < n; i++) {
+            Board copy = Board(b.taken, b.black);
+            copy.doMove(moves[i], s);
+
+            priority[i] += -512*copy.numLegalMoves(-s);
+        }
+    }
 
     // sort
     for(int i = 1; i < n; i++) {

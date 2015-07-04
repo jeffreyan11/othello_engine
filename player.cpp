@@ -9,7 +9,7 @@
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 12;
+    maxDepth = 16;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 25;
@@ -73,7 +73,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
     }
     else if(totalTimePM != -1) {
-        totalTimePM = msLeft / (2 * (64 - turn - 16) / 2);
+        totalTimePM = msLeft / (2 * (64 - turn));
     }
 
     using namespace std::chrono;
@@ -154,7 +154,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     attemptingDepth = minDepth;
     int chosenScore = 0;
     do {
-        cerr << "Searching depth " << attemptingDepth << ".";
+        cerr << "Searching depth " << attemptingDepth << ":";
 
         int newBest = pvs(&game, legalMoves, scores, mySide,
             attemptingDepth, NEG_INFTY, INFTY);
@@ -162,23 +162,24 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             cerr << " Broken out of search!" << endl;
             break;
         }
-        cerr << " (" << newBest << ", " << scores.get(0) << ")" << endl;
         myMove = newBest;
         attemptingDepth += 2;
 
         sort(legalMoves, scores, 0, legalMoves.size-1);
+        cerr << " (" << newBest << ", " << scores.get(0) << ")" << endl;
         chosenScore = scores.get(0);
+/*
         for(unsigned int i = 0; i < scores.size; i++) {
             cerr << legalMoves.get(i) << ", " << scores.get(i) << endl;
         }
+*/
         scores.clear();
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while( (
-            (msLeft/(empties - 18) > time_span.count()*1000.0*12)
-            || msLeft == -1)
-            && attemptingDepth <= maxDepth );
+    } while(((totalTimePM > time_span.count() * 1000.0 * legalMoves.size)
+                || msLeft == -1)
+            && attemptingDepth <= maxDepth);
 
     cerr << "Playing " << myMove << ". Score: " << chosenScore << endl;
     killer_table.clean(turn+2);
@@ -217,7 +218,7 @@ int Player::pvs(Board *b, MoveList &moves, MoveList &scores, int s,
         if (i != 0) {
             score = -pvs_h(&copy, ttScore, -s, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
-                score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -score);
+                score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
         }
         else
             score = -pvs_h(&copy, ttScore, -s, depth-1, -beta, -alpha);
@@ -300,7 +301,7 @@ int Player::pvs_h(Board *b, int &topScore, int s, int depth,
         if(ttScore > topScore)
             topScore = ttScore;
         if (alpha >= beta) {
-            if(depth >= 5 && depth <= maxDepth-3)
+            if(depth >= 4 && depth <= maxDepth-2)
                 killer_table.add(b, s, legalMoves.get(i),
                     turn+attemptingDepth-depth);
             break;

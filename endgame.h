@@ -12,7 +12,7 @@
 #define USE_STABILITY true
 #define USE_REGION_PAR false
 
-#define COUNT_NODES true
+#define COUNT_NODES false
 
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,

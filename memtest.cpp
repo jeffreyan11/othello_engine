@@ -1,5 +1,6 @@
 #include <chrono>
 #include <fstream>
+#include <string>
 #include "common.h"
 #include "player.h"
 #include "board.h"
@@ -117,6 +118,24 @@ int main(int argc, char **argv) {
         m = p.doMove(m, -1);
     }*/
 
+/*
+    Board b;
+    string bstr = "OOOO----O-OOX---OOOOXO--OOOOXO--OOOOXOX-OOOOXO--OOXXXOOXOOOOOOOO";
+    char board[64];
+    for(int i = 0; i < 63; i++) {
+        board[i] = bstr[i];
+    }
+    b.setBoard(board);
+    MoveList lm = b.getLegalMoves(CWHITE);
+    int empties = b.countEmpty();
+    Player p(BLACK);
+    Endgame e;
+    e.endgameTimeMS = 100000000;
+    e.mySide = CWHITE;
+    int result = e.endgame(b, lm, empties, p.evaluater);
+    cerr << "Best move: " << result << endl;
+*/
+
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
         end_time-start_time);
@@ -162,6 +181,10 @@ unsigned long long ffo(std::string file) {
     e.mySide = side;
     int result = e.endgame(b, lm, empties, p.evaluater);
     cerr << "Best move: " << result << endl;
+    #if COUNT_NODES
     return e.nodes;
+    #else
+    return 0;
+    #endif
 }
 

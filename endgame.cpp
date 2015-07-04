@@ -49,7 +49,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
 
     if(depth > END_SHLLW) {
         MoveList scores;
-        pvs(b, moves, scores, mySide, 4, NEG_INFTY, INFTY);
+        pvs(b, moves, scores, mySide, 6, NEG_INFTY, INFTY);
         sort(moves, scores, 0, moves.size-1);
     }
 
@@ -117,7 +117,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
             }
         }
 
-        cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
+        cerr << "Searched move: " << moves.get(i) << " | score: " << score << endl;
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves.get(i)];
         #endif
