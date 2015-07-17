@@ -49,7 +49,7 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
 
     if(depth > END_SHLLW) {
         MoveList scores;
-        pvs(b, moves, scores, mySide, 6, NEG_INFTY, INFTY);
+        sortSearch(b, moves, scores, mySide, 4);
         sort(moves, scores, 0, moves.size-1);
     }
 
@@ -163,9 +163,6 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     if(endgame_table->get(&b, s, score) != -1) {
         if (alpha < score)
             alpha = score;
-        #if COUNT_NODES
-        nodes++;
-        #endif
         return alpha;
     }
     #endif
@@ -175,9 +172,6 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     if(alpha >= STAB_THRESHOLD[depth]) {
         score = 64 - 2*b.getStability(-s);
         if(score <= alpha) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return score;
         }
     }
@@ -190,9 +184,6 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         if (alpha < score)
             alpha = score;
         if (alpha >= beta) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return alpha;
         }
     }
@@ -203,12 +194,12 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     if(legalMoves.size <= 0) {
         if(passedLast) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return (b.count(s) - b.count(-s));
         }
 
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame_h(b, -s, depth, -beta, -alpha, true);
 
         if (alpha < score)
@@ -221,9 +212,9 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     // Use a shallow search for move ordering
     MoveList scores;
     if(depth > 15)
-        pvs(b, legalMoves, scores, s, 4, NEG_INFTY, INFTY);
+        sortSearch(b, legalMoves, scores, s, 4);
     else
-        pvs(b, legalMoves, scores, s, 2, NEG_INFTY, INFTY);
+        sortSearch(b, legalMoves, scores, s, 2);
 
     // Restrict opponent's mobility and potential mobility
     for(unsigned int i = 0; i < legalMoves.size; i++) {
@@ -243,6 +234,9 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[legalMoves.get(i)];
         #endif
@@ -294,9 +288,6 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     if(alpha >= STAB_THRESHOLD[depth]) {
         score = 64 - 2*b.getStability(-s);
         if(score <= alpha) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return score;
         }
     }
@@ -306,12 +297,12 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
 
     if(!legal) {
         if(passedLast) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return (b.count(s) - b.count(-s));
         }
 
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame_shallow(b, -s, depth, -beta, -alpha, true);
 
         if (alpha < score)
@@ -384,6 +375,9 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     for (int i = 0; i < n; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(moves[i], s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
         #if USE_REGION_PAR
         region_parity ^= QUADRANT_ID[moves[i]];
         #endif
@@ -422,12 +416,12 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
 
     if(legalMove1 == MOVE_NULL) {
         if(passedLast) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return (b.count(s) - b.count(-s));
         }
 
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame4(b, -s, -beta, -alpha, true);
 
         if (alpha < score)
@@ -437,6 +431,9 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
 
     Board copy = Board(b.taken, b.black);
     copy.doMove(legalMove1, s);
+    #if COUNT_NODES
+    nodes++;
+    #endif
 
     score = -endgame3(copy, -s, -beta, -alpha, false);
 
@@ -448,6 +445,9 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
     if(legalMove2 != MOVE_NULL) {
         copy = Board(b.taken, b.black);
         copy.doMove(legalMove2, s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
 
         score = -endgame3(copy, -s, -alpha-1, -alpha, false);
         if (alpha < score && score < beta)
@@ -461,6 +461,9 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
         if(legalMove3 != MOVE_NULL) {
             copy = Board(b.taken, b.black);
             copy.doMove(legalMove3, s);
+            #if COUNT_NODES
+            nodes++;
+            #endif
 
             score = -endgame3(copy, -s, -alpha-1, -alpha, false);
             if (alpha < score && score < beta)
@@ -474,6 +477,9 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
             if(legalMove4 != MOVE_NULL) {
                 copy = Board(b.taken, b.black);
                 copy.doMove(legalMove3, s);
+                #if COUNT_NODES
+                nodes++;
+                #endif
 
                 score = -endgame3(copy, -s, -alpha-1, -alpha, false);
                 if (alpha < score && score < beta)
@@ -499,12 +505,12 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 
     if(legalMove1 == MOVE_NULL) {
         if(passedLast) {
-            #if COUNT_NODES
-            nodes++;
-            #endif
             return (b.count(s) - b.count(-s));
         }
 
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame3(b, -s, -beta, -alpha, true);
 
         if (alpha < score)
@@ -514,6 +520,9 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 
     Board copy = Board(b.taken, b.black);
     copy.doMove(legalMove1, s);
+    #if COUNT_NODES
+    nodes++;
+    #endif
 
     score = -endgame2(copy, -s, -beta, -alpha);
 
@@ -525,6 +534,9 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
     if(legalMove2 != MOVE_NULL) {
         copy = Board(b.taken, b.black);
         copy.doMove(legalMove2, s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
 
         score = -endgame2(copy, -s, -beta, -alpha);
 
@@ -536,6 +548,9 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         if(legalMove3 != MOVE_NULL) {
             copy = Board(b.taken, b.black);
             copy.doMove(legalMove3, s);
+            #if COUNT_NODES
+            nodes++;
+            #endif
 
             score = -endgame2(copy, -s, -beta, -alpha);
 
@@ -565,6 +580,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
 
     if( (opp & NEIGHBORS[lm1]) && (changeMask = b.getDoMove(lm1, s)) ) {
         b.makeMove(lm1, changeMask, s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame1(b, -s, -beta, lm2);
         b.undoMove(lm1, changeMask, s);
 
@@ -576,6 +594,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
 
     if( (opp & NEIGHBORS[lm2]) && (changeMask = b.getDoMove(lm2, s)) ) {
         b.makeMove(lm2, changeMask, s);
+        #if COUNT_NODES
+        nodes++;
+        #endif
         score = -endgame1(b, -s, -beta, lm1);
         b.undoMove(lm2, changeMask, s);
 
@@ -589,6 +610,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             // if no legal moves... try other player
             if( (opp & NEIGHBORS[lm1]) && (changeMask = b.getDoMove(lm1, -s)) ) {
                 b.makeMove(lm1, changeMask, -s);
+                #if COUNT_NODES
+                nodes++;
+                #endif
                 score = endgame1(b, s, alpha, lm2);
                 b.undoMove(lm1, changeMask, -s);
 
@@ -600,6 +624,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
 
             if( (opp & NEIGHBORS[lm2]) && (changeMask = b.getDoMove(lm2, -s)) ) {
                 b.makeMove(lm2, changeMask, -s);
+                #if COUNT_NODES
+                nodes++;
+                #endif
                 score = endgame1(b, s, alpha, lm1);
                 b.undoMove(lm2, changeMask, -s);
 
@@ -609,9 +636,6 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             else {
                 // if both players passed, game over
                 if(score == NEG_INFTY) {
-                    #if COUNT_NODES
-                    nodes++;
-                    #endif
                     return b.count(s) - b.count(-s);
                 }
             }
@@ -648,49 +672,38 @@ int Endgame::endgame1(Board &b, int s, int alpha, int legalMove) {
     return score;
 }
 
-//--------------------------------PVS Search------------------------------------
+//--------------------------------Sort Search-----------------------------------
 
 /**
  * @brief Performs an alpha-beta search.
 */
-void Endgame::pvs(Board &b, MoveList &moves, MoveList &scores, int s,
-        int depth, int alpha, int beta) {
-    int score;
+void Endgame::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
+        int depth) {
 
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = Board(b.taken, b.black);
-        copy.doMove(moves.get(i), s);
-        int ttScore = NEG_INFTY;
-
-        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
-
-        scores.add(ttScore);
-        if (score > alpha)
-            alpha = score;
+        copy.doMove(moves.get(i), side);
+        scores.add(-pvs(copy, -side, depth-1, NEG_INFTY, INFTY));
     }
 }
 
 /**
  * @brief Helper function for the alpha-beta search.
 */
-int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
-        int alpha, int beta) {
+int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0) {
-        topScore = (s == CBLACK) ? evaluater->end_heuristic(&b) :
-                -evaluater->end_heuristic(&b);
-        return topScore;
+        return (s == CBLACK) ? evaluater->end_heuristic(&b)
+                             : -evaluater->end_heuristic(&b);
     }
 
     int score;
-    int ttScore = NEG_INFTY;
 
     MoveList legalMoves = b.getLegalMoves(s);
     if(legalMoves.size <= 0) {
-        score = -pvs_h(b, ttScore, -s, depth-1, -beta, -alpha);
+        score = -pvs(b, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
-        topScore = ttScore;
 
         return alpha;
     }
@@ -699,12 +712,10 @@ int Endgame::pvs_h(Board &b, int &topScore, int s, int depth,
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
 
-        score = -pvs_h(copy, ttScore, -s, depth-1, -beta, -alpha);
+        score = -pvs(copy, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
-        if(ttScore > topScore)
-            topScore = ttScore;
         if (alpha >= beta)
             break;
     }

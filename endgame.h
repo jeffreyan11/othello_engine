@@ -12,7 +12,7 @@
 #define USE_STABILITY true
 #define USE_REGION_PAR false
 
-#define COUNT_NODES false
+#define COUNT_NODES true
 
 const int QUADRANT_ID[64] = {
 1, 1, 1, 1, 2, 2, 2, 2,
@@ -62,10 +62,9 @@ private:
     int region_parity;
     #endif
 
-    void pvs(Board &b, MoveList &moves, MoveList &scores, int side, int depth,
-        int alpha, int beta);
-    int pvs_h(Board &b, int &topScore, int side, int depth,
-        int alpha, int beta);
+    void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
+        int depth);
+    int pvs(Board &b, int side, int depth, int alpha, int beta);
 
     int bitScanForward(bitbrd bb);
     int countSetBits(bitbrd i);
