@@ -10,24 +10,30 @@
 struct BoardData {
     bitbrd taken;
     bitbrd black;
-    int ptm;
-    int move;
-    int turn;
+    int score;
+    uint8_t move;
+    uint8_t ptm;
+    uint8_t turn;
+    uint8_t depth;
 
     BoardData() {
         taken = 0;
         black = 0;
+        score = 0;
+        move = 0;
         ptm = 0;
-        move = -1;
         turn = 0;
+        depth = 0;
     }
 
-    BoardData(bitbrd t, bitbrd b, int p, int m, int tu) {
+    BoardData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d) {
         taken = t;
         black = b;
-        ptm = p;
-        move = m;
-        turn = tu;
+        score = s;
+        move = (uint8_t) m;
+        ptm = (uint8_t) p;
+        turn = (uint8_t) tu;
+        depth = (uint8_t) d;
     }
 };
 
@@ -37,9 +43,9 @@ public:
     HashLL *next;
     BoardData cargo;
 
-    HashLL(bitbrd t, bitbrd b, int ptm, int m, int tu) {
+    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, int tu, int d) {
         next = NULL;
-        cargo = BoardData(t, b, ptm, m, tu);
+        cargo = BoardData(t, b, s, m, ptm, tu, d);
     }
 
     ~HashLL() {}
@@ -67,9 +73,8 @@ public:
     Hash(int isize);
     ~Hash();
 
-    void add(const Board *b, int ptm, int move, int turn);
-    int get(const Board *b, int ptm);
-    int get(const Board *b, int ptm, int &score);
+    void add(const Board *b, int score, int move, int ptm, int turn, int depth);
+    BoardData *get(const Board *b, int ptm);
     void clean(int turn);
 };
 

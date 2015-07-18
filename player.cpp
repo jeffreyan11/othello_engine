@@ -63,17 +63,12 @@ Player::~Player() {
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
-    if(totalTimePM == -2) {
-        totalTimePM = msLeft;
-        if(totalTimePM != -1) {
-            totalTimePM /= 18;
-        }
-        else {
-            totalTimePM = 10000000;
-        }
+    if(msLeft != -1) {
+        totalTimePM = msLeft / (64 - turn);
     }
-    else if(totalTimePM != -1) {
-        totalTimePM = msLeft / (2 * (64 - turn));
+    else {
+        // 1 min per move for "infinite" time
+        totalTimePM = 60000;
     }
 
     using namespace std::chrono;
@@ -170,7 +165,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while(((totalTimePM > time_span.count() * 1000.0 * legalMoves.size * 2)
+    } while(((totalTimePM > time_span.count() * 1000.0 * legalMoves.size * 3)
                 || msLeft == -1)
             && attemptingDepth <= maxDepth);
 
@@ -205,7 +200,7 @@ int Player::pvs(Board *b, MoveList &moves, int &bestScore, int s, int depth) {
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * moves.size * 1000 > totalTimePM * (i+1))
+        if (time_span.count() * moves.size * 1000 > totalTimePM * (i+1))
             return MOVE_BROKEN;
 
         Board copy = Board(b->taken, b->black);
@@ -243,10 +238,12 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
     int score;
 
     // Hash table using the killer heuristic
-    int killerMove = killer_table.get(b, s);
-    if(killerMove != -1) {
+    BoardData *entry = killer_table.get(b, s);
+    if(entry != NULL) {
+        if (entry->depth >= depth && entry->score >= beta)
+            return beta;
         Board copy = Board(b->taken, b->black);
-        copy.doMove(killerMove, s);
+        copy.doMove(entry->move, s);
         score = -pvs_h(&copy, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
@@ -256,7 +253,7 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
     }
 
     MoveList legalMoves = b->getLegalMoves(s);
-    if(legalMoves.size <= 0) {
+    if (legalMoves.size <= 0) {
         score = -pvs_h(b, -s, depth-1, -beta, -alpha);
 
         if (alpha < score)
@@ -287,8 +284,8 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
             alpha = score;
         if (alpha >= beta) {
             if(depth >= 4 && depth <= maxDepth-2)
-                killer_table.add(b, s, legalMoves.get(i),
-                    turn+attemptingDepth-depth);
+                killer_table.add(b, beta, legalMoves.get(i), s,
+                    turn+attemptingDepth-depth, depth);
             break;
         }
     }

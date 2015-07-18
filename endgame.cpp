@@ -18,9 +18,10 @@ Endgame::~Endgame() {
 int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
     #if USE_BESTMOVE_TABLE
     // if best move for this position has already been found and stored
-    int temp = endgame_table->get(&b, mySide);
-    if(temp != -1) {
-        return temp;
+    BoardData *entry = endgame_table->get(&b, mySide);
+    if(entry != NULL) {
+        cerr << "Endgame hashtable hit. Score: " << entry->score << endl;
+        return entry->move;
     }
     #endif
 
@@ -157,13 +158,13 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         return endgame_shallow(b, s, depth, alpha, beta, passedLast);
 
     int score;
+    int prevAlpha = alpha;
 
     // play best move, if recorded
     #if USE_BESTMOVE_TABLE
-    if(endgame_table->get(&b, s, score) != -1) {
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+    BoardData *exactEntry = endgame_table->get(&b, s);
+    if(exactEntry != NULL) {
+        return exactEntry->score;
     }
     #endif
 
@@ -178,14 +179,15 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     #endif
 
     // attempt killer heuristic cutoff, using saved alpha
-    int killer = killer_table.get(&b, s, score);
-    if(killer != -1) {
-        // fail-high is a lower bound on score so this is valid
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta) {
-            return alpha;
-        }
+    int killer = -1;
+    BoardData *killerEntry = killer_table.get(&b, s);
+    if(killerEntry != NULL) {
+        if (killerEntry->depth >= depth && killerEntry->score >= beta)
+            return beta;
+        // Fail high is lower bound on score so this is valid
+        if (alpha < killerEntry->score)
+            alpha = killerEntry->score;
+        killer = killerEntry->move;
     }
 
     // additionally, place killer move first in ordering
@@ -259,15 +261,14 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             #endif
         }
         if (alpha >= beta) {
-            if(legalMoves.get(i) != killer)
-                killer_table.add(&b, s, legalMoves.get(i), alpha);
+            killer_table.add(&b, beta, legalMoves.get(i), s, 0, depth);
             return alpha;
         }
     }
     #if USE_BESTMOVE_TABLE
     // Best move with exact score if alpha < score < beta
-    if(tempMove != -1)
-        endgame_table->add(&b, s, tempMove, alpha);
+    if(prevAlpha < alpha && alpha < beta)
+        endgame_table->add(&b, alpha, tempMove, s, 0, depth);
     #endif
 
     return alpha;

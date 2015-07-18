@@ -34,7 +34,7 @@ Hash::~Hash() {
  * @brief Adds key (b,ptm) and item move into the hashtable.
  * Assumes that this key has been checked with get and is not in the table.
 */
-void Hash::add(const Board *b, int ptm, int move, int turn) {
+void Hash::add(const Board *b, int score, int move, int ptm, int turn, int depth) {
     keys++;
     #if USE_HASH64
     bitbrd h = hash(b);
@@ -44,22 +44,29 @@ void Hash::add(const Board *b, int ptm, int move, int turn) {
     unsigned int index = (unsigned int)(h % size);
     HashLL *node = table[index];
     if(node == NULL) {
-        table[index] = new HashLL(b->taken, b->black, ptm, move, turn);
+        table[index] = new HashLL(b->taken, b->black, score, move, ptm, turn, depth);
         return;
     }
 
     //TODO std::cerr << "hash collide" << std::endl;
 
     while(node->next != NULL) {
+        if(node->cargo.taken == b->taken && node->cargo.black == b->black
+                    && node->cargo.ptm == (uint8_t) ptm)
+            return;
         node = node->next;
     }
-    node->next = new HashLL(b->taken, b->black, ptm, move, turn);
+
+    if(node->cargo.taken == b->taken && node->cargo.black == b->black
+                && node->cargo.ptm == (uint8_t) ptm)
+        return;
+    node->next = new HashLL(b->taken, b->black, score, move, ptm, turn, depth);
 }
 
 /**
  * @brief Get the move, if any, associated with a board b and player to move.
 */
-int Hash::get(const Board *b, int ptm) {
+BoardData *Hash::get(const Board *b, int ptm) {
     #if USE_HASH64
     bitbrd h = hash(b);
     #else
@@ -69,45 +76,17 @@ int Hash::get(const Board *b, int ptm) {
     HashLL *node = table[index];
 
     if(node == NULL)
-        return -1;
+        return NULL;
 
     do {
         if(node->cargo.taken == b->taken && node->cargo.black == b->black
-                    && node->cargo.ptm == ptm)
-            return node->cargo.move;
+                    && node->cargo.ptm == (uint8_t) ptm)
+            return &(node->cargo);
         node = node->next;
     }
     while(node != NULL);
 
-    return -1;
-}
-
-/**
- * @brief Only for the endgame, where turn is used to store exact score.
-*/
-int Hash::get(const Board *b, int ptm, int &score) {
-    #if USE_HASH64
-    bitbrd h = hash(b);
-    #else
-    uint32_t h = hash(b);
-    #endif
-    unsigned int index = (unsigned int)(h % size);
-    HashLL *node = table[index];
-
-    if(node == NULL)
-        return -1;
-
-    do {
-        if(node->cargo.taken == b->taken && node->cargo.black == b->black
-                    && node->cargo.ptm == ptm) {
-            score = node->cargo.turn;
-            return node->cargo.move;
-        }
-        node = node->next;
-    }
-    while(node != NULL);
-
-    return -1;
+    return NULL;
 }
 
 void Hash::clean(int turn) {
