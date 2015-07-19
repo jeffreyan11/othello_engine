@@ -18,7 +18,7 @@ Player::Player(Side side) {
     endgameSolver.mySide = mySide;
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
-    totalTimePM = -2;
+    timeLimit = -2;
 
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
@@ -64,11 +64,11 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(msLeft != -1) {
-        totalTimePM = msLeft / (64 - turn);
+        timeLimit = msLeft / (64 - turn);
     }
     else {
         // 1 min per move for "infinite" time
-        totalTimePM = 60000;
+        timeLimit = 60000;
     }
 
     using namespace std::chrono;
@@ -137,6 +137,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         start_time = high_resolution_clock::now();
     }
 
+    // Reset node count. Nodes are counted in the most conservative way (only
+    // when doMove() is called), so that pruning does not inflate node counts.
+    nodes = 0;
+
     // sort search
     cerr << "Performing sort search: depth " << sortDepth << endl;
     attemptingDepth = sortDepth;
@@ -165,14 +169,15 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while(((totalTimePM > time_span.count() * 1000.0 * legalMoves.size * 3)
+    } while(((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 3)
                 || msLeft == -1)
             && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
     cerr << "Playing " << myMove << ". Score: " << chosenScore << endl;
-    killer_table.clean(turn+2);
-    cerr << "Table contains " << killer_table.keys << " keys." << endl;
+    cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
+    transpositionTable.clean(turn+2);
+    cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
     cerr << endl;
 
     game.doMove(myMove, mySide);
@@ -200,11 +205,12 @@ int Player::pvs(Board *b, MoveList &moves, int &bestScore, int s, int depth) {
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if (time_span.count() * moves.size * 1000 > totalTimePM * (i+1))
+        if (time_span.count() * moves.size * 1000 > timeLimit * (i+1))
             return MOVE_BROKEN;
 
         Board copy = Board(b->taken, b->black);
         copy.doMove(moves.get(i), s);
+        nodes++;
         if (i != 0) {
             score = -pvs_h(&copy, -s, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
@@ -236,20 +242,35 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
     }
 
     int score;
+    int prevAlpha = alpha;
+    int hashed = MOVE_NULL;
+    int toHash = MOVE_NULL;
 
     // Hash table using the killer heuristic
-    BoardData *entry = killer_table.get(b, s);
+    BoardData *entry = transpositionTable.get(b, s);
     if(entry != NULL) {
-        if (entry->depth >= depth && entry->score >= beta)
-            return beta;
-        Board copy = Board(b->taken, b->black);
-        copy.doMove(entry->move, s);
-        score = -pvs_h(&copy, -s, depth-1, -beta, -alpha);
+        if (entry->nodeType == ALL_NODE) {
+            if (entry->depth >= depth && entry->score <= alpha)
+                return alpha;
+        }
+        else {
+            hashed = entry->move;
+            if (entry->depth >= depth) {
+                if (entry->nodeType == CUT_NODE && entry->score >= beta)
+                    return beta;
+                else if (entry->nodeType == PV_NODE)
+                    return entry->score;
+            }
+            Board copy = Board(b->taken, b->black);
+            copy.doMove(hashed, s);
+            nodes++;
+            score = -pvs_h(&copy, -s, depth-1, -beta, -alpha);
 
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta)
-            return beta;
+            if (alpha < score)
+                alpha = score;
+            if (alpha >= beta)
+                return beta;
+        }
     }
 
     MoveList legalMoves = b->getLegalMoves(s);
@@ -269,8 +290,11 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
+        if (legalMoves.get(i) == hashed)
+            continue;
         Board copy = Board(b->taken, b->black);
         copy.doMove(legalMoves.get(i), s);
+        nodes++;
 
         if (i != 0) {
             score = -pvs_h(&copy, -s, depth-1, -alpha-1, -alpha);
@@ -280,15 +304,24 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
         else
             score = -pvs_h(&copy, -s, depth-1, -beta, -alpha);
 
-        if (alpha < score)
+        if (alpha < score) {
             alpha = score;
+            toHash = legalMoves.get(i);
+        }
         if (alpha >= beta) {
-            if(depth >= 4 && depth <= maxDepth-2)
-                killer_table.add(b, beta, legalMoves.get(i), s,
-                    turn+attemptingDepth-depth, depth);
+            if(depth >= 5 && depth <= maxDepth-2)
+                transpositionTable.add(b, beta, legalMoves.get(i), s,
+                    turn+attemptingDepth-depth, depth, CUT_NODE);
             break;
         }
     }
+
+    if (depth >= 5 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
+        transpositionTable.add(b, alpha, toHash, s,
+                    turn+attemptingDepth-depth, depth, PV_NODE);
+    else if (depth >= 5 && alpha <= prevAlpha)
+        transpositionTable.add(b, alpha, MOVE_NULL, s,
+                    turn+attemptingDepth-depth, depth, ALL_NODE);
 
     return alpha;
 }
@@ -299,6 +332,7 @@ void Player::sortSearch(Board *b, MoveList &moves, MoveList &scores, int side,
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = Board(b->taken, b->black);
         copy.doMove(moves.get(i), side);
+        nodes++;
 
         scores.add(-pvs_h(&copy, -side, depth-1, NEG_INFTY, INFTY));
     }

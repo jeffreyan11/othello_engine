@@ -34,7 +34,8 @@ Hash::~Hash() {
  * @brief Adds key (b,ptm) and item move into the hashtable.
  * Assumes that this key has been checked with get and is not in the table.
 */
-void Hash::add(const Board *b, int score, int move, int ptm, int turn, int depth) {
+void Hash::add(const Board *b, int score, int move, int ptm, int turn,
+        int depth, uint8_t nodeType) {
     keys++;
     #if USE_HASH64
     bitbrd h = hash(b);
@@ -44,7 +45,8 @@ void Hash::add(const Board *b, int score, int move, int ptm, int turn, int depth
     unsigned int index = (unsigned int)(h % size);
     HashLL *node = table[index];
     if(node == NULL) {
-        table[index] = new HashLL(b->taken, b->black, score, move, ptm, turn, depth);
+        table[index] = new HashLL(b->taken, b->black, score, move, ptm, turn,
+            depth, nodeType);
         return;
     }
 
@@ -60,7 +62,8 @@ void Hash::add(const Board *b, int score, int move, int ptm, int turn, int depth
     if(node->cargo.taken == b->taken && node->cargo.black == b->black
                 && node->cargo.ptm == (uint8_t) ptm)
         return;
-    node->next = new HashLL(b->taken, b->black, score, move, ptm, turn, depth);
+    node->next = new HashLL(b->taken, b->black, score, move, ptm, turn,
+        depth, nodeType);
 }
 
 /**

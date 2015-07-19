@@ -27,6 +27,7 @@ private:
     int sortDepth;
     int endgameDepth;
     int attemptingDepth;
+    uint64_t nodes;
 
     Endgame endgameSolver;
 
@@ -34,10 +35,10 @@ private:
     Openings openingBook;
     #endif
 
-    Hash killer_table;
+    Hash transpositionTable;
 
     int turn;
-    int totalTimePM;
+    int timeLimit;
 
     Move* indexToMove[64];
 

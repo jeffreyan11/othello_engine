@@ -7,6 +7,10 @@
 
 #define USE_HASH64 false
 
+const uint8_t PV_NODE = 0;
+const uint8_t CUT_NODE = 1;
+const uint8_t ALL_NODE = 2;
+
 struct BoardData {
     bitbrd taken;
     bitbrd black;
@@ -15,6 +19,7 @@ struct BoardData {
     uint8_t ptm;
     uint8_t turn;
     uint8_t depth;
+    uint8_t nodeType;
 
     BoardData() {
         taken = 0;
@@ -26,7 +31,7 @@ struct BoardData {
         depth = 0;
     }
 
-    BoardData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d) {
+    BoardData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d, uint8_t nt) {
         taken = t;
         black = b;
         score = s;
@@ -34,6 +39,7 @@ struct BoardData {
         ptm = (uint8_t) p;
         turn = (uint8_t) tu;
         depth = (uint8_t) d;
+        nodeType = nt;
     }
 };
 
@@ -43,9 +49,9 @@ public:
     HashLL *next;
     BoardData cargo;
 
-    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, int tu, int d) {
+    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, int tu, int d, uint8_t nt) {
         next = NULL;
-        cargo = BoardData(t, b, s, m, ptm, tu, d);
+        cargo = BoardData(t, b, s, m, ptm, tu, d, nt);
     }
 
     ~HashLL() {}
@@ -73,7 +79,8 @@ public:
     Hash(int isize);
     ~Hash();
 
-    void add(const Board *b, int score, int move, int ptm, int turn, int depth);
+    void add(const Board *b, int score, int move, int ptm, int turn, int depth,
+        uint8_t nodeType);
     BoardData *get(const Board *b, int ptm);
     void clean(int turn);
 };

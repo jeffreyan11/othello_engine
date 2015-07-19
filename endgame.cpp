@@ -261,14 +261,14 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
             #endif
         }
         if (alpha >= beta) {
-            killer_table.add(&b, beta, legalMoves.get(i), s, 0, depth);
+            killer_table.add(&b, beta, legalMoves.get(i), s, 0, depth, CUT_NODE);
             return alpha;
         }
     }
     #if USE_BESTMOVE_TABLE
     // Best move with exact score if alpha < score < beta
     if(prevAlpha < alpha && alpha < beta)
-        endgame_table->add(&b, alpha, tempMove, s, 0, depth);
+        endgame_table->add(&b, alpha, tempMove, s, 0, depth, PV_NODE);
     #endif
 
     return alpha;
