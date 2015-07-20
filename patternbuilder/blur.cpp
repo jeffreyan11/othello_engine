@@ -66,7 +66,7 @@ void write() {
     out.open("p24table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
-            out << (int)p24Tableb[n][i] << endl;
+            out << (int) (p24Tableb[n][i] * 100.0) << endl;
         }
     }
     out.close();
@@ -74,7 +74,7 @@ void write() {
     out.open("edgetable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
-            out << (int)edgeTableb[n][i] << " ";
+            out << (int) (edgeTableb[n][i] * 100.0) << " ";
 
             if(i%9 == 8) out << endl;
         }
@@ -84,7 +84,7 @@ void write() {
     out.open("pE2Xtable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 59049; i++) {
-            out << (int)pE2XTableb[n][i] << " ";
+            out << (int) (pE2XTableb[n][i] * 100.0) << " ";
 
             if(i%9 == 8) out << endl;
         }
@@ -94,7 +94,7 @@ void write() {
     out.open("p33table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 19683; i++) {
-            out << (int)p33Tableb[n][i] << " ";
+            out << (int) (p33Tableb[n][i] * 100.0) << " ";
 
             if(i%9 == 8) out << endl;
         }

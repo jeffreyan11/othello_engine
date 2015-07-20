@@ -267,7 +267,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     }
     #if USE_BESTMOVE_TABLE
     // Best move with exact score if alpha < score < beta
-    if(prevAlpha < alpha && alpha < beta)
+    if(tempMove != -1 && prevAlpha < alpha && alpha < beta)
         endgame_table->add(&b, alpha, tempMove, s, 0, depth, PV_NODE);
     #endif
 

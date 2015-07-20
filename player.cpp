@@ -64,7 +64,7 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(msLeft != -1) {
-        timeLimit = msLeft / (64 - turn);
+        timeLimit = 3 * msLeft / (2 * (64 - turn));
     }
     else {
         // 1 min per move for "infinite" time
@@ -127,6 +127,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             end_time = high_resolution_clock::now();
             time_span = duration_cast<duration<double>>(end_time-start_time);
             cerr << "Endgame took: " << time_span.count() << endl;
+            cerr << "Playing: " << myMove << endl;
             cerr << endl;
 
             return indexToMove[myMove];
@@ -165,16 +166,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         legalMoves.set(0, temp);
         attemptingDepth += 2;
 
-        cerr << " (" << legalMoves.get(0) << ", " << chosenScore << ")" << endl;
+        cerr << " (" << legalMoves.get(0) << ", " << ((double)(chosenScore)) / 100.0 << ")" << endl;
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while(((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 3)
+    } while(((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 2)
                 || msLeft == -1)
             && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
-    cerr << "Playing " << myMove << ". Score: " << chosenScore << endl;
+    cerr << "Playing " << myMove << ". Score: " << ((double)(chosenScore)) / 100.0 << endl;
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     transpositionTable.clean(turn+2);
     cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
@@ -258,8 +259,13 @@ int Player::pvs_h(Board *b, int s, int depth, int alpha, int beta) {
             if (entry->depth >= depth) {
                 if (entry->nodeType == CUT_NODE && entry->score >= beta)
                     return beta;
-                else if (entry->nodeType == PV_NODE)
+                else if (entry->nodeType == PV_NODE) {
+                    if (entry->score >= beta)
+                        return beta;
+                    if (entry->score <= alpha)
+                        return alpha;
                     return entry->score;
+                }
             }
             Board copy = Board(b->taken, b->black);
             copy.doMove(hashed, s);

@@ -4,14 +4,15 @@
 #include <cstdint>
 #include <cstdlib>
 
-#define bitbrd uint64_t
-#define NEG_INFTY -65536
-#define INFTY 65536
-#define MOVE_NULL 64
-#define MOVE_BROKEN -1
-#define OPENING_NOT_FOUND -3
-#define CBLACK 1
-#define CWHITE -1
+typedef uint64_t bitbrd;
+
+const int NEG_INFTY = -(1 << 20);
+const int INFTY = (1 << 20);
+const int MOVE_NULL = 64;
+const int MOVE_BROKEN = -1;
+const int OPENING_NOT_FOUND = -3;
+const int CBLACK = 1;
+const int CWHITE = -1;
 
 enum Side { 
     WHITE, BLACK

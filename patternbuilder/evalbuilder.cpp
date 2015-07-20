@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "board.h"
+#include "endgame.h"
 using namespace std;
 
 #define DIVS 4
@@ -169,11 +170,14 @@ void checkGames() {
                 // If one side must pass it is not indicated in the database?
                 side = -side;
                 if(!tracker.checkMove(game->moves[j], side)) {
-                    errors++;
-                    games[i] = NULL;
-                    cerr << "error at " << i << " " << j << endl;
-                    cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;
-                    break;
+                    if (tracker.getLegalMoves(CBLACK).size != 0
+                     || tracker.getLegalMoves(CWHITE).size != 0) {
+                        errors++;
+                        games[i] = NULL;
+                        cerr << "error at " << i << " " << j << endl;
+                        cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;
+                        break;
+                    }
                 }
             }
             tracker.doMove(game->moves[j], side);
@@ -181,6 +185,43 @@ void checkGames() {
         }
     }
     cout << errors << " errors." << endl;
+}
+
+void replaceEnd() {
+    for(unsigned int i = 0; i < totalSize; i++) {
+        cerr << "Replacing end: " << i << endl;
+
+        thor_game *game = games[i];
+        if(game == NULL)
+            continue;
+
+        Board tracker;
+        int side = CBLACK;
+        // play opening moves
+        for(int j = 0; j < 46; j++) {
+            // If one side must pass it is not indicated in the database?
+            if(!tracker.checkMove(game->moves[j], side)) {
+                side = -side;
+            }
+            tracker.doMove(game->moves[j], side);
+            side = -side;
+        }
+
+        Endgame e;
+        if(tracker.countEmpty() > 20) {
+            games[i] = NULL;
+            continue;
+        }
+
+        e.mySide = side;
+        MoveList lm = tracker.getLegalMoves(side);
+        int score = e.endgame_score(
+                tracker, lm, tracker.countEmpty());
+        // We want everything from black's POV
+        if (side == CWHITE)
+            score = -score;
+        game->final = (score + 64) / 2;
+    }
 }
 
 void searchFeatures() {
@@ -289,7 +330,7 @@ int main(int argc, char **argv) {
     //readGame("gamedb042714.txt", 8200);
 
     checkGames();
-
+    replaceEnd();
     searchFeatures();
 
     writeFile();
@@ -459,36 +500,36 @@ void boardToEPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
-    int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
-    int r8 = bitsToPI( (int)(black>>56), (int)(white>>56) );
-    int c1 = bitsToPI(
-      (int)(((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
-      (int)(((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
-    int c8 = bitsToPI(
-      (int)(((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
-      (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
+    int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 48) & 0xFF), (int)((white >> 48) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
+      (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
 
-    if(!eused[index][r1]) {
-        edgeTable[index][r1]->sum += score;
-        edgeTable[index][r1]->instances++;
+    if(!eused[index][r2]) {
+        edgeTable[index][r2]->sum += score;
+        edgeTable[index][r2]->instances++;
     }
-    if(!eused[index][r8]) {
-        edgeTable[index][r8]->sum += score;
-        edgeTable[index][r8]->instances++;
+    if(!eused[index][r7]) {
+        edgeTable[index][r7]->sum += score;
+        edgeTable[index][r7]->instances++;
     }
-    if(!eused[index][c1]) {
-        edgeTable[index][c1]->sum += score;
-        edgeTable[index][c1]->instances++;
+    if(!eused[index][c2]) {
+        edgeTable[index][c2]->sum += score;
+        edgeTable[index][c2]->instances++;
     }
-    if(!eused[index][c8]) {
-        edgeTable[index][c8]->sum += score;
-        edgeTable[index][c8]->instances++;
+    if(!eused[index][c7]) {
+        edgeTable[index][c7]->sum += score;
+        edgeTable[index][c7]->instances++;
     }
 
-    eused[index][r1] = 1;
-    eused[index][r8] = 1;
-    eused[index][c1] = 1;
-    eused[index][c8] = 1;
+    eused[index][r2] = 1;
+    eused[index][r7] = 1;
+    eused[index][c2] = 1;
+    eused[index][c7] = 1;
 }
 
 void boardTo24PV(Board *b, int score, int turn) {

@@ -83,6 +83,65 @@ else score = -endgame4(copy, -mySide, -beta, -alpha, false);
     return tempMove;
 }
 
+// Get the score.
+int Endgame::endgame_score(Board &b, MoveList &moves, int depth) {
+    #if USE_REGION_PAR
+    // initialize region parity
+    region_parity = 0;
+    bitbrd empty = ~b.getTaken();
+    while(empty) {
+        region_parity ^= QUADRANT_ID[bitScanForward(empty)];
+        empty &= empty-1;
+    }
+    #endif
+
+    int score;
+    int alpha = -64;
+    int beta = 64;
+
+    for (unsigned int i = 0; i < moves.size; i++) {
+        Board copy = Board(b.taken, b.black);
+        copy.doMove(moves.get(i), mySide);
+        #if USE_REGION_PAR
+        region_parity ^= QUADRANT_ID[moves.get(i)];
+        #endif
+
+        if (i != 0) {
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -alpha-1, -alpha, false);
+else score = -endgame4(copy, -mySide, -alpha-1, -alpha, false);
+
+            if (alpha < score && score < beta) {
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
+else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+            }
+        }
+        else {
+if(depth > END_SHLLW || depth <= 4)
+    score = -endgame_h(copy, -mySide, depth-1, -beta, -alpha, false);
+else if(depth > 5)
+    score = -endgame_shallow(copy, -mySide, depth-1, -beta, -alpha, false);
+else score = -endgame4(copy, -mySide, -beta, -alpha, false);
+        }
+
+        #if USE_REGION_PAR
+        region_parity ^= QUADRANT_ID[moves.get(i)];
+        #endif
+        if (alpha < score) {
+            alpha = score;
+        }
+        if (alpha >= beta)
+            break;
+    }
+
+    return alpha;
+}
+
 /**
  * @brief Function for endgame solver. Used when many empty squares remain.
 */

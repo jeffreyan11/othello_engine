@@ -45,14 +45,14 @@ Eval::~Eval() {
 
 int Eval::heuristic(Board *b, int turn) {
     if(b->count(mySide) == 0)
-        return -9001;
+        return NEG_INFTY;
 
     int score = 0;
 
     #if USE_EDGE_TABLE
     int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
             + 2*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
-            + 3*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+            + 300*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
             //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
     if(mySide == CBLACK)
         score += patterns;
@@ -72,11 +72,11 @@ int Eval::heuristic(Board *b, int turn) {
     if(turn < 21) {
         int myLM = b->numLegalMoves(mySide);
         int oppLM = b->numLegalMoves(oppSide);
-        score += 120 * (myLM - oppLM) / (oppLM + 1);
+        score += 100 * 120 * (myLM - oppLM) / (oppLM + 1);
     }
     else {
         //score += 80 * (myLM - oppLM) / (oppLM + 1);
-        score += 10 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
+        score += 100 * 10 * (b->potentialMobility(mySide) - b->potentialMobility(oppSide));
     }
 
     return score;
@@ -165,16 +165,16 @@ int Eval::boardToEPV(Board *b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
-    int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
-    int r8 = bitsToPI( (int)(black>>56), (int)(white>>56) );
-    int c1 = bitsToPI(
-      (int)(((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
-      (int)(((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
-    int c8 = bitsToPI(
-      (int)(((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
-      (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
-    int result = edgeTable[index][r1] + edgeTable[index][r8] +
-            edgeTable[index][c1] + edgeTable[index][c8];
+    int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 48) & 0xFF), (int)((white >> 48) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
+      (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
+    int result = edgeTable[index][r2] + edgeTable[index][r7] +
+            edgeTable[index][c2] + edgeTable[index][c7];
     return result;
 }
 
