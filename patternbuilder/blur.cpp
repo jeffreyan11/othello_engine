@@ -66,7 +66,9 @@ void write() {
     out.open("p24table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
-            out << (int) (p24Tableb[n][i] * 100.0) << endl;
+            out << (int) (p24Tableb[n][i] * 100.0) << " ";
+
+            if(i%9 == 8) out << endl;
         }
     }
     out.close();

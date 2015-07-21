@@ -97,13 +97,13 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 46.52, 608848847
+    total_nodes += ffo("ffotest/end40.pos");       // 51.16, 504275013
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 1047421144
+    //total_nodes += ffo("ffotest/end45.pos");        // 181.24, 2093794306
     //total_nodes += ffo("ffotest/end46.pos");        // 120314256
     //total_nodes += ffo("ffotest/end47.pos");        // 38407680
     //total_nodes += ffo("ffotest/end48.pos");

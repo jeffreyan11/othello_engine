@@ -288,7 +288,7 @@ MoveList Board::getLegalMovesOrdered(int side, MoveList &priority, int &hashed) 
 
     if(hashed != -1) {
         result.add(hashed);
-        priority.add(1000);
+        priority.add(100000);
         temp ^= MOVEMASK[hashed];
     }
 
@@ -821,66 +821,12 @@ int Board::countEmpty() {
     return countSetBits(~taken);
 }
 
-int Board::bitScanForward(bitbrd bb) {
-    #if defined(__x86_64__)
-        asm ("bsf %1, %0" : "=r" (bb) : "r" (bb));
-        return (int) bb;
-    #else
-        return index64[(int)(((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58)];
-    #endif
-}
-
-int Board::bitScanReverse(bitbrd bb) {
-    #if defined(__x86_64__)
-        asm ("bsr %1, %0" : "=r" (bb) : "r" (bb));
-        return (int) bb;
-    #elif defined(__i386)
-        int b = (int) (bb >> 32);
-        if(b) {
-            asm ("bsrl %1, %0" : "=r" (b) : "r" (b));
-            return b+32;
-        }
-        else {
-            int a = (int) (bb & 0xFFFFFFFF);
-            asm ("bsrl %1, %0" : "=r" (a) : "r" (a));
-            return a;
-        }
-    #else
-        bb |= bb >> 1;
-        bb |= bb >> 2;
-        bb |= bb >> 4;
-        bb |= bb >> 8;
-        bb |= bb >> 16;
-        bb |= bb >> 32;
-        return index64[(int)((bb * 0x03f79d71b4cb0a89) >> 58)];
-    #endif
-}
-
 /*
  * Current count of given side's stones.
  */
 int Board::count(int side) {
     bitbrd i = (side == CBLACK) ? (black) : (black^taken);
     return countSetBits(i);
-}
-
-int Board::countSetBits(bitbrd i) {
-    #if defined(__x86_64__)
-        asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
-        return (int) i;
-    #elif defined(__i386)
-        int a = (int) (i & 0xFFFFFFFF);
-        int b = (int) (i >> 32);
-        asm ("popcntl %1, %0" : "=r" (a) : "r" (a));
-        asm ("popcntl %1, %0" : "=r" (b) : "r" (b));
-        return a+b;
-    #else
-        i = i - ((i >> 1) & 0x5555555555555555);
-        i = (i & 0x3333333333333333) + ((i >> 2) & 0x3333333333333333);
-        i = (((i + (i >> 4)) & 0x0F0F0F0F0F0F0F0F) *
-              0x0101010101010101) >> 56;
-        return (int) i;
-    #endif
 }
 
 bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {

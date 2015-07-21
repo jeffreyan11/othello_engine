@@ -42,9 +42,9 @@ private:
 
     Move* indexToMove[64];
 
-    int pvs(Board *b, MoveList &moves, int &bestScore, int side, int depth);
-    int pvs_h(Board *b, int side, int depth, int alpha, int beta);
-    void sortSearch(Board *b, MoveList &moves, MoveList &scores, int side,
+    int pvs(Board &b, MoveList &moves, int &bestScore, int side, int depth);
+    int pvs_h(Board &b, int side, int depth, int alpha, int beta);
+    void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
 
     void sort(MoveList &moves, MoveList &scores, int left, int right);

@@ -5,7 +5,7 @@
 #include <string>
 #include "common.h"
 
-#define OPENING_BOOK_SIZE 7949
+#define OPENING_BOOK_SIZE 5071
 
 struct Node {
     bitbrd taken, black;

@@ -56,10 +56,10 @@ void createOffspring(int index);
 bitbrd reflectVertical(bitbrd i);
 bitbrd reflectHorizontal(bitbrd x);
 bitbrd reflectDiag(bitbrd x);
-void boardToEPV(Board *b, int offspringIndex, int score, int turn);
-void boardTo24PV(Board *b, int offspringIndex, int score, int turn);
-void boardToE2XPV(Board *b, int offspringIndex, int score, int turn);
-void boardTo33PV(Board *b, int offspringIndex, int score, int turn);
+void boardToEPV(Board *b, int score, int turn);
+void boardTo24PV(Board *b, int score, int turn);
+void boardToE2XPV(Board *b, int score, int turn);
+void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 int main(int argc, char **argv) {
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     readThorGame("WTH_7708/WTH_1984.wtb");
 
     checkGames();
-    replaceEnd();
+    //replaceEnd();
 
     initializeOffspring();
 
@@ -132,10 +132,10 @@ void searchFeatures() {
         p33Errors[i] = 0;
     }
 
-    for (int a = 0; a < NUM_OFFSPRING; a++) {
-        if (a % 10 == 0)
-            cerr << "Analyzing offspring " << a+1 << endl;
-        for(unsigned int i = 0; i < totalSize; i++) {
+    for(unsigned int i = 0; i < totalSize; i++) {
+        if (i % 1000 == 0)
+            cerr << "Analyzing game " << (i+1) << endl;
+        for (int a = 0; a < NUM_OFFSPRING; a++) {
             for(int n = 0; n < DIVS; n++) {
                 for(int j = 0; j < 6561; j++) {
                     used[a][n][j] = 0;
@@ -148,37 +148,37 @@ void searchFeatures() {
                     p33used[a][n][j] = 0;
                 }
             }
-            thor_game *game = games[i];
-            if(game == NULL)
-                continue;
+        }
+        thor_game *game = games[i];
+        if(game == NULL)
+            continue;
 
-            int score = 2*game->final - 64;
-            score *= 10000;
+        int score = 2*game->final - 64;
+        score *= 10000;
 
-            Board tracker;
-            int side = CBLACK;
-            // play opening moves
-            for(int j = 0; j < 10; j++) {
-                // If one side must pass it is not indicated in the database?
-                if(!tracker.checkMove(game->moves[j], side)) {
-                    side = -side;
-                }
-                tracker.doMove(game->moves[j], side);
+        Board tracker;
+        int side = CBLACK;
+        // play opening moves
+        for(int j = 0; j < 10; j++) {
+            // If one side must pass it is not indicated in the database?
+            if(!tracker.checkMove(game->moves[j], side)) {
                 side = -side;
             }
+            tracker.doMove(game->moves[j], side);
+            side = -side;
+        }
 
-            // starting recording statistics
-            for(int j = 10; j < 46; j++) {
-                if(!tracker.checkMove(game->moves[j], side)) {
-                    side = -side;
-                }
-                tracker.doMove(game->moves[j], side);
-                boardTo24PV(&tracker, a, score, j);
-                boardToEPV(&tracker, a, score, j);
-                boardToE2XPV(&tracker, a, score, j);
-                boardTo33PV(&tracker, a, score, j);
+        // starting recording statistics
+        for(int j = 10; j < 46; j++) {
+            if(!tracker.checkMove(game->moves[j], side)) {
                 side = -side;
             }
+            tracker.doMove(game->moves[j], side);
+            boardTo24PV(&tracker, score, j);
+            boardToEPV(&tracker, score, j);
+            boardToE2XPV(&tracker, score, j);
+            boardTo33PV(&tracker, score, j);
+            side = -side;
         }
     }
 
@@ -286,8 +286,8 @@ void createOffspring(int index) {
         }
     }
 
-    auto smallRand = bind(uniform_int_distribution<int>(-500, 500), rng);
-    auto largeRand = bind(uniform_int_distribution<int>(-5000, 5000), rng);
+    auto smallRand = bind(uniform_int_distribution<int>(-200, 200), rng);
+    auto largeRand = bind(uniform_int_distribution<int>(-2000, 2000), rng);
 
     for (int i = 0; i < combos; i++) {
         for (int l = 0; l < 1; l++) {
@@ -348,7 +348,7 @@ void createOffspring(int index) {
 // Creates the initial set of offspring. These are simply randomly generated
 // with no specific rules.
 void initializeOffspring() {
-    auto uniformRand = bind(uniform_int_distribution<int>(-5000, 5000), rng);
+    auto uniformRand = bind(uniform_int_distribution<int>(-1000, 1000), rng);
 
     for (int i = 1; i < NUM_OFFSPRING; i++) {
         for (int j = 0; j < DIVS; j++) {
@@ -521,7 +521,7 @@ void readThorGame(string file) {
     }
 }
 
-void boardToEPV(Board *b, int offspringIndex, int score, int turn) {
+void boardToEPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
@@ -534,34 +534,36 @@ void boardToEPV(Board *b, int offspringIndex, int score, int turn) {
       (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
       (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
 
-    if(!eused[offspringIndex][index][r2]) {
-        int64_t error = edgeTable[offspringIndex][index][r2] - score;
-        error *= error;
-        edgeErrors[offspringIndex] += error;
-    }
-    if(!eused[offspringIndex][index][r7]) {
-        int64_t error = edgeTable[offspringIndex][index][r7] - score;
-        error *= error;
-        edgeErrors[offspringIndex] += error;
-    }
-    if(!eused[offspringIndex][index][c2]) {
-        int64_t error = edgeTable[offspringIndex][index][c2] - score;
-        error *= error;
-        edgeErrors[offspringIndex] += error;
-    }
-    if(!eused[offspringIndex][index][c7]) {
-        int64_t error = edgeTable[offspringIndex][index][c7] - score;
-        error *= error;
-        edgeErrors[offspringIndex] += error;
-    }
+    for (int offspringIndex = 0; offspringIndex < NUM_OFFSPRING; offspringIndex++) {
+        if(!eused[offspringIndex][index][r2]) {
+            int64_t error = edgeTable[offspringIndex][index][r2] - score;
+            error *= error;
+            edgeErrors[offspringIndex] += error;
+        }
+        if(!eused[offspringIndex][index][r7]) {
+            int64_t error = edgeTable[offspringIndex][index][r7] - score;
+            error *= error;
+            edgeErrors[offspringIndex] += error;
+        }
+        if(!eused[offspringIndex][index][c2]) {
+            int64_t error = edgeTable[offspringIndex][index][c2] - score;
+            error *= error;
+            edgeErrors[offspringIndex] += error;
+        }
+        if(!eused[offspringIndex][index][c7]) {
+            int64_t error = edgeTable[offspringIndex][index][c7] - score;
+            error *= error;
+            edgeErrors[offspringIndex] += error;
+        }
 
-    eused[offspringIndex][index][r2] = 1;
-    eused[offspringIndex][index][r7] = 1;
-    eused[offspringIndex][index][c2] = 1;
-    eused[offspringIndex][index][c7] = 1;
+        eused[offspringIndex][index][r2] = 1;
+        eused[offspringIndex][index][r7] = 1;
+        eused[offspringIndex][index][c2] = 1;
+        eused[offspringIndex][index][c7] = 1;
+    }
 }
 
-void boardTo24PV(Board *b, int offspringIndex, int score, int turn) {
+void boardTo24PV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
@@ -611,58 +613,60 @@ void boardTo24PV(Board *b, int offspringIndex, int score, int turn) {
     int rlrw = (int) ((rotbw&0xF) + ((rotbw>>4)&0xF0));
     int rlr = bitsToPI(rlrb, rlrw);
 
-    if(!used[offspringIndex][index][ul]) {
-        int64_t error = p24Table[offspringIndex][index][ul] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][ll]) {
-        int64_t error = p24Table[offspringIndex][index][ll] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][ur]) {
-        int64_t error = p24Table[offspringIndex][index][ur] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][lr]) {
-        int64_t error = p24Table[offspringIndex][index][lr] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][rul]) {
-        int64_t error = p24Table[offspringIndex][index][rul] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][rll]) {
-        int64_t error = p24Table[offspringIndex][index][rll] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][rur]) {
-        int64_t error = p24Table[offspringIndex][index][rur] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
-    if(!used[offspringIndex][index][rlr]) {
-        int64_t error = p24Table[offspringIndex][index][rlr] - score;
-        error *= error;
-        p24Errors[offspringIndex] += error;
-    }
+    for (int offspringIndex = 0; offspringIndex < NUM_OFFSPRING; offspringIndex++) {
+        if(!used[offspringIndex][index][ul]) {
+            int64_t error = p24Table[offspringIndex][index][ul] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][ll]) {
+            int64_t error = p24Table[offspringIndex][index][ll] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][ur]) {
+            int64_t error = p24Table[offspringIndex][index][ur] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][lr]) {
+            int64_t error = p24Table[offspringIndex][index][lr] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][rul]) {
+            int64_t error = p24Table[offspringIndex][index][rul] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][rll]) {
+            int64_t error = p24Table[offspringIndex][index][rll] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][rur]) {
+            int64_t error = p24Table[offspringIndex][index][rur] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
+        if(!used[offspringIndex][index][rlr]) {
+            int64_t error = p24Table[offspringIndex][index][rlr] - score;
+            error *= error;
+            p24Errors[offspringIndex] += error;
+        }
 
-    used[offspringIndex][index][ul] = 1;
-    used[offspringIndex][index][ll] = 1;
-    used[offspringIndex][index][ur] = 1;
-    used[offspringIndex][index][lr] = 1;
-    used[offspringIndex][index][rul] = 1;
-    used[offspringIndex][index][rll] = 1;
-    used[offspringIndex][index][rur] = 1;
-    used[offspringIndex][index][rlr] = 1;
+        used[offspringIndex][index][ul] = 1;
+        used[offspringIndex][index][ll] = 1;
+        used[offspringIndex][index][ur] = 1;
+        used[offspringIndex][index][lr] = 1;
+        used[offspringIndex][index][rul] = 1;
+        used[offspringIndex][index][rll] = 1;
+        used[offspringIndex][index][rur] = 1;
+        used[offspringIndex][index][rlr] = 1;
+    }
 }
 
-void boardToE2XPV(Board *b, int offspringIndex, int score, int turn) {
+void boardToE2XPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
@@ -694,34 +698,36 @@ void boardToE2XPV(Board *b, int offspringIndex, int score, int turn) {
         ((white & 0x4000) >> 6) + ((white & 0x40000000000000) >> 45) );
     int c8 = bitsToPI(c8b, c8w);
 
-    if(!exused[offspringIndex][index][r1]) {
-        int64_t error = pE2XTable[offspringIndex][index][r1] - score;
-        error *= error;
-        pE2XErrors[offspringIndex] += error;
-    }
-    if(!exused[offspringIndex][index][r8]) {
-        int64_t error = pE2XTable[offspringIndex][index][r8] - score;
-        error *= error;
-        pE2XErrors[offspringIndex] += error;
-    }
-    if(!exused[offspringIndex][index][c1]) {
-        int64_t error = pE2XTable[offspringIndex][index][c1] - score;
-        error *= error;
-        pE2XErrors[offspringIndex] += error;
-    }
-    if(!exused[offspringIndex][index][c8]) {
-        int64_t error = pE2XTable[offspringIndex][index][c8] - score;
-        error *= error;
-        pE2XErrors[offspringIndex] += error;
-    }
+    for (int offspringIndex = 0; offspringIndex < NUM_OFFSPRING; offspringIndex++) {
+        if(!exused[offspringIndex][index][r1]) {
+            int64_t error = pE2XTable[offspringIndex][index][r1] - score;
+            error *= error;
+            pE2XErrors[offspringIndex] += error;
+        }
+        if(!exused[offspringIndex][index][r8]) {
+            int64_t error = pE2XTable[offspringIndex][index][r8] - score;
+            error *= error;
+            pE2XErrors[offspringIndex] += error;
+        }
+        if(!exused[offspringIndex][index][c1]) {
+            int64_t error = pE2XTable[offspringIndex][index][c1] - score;
+            error *= error;
+            pE2XErrors[offspringIndex] += error;
+        }
+        if(!exused[offspringIndex][index][c8]) {
+            int64_t error = pE2XTable[offspringIndex][index][c8] - score;
+            error *= error;
+            pE2XErrors[offspringIndex] += error;
+        }
 
-    exused[offspringIndex][index][r1] = 1;
-    exused[offspringIndex][index][r8] = 1;
-    exused[offspringIndex][index][c1] = 1;
-    exused[offspringIndex][index][c8] = 1;
+        exused[offspringIndex][index][r1] = 1;
+        exused[offspringIndex][index][r8] = 1;
+        exused[offspringIndex][index][c1] = 1;
+        exused[offspringIndex][index][c8] = 1;
+    }
 }
 
-void boardTo33PV(Board *b, int offspringIndex, int score, int turn) {
+void boardTo33PV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
@@ -747,31 +753,33 @@ void boardTo33PV(Board *b, int offspringIndex, int score, int turn) {
     int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
     int lr = bitsToPI(lrb, lrw);
 
-    if(!p33used[offspringIndex][index][ul]) {
-        int64_t error = p33Table[offspringIndex][index][ul] - score;
-        error *= error;
-        p33Errors[offspringIndex] += error;
-    }
-    if(!p33used[offspringIndex][index][ur]) {
-        int64_t error = p33Table[offspringIndex][index][ur] - score;
-        error *= error;
-        p33Errors[offspringIndex] += error;
-    }
-    if(!p33used[offspringIndex][index][ll]) {
-        int64_t error = p33Table[offspringIndex][index][ll] - score;
-        error *= error;
-        p33Errors[offspringIndex] += error;
-    }
-    if(!p33used[offspringIndex][index][lr]) {
-        int64_t error = p33Table[offspringIndex][index][lr] - score;
-        error *= error;
-        p33Errors[offspringIndex] += error;
-    }
+    for (int offspringIndex = 0; offspringIndex < NUM_OFFSPRING; offspringIndex++) {
+        if(!p33used[offspringIndex][index][ul]) {
+            int64_t error = p33Table[offspringIndex][index][ul] - score;
+            error *= error;
+            p33Errors[offspringIndex] += error;
+        }
+        if(!p33used[offspringIndex][index][ur]) {
+            int64_t error = p33Table[offspringIndex][index][ur] - score;
+            error *= error;
+            p33Errors[offspringIndex] += error;
+        }
+        if(!p33used[offspringIndex][index][ll]) {
+            int64_t error = p33Table[offspringIndex][index][ll] - score;
+            error *= error;
+            p33Errors[offspringIndex] += error;
+        }
+        if(!p33used[offspringIndex][index][lr]) {
+            int64_t error = p33Table[offspringIndex][index][lr] - score;
+            error *= error;
+            p33Errors[offspringIndex] += error;
+        }
 
-    p33used[offspringIndex][index][ul] = 1;
-    p33used[offspringIndex][index][ur] = 1;
-    p33used[offspringIndex][index][ll] = 1;
-    p33used[offspringIndex][index][lr] = 1;
+        p33used[offspringIndex][index][ul] = 1;
+        p33used[offspringIndex][index][ur] = 1;
+        p33used[offspringIndex][index][ll] = 1;
+        p33used[offspringIndex][index][lr] = 1;
+    }
 }
 
 int bitsToPI(int b, int w) {

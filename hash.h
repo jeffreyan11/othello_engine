@@ -65,9 +65,9 @@ private:
 
     //void process(int index);
     #if USE_HASH64
-    bitbrd hash(const Board *b);
+    bitbrd hash(const Board &b);
     #else
-    uint32_t hash(const Board *b);
+    uint32_t hash(const Board &b);
     #endif
 
 public:
@@ -79,9 +79,9 @@ public:
     Hash(int isize);
     ~Hash();
 
-    void add(const Board *b, int score, int move, int ptm, int turn, int depth,
+    void add(const Board &b, int score, int move, int ptm, int turn, int depth,
         uint8_t nodeType);
-    BoardData *get(const Board *b, int ptm);
+    BoardData *get(const Board &b, int ptm);
     void clean(int turn);
 };
 

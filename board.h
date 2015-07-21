@@ -397,10 +397,6 @@ class Board {
 private:
     bool checkMove(int index, int side);
 
-    int countSetBits(bitbrd i);
-    int bitScanForward(bitbrd bb);
-    int bitScanReverse(bitbrd bb);
-
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
     bitbrd eastFill(int index, bitbrd self, bitbrd pos);
@@ -415,7 +411,7 @@ public:
     bitbrd black;
 
     Board();
-    Board(bitbrd b, bitbrd t);
+    Board(bitbrd t, bitbrd b);
     ~Board();
     Board *copy();
 

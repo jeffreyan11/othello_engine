@@ -14,6 +14,10 @@ const int OPENING_NOT_FOUND = -3;
 const int CBLACK = 1;
 const int CWHITE = -1;
 
+int countSetBits(bitbrd i);
+int bitScanForward(bitbrd bb);
+int bitScanReverse(bitbrd bb);
+
 enum Side { 
     WHITE, BLACK
 };
