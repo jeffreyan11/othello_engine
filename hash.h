@@ -3,7 +3,6 @@
 
 #include "board.h"
 #include "common.h"
-#include <iostream>
 
 #define USE_HASH64 false
 

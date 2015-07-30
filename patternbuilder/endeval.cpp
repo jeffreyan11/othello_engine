@@ -418,10 +418,11 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int)to << " " << a->sum << " " << a->instances << endl;
+                out << (int) (to * 100.0) << " ";
             }
-            else
-                out << 0 << " " << a->sum << " " << a->instances << endl;
+            else out << 0 << " ";
+
+            if(i%9 == 8) out << endl;
         }
     }
     out.close();
@@ -439,7 +440,7 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int)to << " ";
+                out << (int) (to * 100.0) << " ";
             }
             else out << 0 << " ";
 
@@ -461,7 +462,7 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int)to << " ";
+                out << (int) (to * 100.0) << " ";
             }
             else out << 0 << " ";
 
@@ -475,36 +476,36 @@ void boardToEPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
     bitbrd black = b->toBits(BLACK);
     bitbrd white = b->toBits(WHITE);
-    int r1 = bitsToPI( (int)(black & 0xFF), (int)(white & 0xFF) );
-    int r8 = bitsToPI( (int)(black>>56), (int)(white>>56) );
-    int c1 = bitsToPI(
-      (int)(((black & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
-      (int)(((white & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
-    int c8 = bitsToPI(
-      (int)(((black & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
-      (int)(((white & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
+    int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 48) & 0xFF), (int)((white >> 48) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
+      (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
 
-    if(!eused[index][r1]) {
-        edgeTable[index][r1]->sum += score;
-        edgeTable[index][r1]->instances++;
+    if(!eused[index][r2]) {
+        edgeTable[index][r2]->sum += score;
+        edgeTable[index][r2]->instances++;
     }
-    if(!eused[index][r8]) {
-        edgeTable[index][r8]->sum += score;
-        edgeTable[index][r8]->instances++;
+    if(!eused[index][r7]) {
+        edgeTable[index][r7]->sum += score;
+        edgeTable[index][r7]->instances++;
     }
-    if(!eused[index][c1]) {
-        edgeTable[index][c1]->sum += score;
-        edgeTable[index][c1]->instances++;
+    if(!eused[index][c2]) {
+        edgeTable[index][c2]->sum += score;
+        edgeTable[index][c2]->instances++;
     }
-    if(!eused[index][c8]) {
-        edgeTable[index][c8]->sum += score;
-        edgeTable[index][c8]->instances++;
+    if(!eused[index][c7]) {
+        edgeTable[index][c7]->sum += score;
+        edgeTable[index][c7]->instances++;
     }
 
-    eused[index][r1] = 1;
-    eused[index][r8] = 1;
-    eused[index][c1] = 1;
-    eused[index][c8] = 1;
+    eused[index][r2] = 1;
+    eused[index][r7] = 1;
+    eused[index][c2] = 1;
+    eused[index][c7] = 1;
 }
 
 void boardTo24PV(Board *b, int score, int turn) {

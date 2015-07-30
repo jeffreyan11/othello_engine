@@ -1,5 +1,6 @@
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include "common.h"
 #include "player.h"
@@ -97,15 +98,15 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 51.16, 504275013
+    total_nodes += ffo("ffotest/end40.pos");       // 24.42, 265377357
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 181.24, 2093794306
-    //total_nodes += ffo("ffotest/end46.pos");        // 120314256
-    //total_nodes += ffo("ffotest/end47.pos");        // 38407680
+    //total_nodes += ffo("ffotest/end45.pos");        // 132.50, 1592420272
+    //total_nodes += ffo("ffotest/end46.pos");        // 23.53, 210360547
+    //total_nodes += ffo("ffotest/end47.pos");        // 43.45, 318777223
     //total_nodes += ffo("ffotest/end48.pos");
     //total_nodes += ffo("ffotest/end59.pos");
 

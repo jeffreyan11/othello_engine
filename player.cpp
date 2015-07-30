@@ -1,3 +1,5 @@
+#include <chrono>
+#include <iostream>
 #include "player.h"
 
 /**
@@ -159,6 +161,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         int newBest = pvs(game, legalMoves, chosenScore, mySide, attemptingDepth);
         if(newBest == MOVE_BROKEN) {
             cerr << " Broken out of search!" << endl;
+            end_time = high_resolution_clock::now();
+            time_span = duration_cast<duration<double>>(end_time-start_time);
             break;
         }
         int temp = legalMoves.get(newBest);
@@ -192,7 +196,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
  * Returns the index of the best move.
 */
 int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
-
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
 
@@ -284,15 +287,18 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     // internal iterative deepening
-    if(depth >= 5) {
+    if (depth >= 2) {
         MoveList scores;
-        sortSearch(b, legalMoves, scores, s, 2);
-        sort(legalMoves, scores, 0, legalMoves.size-1);
-    }
-    else if (depth >= 3) {
-        MoveList scores;
-        for (unsigned int i = 0; i < legalMoves.size; i++)
-            scores.add(SQ_VAL[legalMoves.get(i)]);
+        if(depth >= 9)
+            sortSearch(b, legalMoves, scores, s, 4);
+        else if(depth >= 5)
+            sortSearch(b, legalMoves, scores, s, 2);
+        else if(depth >= 3)
+            sortSearch(b, legalMoves, scores, s, 0);
+        else {
+            for (unsigned int i = 0; i < legalMoves.size; i++)
+                scores.add(SQ_VAL[legalMoves.get(i)]);
+        }
         sort(legalMoves, scores, 0, legalMoves.size-1);
     }
 
@@ -303,7 +309,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
         copy.doMove(legalMoves.get(i), s);
         nodes++;
 
-        if (i != 0) {
+        if (depth > 2 && i != 0) {
             score = -pvs_h(copy, -s, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
                 score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
@@ -343,43 +349,4 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
 
         scores.add(-pvs_h(copy, -side, depth-1, NEG_INFTY, INFTY));
     }
-}
-
-void Player::sort(MoveList &moves, MoveList &scores, int left, int right) {
-    int pivot = (left + right) / 2;
-
-    if (left < right) {
-        pivot = partition(moves, scores, left, right, pivot);
-        sort(moves, scores, left, pivot-1);
-        sort(moves, scores, pivot+1, right);
-    }
-}
-
-void Player::swap(MoveList &moves, MoveList &scores, int i, int j) {
-    int less1 = moves.get(j);
-    moves.set(j, moves.get(i));
-    moves.set(i, less1);
-
-    int less2 = scores.get(j);
-    scores.set(j, scores.get(i));
-    scores.set(i, less2);
-}
-
-int Player::partition(MoveList &moves, MoveList &scores, int left, int right,
-    int pindex) {
-
-    int index = left;
-    int pivot = scores.get(pindex);
-
-    swap(moves, scores, pindex, right);
-
-    for (int i = left; i < right; i++) {
-        if (scores.get(i) > pivot) {
-            swap(moves, scores, i, index);
-            index++;
-        }
-    }
-    swap(moves, scores, index, right);
-
-    return index;
 }

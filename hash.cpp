@@ -1,3 +1,4 @@
+#include <iostream>
 #include "hash.h"
 
 Hash::Hash() {

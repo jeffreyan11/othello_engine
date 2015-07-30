@@ -54,12 +54,23 @@ public:
         moves[size] = m;
         size++;
     }
+
     int get(int i) { return moves[i]; }
     int last() { return moves[size-1]; }
     void set(int i, int val) { moves[i] = val; }
+
+    void swap(int i, int j) {
+        int temp = moves[i];
+        moves[i] = moves[j];
+        moves[j] = temp;
+    }
+
     void clear() {
         size = 0;
     }
 };
+
+//int nextMove(MoveList &moves, MoveList &scores, unsigned int index);
+void sort(MoveList &moves, MoveList &scores, int left, int right);
 
 #endif

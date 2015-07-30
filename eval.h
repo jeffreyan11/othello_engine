@@ -1,7 +1,7 @@
 #ifndef __EVAL_H__
 #define __EVAL_H__
 
-#include <fstream>
+#include <string>
 #include "board.h"
 
 #define USE_EDGE_TABLE true
@@ -39,9 +39,7 @@ private:
 
     void readTable(std::string fileName, int lines, int **tableArray);
     void readStability44Table();
-    void readEdgeEndtable();
-    void readPattern24Endtable();
-    void readPatternE2XEndtable();
+    void readEndTable(std::string fileName, int lines, int **tableArray);
 
 public:
     Eval(int s);

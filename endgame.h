@@ -1,13 +1,12 @@
 #ifndef __ENDGAME_H__
 #define __ENDGAME_H__
 
-#include <chrono>
 #include "common.h"
 #include "board.h"
 #include "hash.h"
 #include "eval.h"
 
-#define END_SHLLW 9
+#define END_SHLLW 8
 #define USE_BESTMOVE_TABLE true
 #define USE_STABILITY true
 #define USE_REGION_PAR false
@@ -62,14 +61,13 @@ private:
     int region_parity;
     #endif
 
+    int dispatch(Board &b, int s, int depth, int alpha, int beta);
+
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
 
-    void sort(MoveList &moves, MoveList &scores, int left, int right);
-    void swap(MoveList &moves, MoveList &scores, int i, int j);
-    int partition(MoveList &moves, MoveList &scores, int left, int
-        right, int pindex);
+    int nextMoveShallow(int *moves, int *scores, int size, int index);
 
 public:
     int endgameTimeMS;

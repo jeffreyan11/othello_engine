@@ -1,8 +1,6 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-#include <chrono>
-#include <iostream>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -46,11 +44,6 @@ private:
     int pvs_h(Board &b, int side, int depth, int alpha, int beta);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
-
-    void sort(MoveList &moves, MoveList &scores, int left, int right);
-    void swap(MoveList &moves, MoveList &scores, int i, int j);
-    int partition(MoveList &moves, MoveList &scores, int left, int
-        right, int pindex);
 
 public:
     Board game;
