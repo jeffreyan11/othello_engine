@@ -98,16 +98,16 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 24.42, 265377357
+    total_nodes += ffo("ffotest/end40.pos");       // 23.26, 267955526
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 132.50, 1592420272
-    //total_nodes += ffo("ffotest/end46.pos");        // 23.53, 210360547
-    //total_nodes += ffo("ffotest/end47.pos");        // 43.45, 318777223
-    //total_nodes += ffo("ffotest/end48.pos");
+    //total_nodes += ffo("ffotest/end45.pos");        // 119.81, 1543494166
+    //total_nodes += ffo("ffotest/end46.pos");        // 21.31, 195573937
+    //total_nodes += ffo("ffotest/end47.pos");        // 12.57, 43199418
+    //total_nodes += ffo("ffotest/end48.pos");        // 105.84, 728328702
     //total_nodes += ffo("ffotest/end59.pos");
 
     /*Player p(BLACK);
@@ -182,10 +182,6 @@ unsigned long long ffo(std::string file) {
     e.mySide = side;
     int result = e.endgame(b, lm, empties, p.evaluater);
     cerr << "Best move: " << result << endl;
-    #if COUNT_NODES
     return e.nodes;
-    #else
-    return 0;
-    #endif
 }
 
