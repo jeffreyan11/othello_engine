@@ -37,13 +37,16 @@ const int STAB_THRESHOLD[40] = {
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 2, 2, 2, 2, 4, 4, 6,
-    6, 8, 8, 10, 10, 10, 12, 12, 12, 12,
+    6, 8, 8, 10, 10, 10, 10, 12, 12, 12,
     12, 12, 12, 12, 12
 };
 
+const int END_MEDIUM = 12;
+const int END_SHLLW = 8;
+
 Endgame::Endgame() {
     endgame_table = new EndHash(16000);
-    killer_table = new EndHash(16000000);
+    killer_table = new EndHash(8000000);
     #if USE_ALL_TABLE
     all_table = new EndHash(2000000);
     #endif
@@ -185,8 +188,8 @@ int Endgame::dispatch(Board &b, int s, int depth, int alpha, int beta) {
  */
 int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
-    if(depth <= END_SHLLW)
-        return endgameShallow(b, s, depth, alpha, beta, passedLast);
+    if(depth <= END_MEDIUM)
+        return endgameMedium(b, s, depth, alpha, beta, passedLast);
 
     int score;
     int prevAlpha = alpha;
@@ -257,8 +260,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         int p = 11 * SQ_VAL[m];
         if (m == killer)
             p |= 1 << 16;
-        //if(!(NEIGHBORS[m] & ~b.taken))
-        //    p += 128;
 
         priority.add(scores.get(i) - 1024*copy.numLegalMoves(s^1)
                 - 64*copy.potentialMobility(s^1) + 8*p);
@@ -316,9 +317,121 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 }
 
 /**
- * @brief Endgame solver, to be used with about 10 or less empty squares.
- * Here, it is no longer efficient to use a hash table or heavy sort searching.
- * Fastest first is used above depth 7, otherwise, moves are just sorted by
+ * @brief A function for the endgame solver, used when a medium number of
+ * squares remain. Sort searching is no longer used here, and the MoveList is
+ * dropped in favor of a faster array on the stack.
+ */
+int Endgame::endgameMedium(Board &b, int s, int depth, int alpha, int beta,
+        bool passedLast) {
+    if(depth <= END_SHLLW)
+        return endgameShallow(b, s, depth, alpha, beta, passedLast);
+
+    int score;
+    int prevAlpha = alpha;
+
+    // play best move, if recorded
+    EndgameEntry *exactEntry = endgame_table->get(b, s);
+    if(exactEntry != NULL) {
+        return exactEntry->score;
+    }
+
+    #if USE_STABILITY
+    if(alpha >= STAB_THRESHOLD[depth]) {
+        score = 64 - 2*b.getStability(s^1);
+        if(score <= alpha) {
+            return score;
+        }
+    }
+    #endif
+
+    // attempt killer heuristic cutoff, using saved alpha
+    int killer = -1;
+    EndgameEntry *killerEntry = killer_table->get(b, s);
+    if(killerEntry != NULL) {
+        if (killerEntry->score >= beta)
+            return beta;
+        // Fail high is lower bound on score so this is valid
+        if (alpha < killerEntry->score)
+            alpha = killerEntry->score;
+        killer = killerEntry->move;
+    }
+
+    bitbrd legal = b.getLegal(s);
+    if(!legal) {
+        if(passedLast) {
+            return (2 * b.count(s) - 64 + depth);
+        }
+
+        score = -endgameMedium(b, s^1, depth, -beta, -alpha, true);
+
+        if (alpha < score)
+            alpha = score;
+        return alpha;
+    }
+
+    // create array of legal moves
+    int moves[END_MEDIUM];
+    int priority[END_MEDIUM];
+    int n = 0;
+
+    do {
+        int m = bitScanForward(legal);
+        Board copy = b.copy();
+        copy.doMove(m, s);
+
+        priority[n] = SQ_VAL[m];
+        if(m == killer)
+            priority[n] += 1 << 16;
+        priority[n] -= 16 * copy.numLegalMoves(s^1);
+
+        moves[n] = m;
+        legal &= legal-1; n++;
+    } while(legal);
+
+    int tempMove = -1;
+    // search all moves
+    int i = 0;
+    for (int move = nextMoveShallow(moves, priority, n, i); move != MOVE_NULL;
+             move = nextMoveShallow(moves, priority, n, ++i)) {
+        Board copy = b.copy();
+        copy.doMove(move, s);
+        nodes++;
+        #if USE_REGION_PAR
+        region_parity ^= QUADRANT_ID[move];
+        #endif
+
+        if (i != 0) {
+            score = -endgameMedium(copy, s^1, depth-1, -alpha-1, -alpha, false);
+            if (alpha < score && score < beta)
+                score = -endgameMedium(copy, s^1, depth-1, -beta, -alpha, false);
+        }
+        else
+            score = -endgameMedium(copy, s^1, depth-1, -beta, -alpha, false);
+
+        #if USE_REGION_PAR
+        region_parity ^= QUADRANT_ID[move];
+        #endif
+        if (score >= beta) {
+            killer_table->add(b, beta, move, s, depth);
+            return beta;
+        }
+        if (alpha < score) {
+            alpha = score;
+            tempMove = move;
+        }
+    }
+
+    // Best move with exact score if alpha < score < beta
+    if (tempMove != -1 && prevAlpha < alpha && alpha < beta)
+        endgame_table->add(b, alpha, tempMove, s, depth);
+
+    return alpha;
+}
+
+/**
+ * @brief Endgame solver, to be used with about 8 or less empty squares.
+ * Here, it is no longer efficient to use a hash table or heavy sorting.
+ * Fastest first is used above depth 6, otherwise, moves are just sorted by
  * hole parity.
  */
 int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
@@ -338,7 +451,6 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     #endif
 
     bitbrd legal = b.getLegal(s);
-
     if(!legal) {
         if(passedLast) {
             return (2 * b.count(s) - 64 + depth);
@@ -358,13 +470,13 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
 
     bitbrd empty = ~b.getTaken();
     #if USE_REGION_PAR
-    if(region_parity) {
+    if(depth < 5 && region_parity) {
         do {
             moves[n] = bitScanForward(legal);
 
             int p = SQ_VAL[moves[n]];
             if(!(NEIGHBORS[moves[n]] & empty))
-                p += 128;
+                p += 64;
             if(QUADRANT_ID[moves[n]] & region_parity)
                 p += 1 << 15;
             priority[n] = p;
@@ -379,7 +491,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             priority[n] = SQ_VAL[moves[n]];
 
             if(!(NEIGHBORS[moves[n]] & empty))
-                priority[n] += 128;
+                priority[n] += 64;
 
             legal &= legal-1; n++;
         } while(legal);
@@ -387,12 +499,12 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     }
     #endif
 
-    if(depth > 7) {
+    if(depth > 6) {
         for(int i = 0; i < n; i++) {
             Board copy = b.copy();
             copy.doMove(moves[i], s);
 
-            priority[i] += -512*copy.numLegalMoves(s^1);
+            priority[i] += -128*copy.numLegalMoves(s^1);
         }
     }
 

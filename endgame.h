@@ -6,7 +6,6 @@
 #include "endhash.h"
 #include "eval.h"
 
-#define END_SHLLW 8
 #define USE_STABILITY true
 #define USE_REGION_PAR false
 #define USE_ALL_TABLE false
@@ -28,6 +27,8 @@ private:
 
     int dispatch(Board &b, int s, int depth, int alpha, int beta);
     int endgameDeep(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgameMedium(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
     int endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);

@@ -31,7 +31,7 @@ void EndHash::add(Board &b, int score, int move, int ptm, int depth) {
         return;
     }
     // Replacement strategy
-    else if (depth >= node->depth) {
+    else if (depth + 2 >= node->depth) {
         node->setEntry(b.getTaken(), b.getBits(CBLACK), score, move, ptm, depth);
     }
 }

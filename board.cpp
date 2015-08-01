@@ -513,7 +513,7 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m1 = m2;
                 m2 = temp;
             }
-            else if ( !(NEIGHBORS[m3] & ~taken) ) {
+            else /*if ( !(NEIGHBORS[m3] & ~taken) ) */{
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
@@ -536,7 +536,7 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m2 = m4;
                 m4 = temp;
             }
-            else if ( !(NEIGHBORS[m4] & ~taken) ) {
+            else /*if ( !(NEIGHBORS[m4] & ~taken) )*/ {
                 int temp = m1;
                 m1 = m4;
                 m4 = temp;
@@ -601,7 +601,7 @@ int Board::getLegalMoves3(int side, int *moves) {
                 m1 = m2;
                 m2 = temp;
             }
-            else if ( !(NEIGHBORS[m3] & ~taken) ) {
+            else /*if ( !(NEIGHBORS[m3] & ~taken) ) */{
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
