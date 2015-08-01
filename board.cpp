@@ -320,16 +320,16 @@ const int BOARD_REGIONS[64] = {
  * @brief Make a 8x8 othello board and initialize it to the standard setup.
  */
 Board::Board() {
-    taken = 0x0000001818000000;
-    black = 0x0000000810000000;
+    pieces[CWHITE] = 0x0000001008000000;
+    pieces[CBLACK] = 0x0000000810000000;
 }
 
 /**
- * @brief A constructor allowing specification of taken, black.
+ * @brief A constructor allowing specification of white, black.
 */
-Board::Board(bitbrd t, bitbrd b) {
-    taken = t;
-    black = b;
+Board::Board(bitbrd w, bitbrd b) {
+    pieces[CWHITE] = w;
+    pieces[CBLACK] = b;
 }
 
 /**
@@ -339,14 +339,14 @@ Board::~Board() {
 }
 
 Board Board::copy() {
-    return Board(taken, black);
+    return Board(pieces[CWHITE], pieces[CBLACK]);
 }
 
 /**
  * @brief Returns a copy of this board.
  */
 Board *Board::dynamicCopy() {
-    Board *newBoard = new Board(taken, black);
+    Board *newBoard = new Board(pieces[CWHITE], pieces[CBLACK]);
     return newBoard;
 }
 
@@ -364,14 +364,7 @@ void Board::doMove(int index, int side) {
     }
 
     bitbrd changeMask = getDoMove(index, side);
-    changeMask |= MOVEMASK[index];
-
-    // update taken, black
-    taken |= changeMask;
-    if(side == CBLACK)
-        black |= changeMask;
-    else
-        black &= ~changeMask;
+    makeMove(index, changeMask, side);
 }
 
 /**
@@ -379,8 +372,8 @@ void Board::doMove(int index, int side) {
  */
 bitbrd Board::getDoMove(int index, int side) {
     bitbrd changeMask = 0;
-    bitbrd pos = (side == CWHITE) ? ~black : ~(taken^black);
-    bitbrd self = (side == CBLACK) ? black : taken^black;
+    bitbrd pos = ~pieces[side^1];
+    bitbrd self = pieces[side];
 
     switch(BOARD_REGIONS[index]) {
         case 1:
@@ -447,14 +440,15 @@ bitbrd Board::getDoMove(int index, int side) {
 }
 
 void Board::makeMove(int index, bitbrd changeMask, int side) {
-    taken |= MOVEMASK[index];
-    // MOVEMASK is included if side is CBLACK == 1
-    black ^= changeMask | (MOVEMASK[index] * ((bitbrd) side));
+    pieces[CWHITE] ^= changeMask;
+    pieces[CBLACK] ^= changeMask;
+    pieces[side] |= MOVEMASK[index];
 }
 
 void Board::undoMove(int index, bitbrd changeMask, int side) {
-    taken ^= MOVEMASK[index];
-    black ^= changeMask | (MOVEMASK[index] * ((bitbrd) side));
+    pieces[CWHITE] ^= changeMask;
+    pieces[CBLACK] ^= changeMask;
+    pieces[side] ^= MOVEMASK[index];
 }
 
 /**
@@ -498,22 +492,23 @@ int Board::getLegalMoves4(int side, int *moves) {
       }
     }
 
+    bitbrd empty = ~getTaken();
     // parity sorting
     if(n == 2) {
-        if( (NEIGHBORS[m1] & ~taken) && !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & empty) && !(NEIGHBORS[m2] & empty) ) {
             int temp = m1;
             m1 = m2;
             m2 = temp;
         }
     }
     else if(n == 3) {
-        if( (NEIGHBORS[m1] & ~taken) ) {
-            if( !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & empty) ) {
+            if( !(NEIGHBORS[m2] & empty) ) {
                 int temp = m1;
                 m1 = m2;
                 m2 = temp;
             }
-            else /*if ( !(NEIGHBORS[m3] & ~taken) ) */{
+            else /*if ( !(NEIGHBORS[m3] & empty) ) */{
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
@@ -521,14 +516,14 @@ int Board::getLegalMoves4(int side, int *moves) {
         }
     }
     else if(n == 4) {
-        if( (NEIGHBORS[m1] & ~taken) ) {
-            if( !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & empty) ) {
+            if( !(NEIGHBORS[m2] & empty) ) {
                 int temp = m1;
                 m1 = m2;
                 m2 = m4;
                 m4 = temp;
             }
-            else if ( !(NEIGHBORS[m3] & ~taken) ) {
+            else if ( !(NEIGHBORS[m3] & empty) ) {
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
@@ -536,19 +531,19 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m2 = m4;
                 m4 = temp;
             }
-            else /*if ( !(NEIGHBORS[m4] & ~taken) )*/ {
+            else /*if ( !(NEIGHBORS[m4] & empty) )*/ {
                 int temp = m1;
                 m1 = m4;
                 m4 = temp;
             }
         }
-        else if( (NEIGHBORS[m2] & ~taken) ) {
-            if ( !(NEIGHBORS[m3] & ~taken) ) {
+        else if( (NEIGHBORS[m2] & empty) ) {
+            if ( !(NEIGHBORS[m3] & empty) ) {
                 int temp = m2;
                 m2 = m3;
                 m3 = temp;
             }
-            else if ( !(NEIGHBORS[m4] & ~taken) ) {
+            else if ( !(NEIGHBORS[m4] & empty) ) {
                 int temp = m2;
                 m2 = m4;
                 m4 = temp;
@@ -586,22 +581,23 @@ int Board::getLegalMoves3(int side, int *moves) {
       }
     }
 
+    bitbrd empty = ~getTaken();
     // parity sorting
     if(n == 2) {
-        if( (NEIGHBORS[m1] & ~taken) && !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & empty) && !(NEIGHBORS[m2] & empty) ) {
             int temp = m1;
             m1 = m2;
             m2 = temp;
         }
     }
     else if(n == 3) {
-        if( (NEIGHBORS[m1] & ~taken) ) {
-            if( !(NEIGHBORS[m2] & ~taken) ) {
+        if( (NEIGHBORS[m1] & empty) ) {
+            if( !(NEIGHBORS[m2] & empty) ) {
                 int temp = m1;
                 m1 = m2;
                 m2 = temp;
             }
-            else /*if ( !(NEIGHBORS[m3] & ~taken) ) */{
+            else /*if ( !(NEIGHBORS[m3] & empty) ) */{
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
@@ -624,8 +620,8 @@ int Board::getLegalMoves3(int side, int *moves) {
 */
 bitbrd Board::getLegal(int side) {
     bitbrd result = 0;
-    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
-    bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
+    bitbrd self = pieces[side];
+    bitbrd opp = pieces[side^1];
 
 #if KOGGE_STONE
     bitbrd other = opp & 0x00FFFFFFFFFFFF00;
@@ -682,7 +678,7 @@ bitbrd Board::getLegal(int side) {
     tempr |= maskr & (tempr >> 18);
     result |= (templ << 9) | (tempr >> 9);
 
-    return result & ~taken;
+    return result & ~getTaken();
 
 #else
     bitbrd other = opp & 0x00FFFFFFFFFFFF00;
@@ -723,7 +719,7 @@ bitbrd Board::getLegal(int side) {
     tempM |= (((tempM << 9) | (tempM >> 9)) & other);
     result |= ((tempM << 9) | (tempM >> 9));
 
-    return result & ~taken;
+    return result & ~getTaken();
 #endif
 }
 
@@ -732,8 +728,8 @@ int Board::numLegalMoves(int side) {
 }
 
 int Board::potentialMobility(int side) {
-    bitbrd other = (side == CBLACK) ? (taken ^ black) : (black);
-    bitbrd empty = ~taken;
+    bitbrd other = pieces[side^1];
+    bitbrd empty = ~getTaken();
 
     // Potential mobility = empty squares adjacent to opponent's pieces
     bitbrd result = (other >> 8) | (other << 8);
@@ -750,9 +746,10 @@ int Board::potentialMobility(int side) {
 
 int Board::getStability(int side) {
     bitbrd result = 0;
-    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
+    bitbrd self = pieces[side];
 
     bitbrd border = self & 0xFF818181818181FF;
+    bitbrd taken = getTaken();
 
     // north and south
     // calculate full lines
@@ -863,101 +860,9 @@ int Board::getStability(int side) {
 
     return countSetBits(result & self);
 }
-/*
-int Board::getStability(int side) {
-    bitbrd result = 0;
-    bitbrd self = (side == CBLACK) ? (black) : (taken ^ black);
-    //bitbrd opp = (side == CBLACK) ? (taken ^ black) : (black);
-
-    //bitbrd other = opp & 0x00FFFFFFFFFFFF00;
-    bitbrd border = self & 0xFF818181818181FF;
-
-    // north and south
-    // calculate full lines
-    bitbrd full = taken & (((taken << 8) & (taken >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full = (full << 8) & (full >> 8);
-
-    // propagate edge pieces, anywhere there are own pieces or full lines,
-    // to find single direction stability
-    full |= self;
-    bitbrd tempM = border;
-    tempM |= (((border << 8) | (border >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    result = tempM;
-    //result = ((tempM << 8) | (tempM >> 8));
-
-    //other = opp & 0x7E7E7E7E7E7E7E7E;
-    // east and west
-    full = taken & (((taken << 1) & (taken >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full = (full << 1) & (full >> 1);
-    full |= self;
-
-    tempM = border;
-    tempM |= (((border << 1) | (border >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    result &= tempM;
-    //result |= ((tempM << 1) | (tempM >> 1));
-
-    // ne and sw
-    full = taken & (((taken << 7) & (taken >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full = (full << 7) & (full >> 7);
-    full |= self;
-
-    tempM = border;
-    tempM |= (((border << 7) | (border >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    result &= tempM;
-    //result |= ((tempM << 7) | (tempM >> 7));
-
-    // nw and se
-    full = taken & (((taken << 9) & (taken >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full = (full << 9) & (full >> 9);
-    full |= self;
-
-    tempM = border;
-    tempM = (((border << 9) | (border >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    result &= tempM;
-    //result |= ((tempM << 9) | (tempM >> 9));
-
-    return countSetBits(result & self);
-}
-*/
 
 bitbrd Board::getBits(int side) {
-    return (side == CBLACK) ? black : (taken ^ black);
+    return pieces[side];
 }
 
 /*
@@ -965,23 +870,23 @@ bitbrd Board::getBits(int side) {
  * piece and 'b', 'X' indicates a black piece. Mainly for testing purposes.
  */
 void Board::setBoard(char data[]) {
-    taken = 0;
-    black = 0;
+    pieces[CWHITE] = 0;
+    pieces[CBLACK] = 0;
     for (int i = 0; i < 64; i++) {
         if (data[i] == 'b' || data[i] == 'B' || data[i] == 'X') {
-            taken |= MOVEMASK[i];
-            black |= MOVEMASK[i];
+            pieces[CBLACK] |= MOVEMASK[i];
         } if (data[i] == 'w' || data[i] == 'W' || data[i] == 'O') {
-            taken |= MOVEMASK[i];
+            pieces[CWHITE] |= MOVEMASK[i];
         }
     }
 }
 
 char *Board::toString() {
     char *result = new char[64];
+    bitbrd taken = getTaken();
     for (int i = 0; i < 64; i++) {
         if (taken & MOVEMASK[i]) {
-            if (black & MOVEMASK[i])
+            if (pieces[CBLACK] & MOVEMASK[i])
                 result[i] = 'b';
             else
                 result[i] = 'w';
@@ -993,7 +898,7 @@ char *Board::toString() {
 }
 
 bitbrd Board::getTaken() {
-    return taken;
+    return pieces[CWHITE] | pieces[CBLACK];
 }
 
 int Board::countEmpty() {
@@ -1004,8 +909,7 @@ int Board::countEmpty() {
  * Current count of given side's stones.
  */
 int Board::count(int side) {
-    bitbrd i = (side == CBLACK) ? (black) : (black^taken);
-    return countSetBits(i);
+    return countSetBits(pieces[side]);
 }
 
 bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {

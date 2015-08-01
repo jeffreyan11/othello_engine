@@ -61,8 +61,7 @@ const int SQ_VAL[64] = {
 class Board {
 
 private:
-    bitbrd taken;
-    bitbrd black;
+    bitbrd pieces[2];
 
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
@@ -75,7 +74,7 @@ private:
       
 public:
     Board();
-    Board(bitbrd t, bitbrd b);
+    Board(bitbrd w, bitbrd b);
     ~Board();
     Board copy();
     Board *dynamicCopy();
