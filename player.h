@@ -11,12 +11,6 @@ using namespace std;
 
 #define USE_OPENING_BOOK false
 
-const int endgameTime[26] = {0,
-25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
-50, 50, 75, 100, 150, // 11-15
-300, 600, 1500, 3000, 7500, // 16 - 20
-18000, 40000, 100000, 300000, 900000};
-
 class Player {
 
 private:

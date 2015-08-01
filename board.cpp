@@ -338,10 +338,14 @@ Board::Board(bitbrd t, bitbrd b) {
 Board::~Board() {
 }
 
+Board Board::copy() {
+    return Board(taken, black);
+}
+
 /**
  * @brief Returns a copy of this board.
  */
-Board *Board::copy() {
+Board *Board::dynamicCopy() {
     Board *newBoard = new Board(taken, black);
     return newBoard;
 }
@@ -392,64 +396,64 @@ void Board::doMove(int index, int side) {
     bitbrd self = (side == CBLACK) ? black : taken^black;
 
     switch(BOARD_REGIONS[index]) {
-    case 2:
-        changeMask = southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 4:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 6:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        break;
-    case 8:
-        changeMask = northFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        break;
-    case 1:
-        changeMask = southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 3:
-        changeMask = southFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        break;
-    case 7:
-        changeMask = northFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        break;
-    case 9:
-        changeMask = northFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        break;
-    case 5:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
+        case 1:
+            changeMask = southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 2:
+            changeMask = southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 3:
+            changeMask = southFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            break;
+        case 4:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 5:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 6:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            break;
+        case 7:
+            changeMask = northFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            break;
+        case 8:
+            changeMask = northFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            break;
+        case 9:
+            changeMask = northFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            break;
     }
 
     changeMask |= MOVEMASK[index];
@@ -471,64 +475,64 @@ bitbrd Board::getDoMove(int index, int side) {
     bitbrd self = (side == CBLACK) ? black : taken^black;
 
     switch(BOARD_REGIONS[index]) {
-    case 2:
-        changeMask = southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 4:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 6:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        break;
-    case 8:
-        changeMask = northFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        break;
-    case 1:
-        changeMask = southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
-    case 3:
-        changeMask = southFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        break;
-    case 7:
-        changeMask = northFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        break;
-    case 9:
-        changeMask = northFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        break;
-    case 5:
-        changeMask = northFill(index, self, pos);
-        changeMask |= southFill(index, self, pos);
-        changeMask |= eastFill(index, self, pos);
-        changeMask |= westFill(index, self, pos);
-        changeMask |= neFill(index, self, pos);
-        changeMask |= nwFill(index, self, pos);
-        changeMask |= swFill(index, self, pos);
-        changeMask |= seFill(index, self, pos);
-        break;
+        case 1:
+            changeMask = southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 2:
+            changeMask = southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 3:
+            changeMask = southFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            break;
+        case 4:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 5:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            changeMask |= seFill(index, self, pos);
+            break;
+        case 6:
+            changeMask = northFill(index, self, pos);
+            changeMask |= southFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            changeMask |= swFill(index, self, pos);
+            break;
+        case 7:
+            changeMask = northFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            break;
+        case 8:
+            changeMask = northFill(index, self, pos);
+            changeMask |= eastFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= neFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            break;
+        case 9:
+            changeMask = northFill(index, self, pos);
+            changeMask |= westFill(index, self, pos);
+            changeMask |= nwFill(index, self, pos);
+            break;
     }
 
     return changeMask;
@@ -1038,7 +1042,7 @@ int Board::getStability(int side) {
 }
 */
 
-bitbrd Board::toBits(int side) {
+bitbrd Board::getBits(int side) {
     return (side == CBLACK) ? black : (taken ^ black);
 }
 
@@ -1079,7 +1083,7 @@ bitbrd Board::getTaken() {
 }
 
 int Board::countEmpty() {
-    return countSetBits(~taken);
+    return countSetBits(~getTaken());
 }
 
 /*
@@ -1092,12 +1096,16 @@ int Board::count(int side) {
 
 bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = NORTHRAY[index];
+    // Capture line ends with either my piece or empty square
     bitbrd block = result & pos;
-    if(block) {
+    // If the line ends before the edge
+    if (block) {
         int anchor = bitScanReverse(block);
         // use multiplication to reduce branching
-        return ((self & MOVEMASK[anchor]) && true) *
-                (result ^ NORTHRAYI[anchor]);
+        // confirm line ender is an anchor piece
+        return ((self & MOVEMASK[anchor]) && true)
+        // and if so, we can return the captured pieces
+              * (result ^ NORTHRAYI[anchor]);
     }
     return 0;
 }
@@ -1105,8 +1113,9 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
 bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = SOUTHRAY[index];
     bitbrd block = result & pos;
+    // Get single occupancy blocker mask, if the blocker is an anchor piece
     block &= -block & self;
-    if((block >> 8) & ~pos) {
+    if ((block >> 8) & ~pos) {
         int anchor = bitScanForward(block);
         return (result ^ SOUTHRAYI[anchor]);
     }
@@ -1117,7 +1126,7 @@ bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = EASTRAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if((block >> 1) & ~pos) {
+    if ((block >> 1) & ~pos) {
         int anchor = bitScanForward(block);
         return (result ^ EASTRAYI[anchor]);
     }
@@ -1127,7 +1136,7 @@ bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
 bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = WESTRAY[index];
     bitbrd block = result & pos;
-    if(block) {
+    if (block) {
         int anchor = bitScanReverse(block);
         return ((self & MOVEMASK[anchor]) && true) *
                 (result ^ WESTRAYI[anchor]);
@@ -1138,7 +1147,7 @@ bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
 bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = NERAY[index];
     bitbrd block = result & pos;
-    if(block) {
+    if (block) {
         int anchor = bitScanReverse(block);
         return ((self & MOVEMASK[anchor]) && true) *
                 (result ^ NERAYI[anchor]);
@@ -1149,7 +1158,7 @@ bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
 bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = NWRAY[index];
     bitbrd block = result & pos;
-    if(block) {
+    if (block) {
         int anchor = bitScanReverse(block);
         return ((self & MOVEMASK[anchor]) && true) *
                 (result ^ NWRAYI[anchor]);
@@ -1161,7 +1170,7 @@ bitbrd Board::swFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = SWRAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if((block >> 7) & ~pos) {
+    if ((block >> 7) & ~pos) {
         int anchor = bitScanForward(block);
         return (result ^ SWRAYI[anchor]);
     }
@@ -1172,7 +1181,7 @@ bitbrd Board::seFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = SERAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if((block >> 9) & ~pos) {
+    if ((block >> 9) & ~pos) {
         int anchor = bitScanForward(block);
         return (result ^ SERAYI[anchor]);
     }

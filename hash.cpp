@@ -35,47 +35,38 @@ Hash::~Hash() {
  * @brief Adds key (b,ptm) and item move into the hashtable.
  * Assumes that this key has been checked with get and is not in the table.
 */
-void Hash::add(const Board &b, int score, int move, int ptm, int turn,
+void Hash::add(Board &b, int score, int move, int ptm, int turn,
         int depth, uint8_t nodeType) {
     keys++;
-    #if USE_HASH64
-    bitbrd h = hash(b);
-    #else
     uint32_t h = hash(b);
-    #endif
     unsigned int index = (unsigned int)(h % size);
     HashLL *node = table[index];
     if(node == NULL) {
-        table[index] = new HashLL(b.taken, b.black, score, move, ptm, turn,
-            depth, nodeType);
+        table[index] = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move,
+            ptm, turn, depth, nodeType);
         return;
     }
 
-    //TODO std::cerr << "hash collide" << std::endl;
-
-    while(node->next != NULL) {
-        if(node->cargo.taken == b.taken && node->cargo.black == b.black
-                    && node->cargo.ptm == (uint8_t) ptm)
+    do {
+        if(node->cargo.taken == b.getTaken()
+        && node->cargo.black == b.getBits(CBLACK)
+        && node->cargo.ptm == (uint8_t) ptm) {
+            node->cargo.setData(b.getTaken(), b.getBits(CBLACK), score, move, ptm,
+                turn, depth, nodeType);
             return;
+        }
         node = node->next;
-    }
+    } while (node != NULL);
 
-    if(node->cargo.taken == b.taken && node->cargo.black == b.black
-                && node->cargo.ptm == (uint8_t) ptm)
-        return;
-    node->next = new HashLL(b.taken, b.black, score, move, ptm, turn,
-        depth, nodeType);
+    node = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move, ptm,
+        turn, depth, nodeType);
 }
 
 /**
  * @brief Get the move, if any, associated with a board b and player to move.
 */
-BoardData *Hash::get(const Board &b, int ptm) {
-    #if USE_HASH64
-    bitbrd h = hash(b);
-    #else
+BoardData *Hash::get(Board &b, int ptm) {
     uint32_t h = hash(b);
-    #endif
     unsigned int index = (unsigned int)(h % size);
     HashLL *node = table[index];
 
@@ -83,8 +74,9 @@ BoardData *Hash::get(const Board &b, int ptm) {
         return NULL;
 
     do {
-        if(node->cargo.taken == b.taken && node->cargo.black == b.black
-                    && node->cargo.ptm == (uint8_t) ptm)
+        if(node->cargo.taken == b.getTaken()
+        && node->cargo.black == b.getBits(CBLACK)
+        && node->cargo.ptm == (uint8_t) ptm)
             return &(node->cargo);
         node = node->next;
     }
@@ -112,29 +104,18 @@ void Hash::clean(int turn) {
 /**
  * @brief Hashes a board position using the FNV hashing algorithm.
 */
-#if USE_HASH64
-bitbrd Hash::hash(const Board &b) {
-    bitbrd h = 14695981039346656037ULL;
-    h ^= b.taken;
-    h *= 1099511628211;
-    h ^= b.black;
-    h *= 1099511628211;
-    return h;
-}
-#else
-uint32_t Hash::hash(const Board &b) {
+uint32_t Hash::hash(Board &b) {
     uint32_t h = 2166136261UL;
-    h ^= b.taken & 0xFFFFFFFF;
+    h ^= b.getTaken() & 0xFFFFFFFF;
     h *= 16777619;
-    h ^= (b.taken >> 32);
+    h ^= (b.getTaken() >> 32);
     h *= 16777619;
-    h ^= b.black & 0xFFFFFFFF;
+    h ^= b.getBits(CBLACK) & 0xFFFFFFFF;
     h *= 16777619;
-    h ^= (b.black >> 32);
+    h ^= (b.getBits(CBLACK) >> 32);
     h *= 16777619;
     return h;
 }
-#endif
 
 void Hash::test() {
     int zeros = 0;

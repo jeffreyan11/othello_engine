@@ -37,7 +37,7 @@ private:
     EndgameEntry **table;
     int size;
 
-    uint32_t hash(const Board &b, int ptm);
+    uint32_t hash(Board &b, int ptm);
 
 public:
     int keys;
@@ -45,8 +45,8 @@ public:
     EndHash(int isize);
     ~EndHash();
 
-    void add(const Board &b, int score, int move, int ptm, int depth);
-    EndgameEntry *get(const Board &b, int ptm);
+    void add(Board &b, int score, int move, int ptm, int depth);
+    EndgameEntry *get(Board &b, int ptm);
 };
 
 #endif

@@ -60,7 +60,8 @@ Endgame::~Endgame() {
 /**
  * @brief Solves the endgame for perfect play.
  */
-int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
+int Endgame::endgame(Board &b, MoveList &moves, int depth, int timeLimit,
+    Eval *eval) {
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, mySide);
     if(entry != NULL) {
@@ -110,10 +111,10 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if(time_span.count() * 1000 * moves.size > endgameTimeMS * (i+1))
+        if(time_span.count() * 1000 * moves.size > timeLimit * (i+1))
             return MOVE_BROKEN;
 
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(moves.get(i), mySide);
         nodes++;
         #if USE_REGION_PAR
@@ -250,7 +251,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     // Restrict opponent's mobility and potential mobility
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         int m = legalMoves.get(i);
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(m, s);
 
         int p = 11 * SQ_VAL[m];
@@ -266,7 +267,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
 
     int tempMove = -1;
     for(unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(legalMoves.get(i), s);
         nodes++;
         #if USE_REGION_PAR
@@ -388,7 +389,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
 
     if(depth > 7) {
         for(int i = 0; i < n; i++) {
-            Board copy = Board(b.taken, b.black);
+            Board copy = b.copy();
             copy.doMove(moves[i], s);
 
             priority[i] += -512*copy.numLegalMoves(-s);
@@ -399,7 +400,7 @@ int Endgame::endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
     int i = 0;
     for (int move = nextMoveShallow(moves, priority, n, i); move != MOVE_NULL;
              move = nextMoveShallow(moves, priority, n, ++i)) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(move, s);
         nodes++;
 
@@ -452,7 +453,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
     }
 
     for (int i = 0; i < n; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(legalMoves[i], s);
         nodes++;
 
@@ -495,7 +496,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         return alpha;
     }
 
-    Board copy = Board(b.taken, b.black);
+    Board copy = b.copy();
     copy.doMove(legalMove1, s);
     nodes++;
 
@@ -507,7 +508,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         alpha = score;
 
     if(legalMove2 != MOVE_NULL) {
-        copy = Board(b.taken, b.black);
+        copy = b.copy();
         copy.doMove(legalMove2, s);
         nodes++;
 
@@ -519,7 +520,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             alpha = score;
 
         if(legalMove3 != MOVE_NULL) {
-            copy = Board(b.taken, b.black);
+            copy = b.copy();
             copy.doMove(legalMove3, s);
             nodes++;
 
@@ -539,7 +540,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     int score = NEG_INFTY;
     bitbrd empty = ~b.getTaken();
-    bitbrd opp = b.toBits(-s);
+    bitbrd opp = b.getBits(-s);
 
     // At 2 squares left, it is more efficient to simply try moves on both
     // squares. This approach was based on Richard Delorme's Edax-Reversi.
@@ -572,7 +573,7 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     }
 
     if(score == NEG_INFTY) {
-        opp = b.toBits(s);
+        opp = b.getBits(s);
 
         // if no legal moves... try other player
         if( (opp & NEIGHBORS[lm1]) && (changeMask = b.getDoMove(lm1, -s)) ) {
@@ -641,7 +642,7 @@ int Endgame::endgame1(Board &b, int s, int alpha, int legalMove) {
 void Endgame::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth) {
     for (unsigned int i = 0; i < moves.size; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(moves.get(i), side);
         scores.add(-pvs(copy, -side, depth-1, NEG_INFTY, INFTY));
     }
@@ -682,7 +683,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(legalMoves.get(i), s);
 
         if (depth > 2 && i != 0) {

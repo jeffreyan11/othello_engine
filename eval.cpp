@@ -153,17 +153,17 @@ int Eval::heuristic(Board &b, int turn, int s) {
     int score = 0;
 
     #if USE_EDGE_TABLE
-    int patterns = 3*boardTo24PV(b, turn) + 2*boardToEPV(b, turn)
-            + 2*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
-            + 300*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+    int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
+            + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
+            + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
             //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
     if(s == CBLACK)
         score += patterns;
     else
         score -= patterns;
     #else
-    //bitbrd bm = b->toBits(mySide);
-    //bitbrd bo = b->toBits(oppSide);
+    //bitbrd bm = b->getBits(mySide);
+    //bitbrd bo = b->getBits(oppSide);
     //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
     //if(turn > 35)
     //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
@@ -174,8 +174,8 @@ int Eval::heuristic(Board &b, int turn, int s) {
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(-s);
     //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
-    score += 100 * (60 + (64 - turn)) * (myLM - oppLM) / (oppLM + 1);
-    score += 100 * (8 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(-s));
+    score += 100 * (60 + (64 - turn) / 2) * (myLM - oppLM) / (oppLM + 1);
+    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(-s));
 
     return score;
 }
@@ -242,8 +242,8 @@ bitbrd Eval::reflectDiag(bitbrd x) {
 
 int Eval::boardToEPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b.toBits(CBLACK);
-    bitbrd white = b.toBits(CWHITE);
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
     int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
     int r7 = bitsToPI( (int)((black >> 48) & 0xFF), (int)((white >> 48) & 0xFF) );
     int c2 = bitsToPI(
@@ -259,8 +259,8 @@ int Eval::boardToEPV(Board &b, int turn) {
 
 int Eval::boardTo24PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b.toBits(CBLACK);
-    bitbrd white = b.toBits(CWHITE);
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
     int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
     int ulw = (int) ((white&0xF) + ((white>>4)&0xF0));
     int ul = bitsToPI(ulb, ulw);
@@ -314,8 +314,8 @@ int Eval::boardTo24PV(Board &b, int turn) {
 
 int Eval::boardToE2XPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b.toBits(CBLACK);
-    bitbrd white = b.toBits(CWHITE);
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
     int r1b = (int) ( (black & 0xFF) +
         ((black & 0x200) >> 1) + ((black & 0x4000) >> 5) );
     int r1w = (int) ( (white & 0xFF) +
@@ -351,8 +351,8 @@ int Eval::boardToE2XPV(Board &b, int turn) {
 
 int Eval::boardTo33PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b.toBits(CBLACK);
-    bitbrd white = b.toBits(CWHITE);
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
     int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
     int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
     int ul = bitsToPI(ulb, ulw);
@@ -381,7 +381,7 @@ int Eval::boardTo33PV(Board &b, int turn) {
 }
 
 int Eval::boardTo44SV(Board &b, int s) {
-    bitbrd sbits = b.toBits(s);
+    bitbrd sbits = b.getBits(s);
 
     int ul = (int) ((sbits & 0xF) + ((sbits>>4) & 0xF0) +
             ((sbits>>8) & 0xF00) + ((sbits>>12) & 0xF000));

@@ -35,14 +35,13 @@ private:
     int nextMoveShallow(int *moves, int *scores, int size, int index);
 
 public:
-    int endgameTimeMS;
     int mySide;
     unsigned long long nodes;
 
     Endgame();
     ~Endgame();
 
-    int endgame(Board &b, MoveList &moves, int depth, Eval *eval);
+    int endgame(Board &b, MoveList &moves, int depth, int timeLimit, Eval *eval);
     int endgame_h(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
     int endgame_shallow(Board &b, int s, int depth, int alpha, int beta,

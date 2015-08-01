@@ -47,7 +47,7 @@ unsigned long long perft(Board &b, int depth, int side, bool passed) {
     }
 
     for(unsigned int i = 0; i < lm.size; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(lm.get(i), side);
         nodes += perft(copy, depth-1, -side, false);
     }
@@ -178,9 +178,8 @@ unsigned long long ffo(std::string file) {
 
     Player p(BLACK);
     Endgame e;
-    e.endgameTimeMS = 100000000;
     e.mySide = side;
-    int result = e.endgame(b, lm, empties, p.evaluater);
+    int result = e.endgame(b, lm, empties, 100000000, p.evaluater);
     cerr << "Best move: " << result << endl;
     return e.nodes;
 }

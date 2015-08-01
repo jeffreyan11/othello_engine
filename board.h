@@ -61,6 +61,9 @@ const int SQ_VAL[64] = {
 class Board {
 
 private:
+    bitbrd taken;
+    bitbrd black;
+
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
     bitbrd eastFill(int index, bitbrd self, bitbrd pos);
@@ -71,13 +74,11 @@ private:
     bitbrd seFill(int index, bitbrd self, bitbrd pos);
       
 public:
-    bitbrd taken;
-    bitbrd black;
-
     Board();
     Board(bitbrd t, bitbrd b);
     ~Board();
-    Board *copy();
+    Board copy();
+    Board *dynamicCopy();
 
     bool isDone();
     bool hasMoves(int side);
@@ -97,7 +98,7 @@ public:
 
     void setBoard(char data[]);
     char *toString();
-    bitbrd toBits(int side);
+    bitbrd getBits(int side);
     int count(int side);
     bitbrd getTaken();
     int countEmpty();

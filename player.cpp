@@ -2,6 +2,12 @@
 #include <iostream>
 #include "player.h"
 
+const int endgameTime[26] = {0,
+25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
+50, 50, 75, 100, 150, // 11-15
+250, 400, 800, 1600, 3600, // 16 - 20
+10000, 25000, 60000, 180000, 600000};
+
 /**
  * @brief Constructor for the player.
  * 
@@ -30,14 +36,6 @@ Player::Player(Side side) {
 
     // initialize the evaluation functions
     evaluater = new Eval();
-
-    #if defined(__x86_64__)
-        cerr << "x86-64 processor detected." << endl;
-    #elif defined(__i386)
-        cerr << "x86 processor detected." << endl;
-    #else
-        cerr << "non-x86 processor detected." << endl;
-    #endif
 }
 
 /**
@@ -115,12 +113,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(empties <= endgameDepth &&
             (msLeft >= endgameTime[empties] || msLeft == -1)) {
         // timing
-        endgameSolver.endgameTimeMS = (msLeft + endgameTime[empties]) / 2;
-        if(msLeft == -1)
-            endgameSolver.endgameTimeMS = 100000000;
+        int endgameLimit = (msLeft == -1) ? 100000000
+                                          : (msLeft + endgameTime[empties]) / 2;
         cerr << "Endgame solver: depth " << empties << endl;
 
-        myMove = endgameSolver.endgame(game, legalMoves, empties, evaluater);
+        myMove = endgameSolver.endgame(game, legalMoves, empties, endgameLimit,
+            evaluater);
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
@@ -145,18 +143,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     nodes = 0;
 
     // sort search
-    cerr << "Performing sort search: depth " << sortDepth << endl;
+    cerr << "Sort search: depth " << sortDepth << endl;
     attemptingDepth = sortDepth;
     MoveList scores;
     sortSearch(game, legalMoves, scores, mySide, sortDepth);
     sort(legalMoves, scores, 0, legalMoves.size-1);
-    scores.clear();
 
     // iterative deepening
     attemptingDepth = minDepth;
     int chosenScore = 0;
     do {
-        cerr << "Searching depth " << attemptingDepth << ":";
+        cerr << "Depth " << attemptingDepth << ": ";
 
         int newBest = pvs(game, legalMoves, chosenScore, mySide, attemptingDepth);
         if(newBest == MOVE_BROKEN) {
@@ -165,21 +162,19 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             time_span = duration_cast<duration<double>>(end_time-start_time);
             break;
         }
-        int temp = legalMoves.get(newBest);
-        legalMoves.set(newBest, legalMoves.get(0));
-        legalMoves.set(0, temp);
+        legalMoves.swap(0, newBest);
         attemptingDepth += 2;
 
-        cerr << " (" << legalMoves.get(0) << ", " << ((double)(chosenScore)) / 100.0 << ")" << endl;
+        cerr << "bestmove (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << ") score " << ((double)(chosenScore)) / 1000.0 << endl;
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
-    } while(((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 3 / 2)
+    } while(((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 2)
                 || msLeft == -1)
             && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
-    cerr << "Playing " << myMove << ". Score: " << ((double)(chosenScore)) / 100.0 << endl;
+    cerr << "Playing (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << "). Score: " << ((double)(chosenScore)) / 1000.0 << endl;
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     transpositionTable.clean(turn+2);
     cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
@@ -212,7 +207,7 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
         if (time_span.count() * moves.size * 1000 > 2 * timeLimit * (i+1))
             return MOVE_BROKEN;
 
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(moves.get(i), s);
         nodes++;
         if (i != 0) {
@@ -257,22 +252,24 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
                 return alpha;
         }
         else {
-            hashed = entry->move;
             if (entry->depth >= depth) {
                 if (entry->nodeType == CUT_NODE && entry->score >= beta)
                     return beta;
                 else if (entry->nodeType == PV_NODE)
                     return entry->score;
             }
-            Board copy = Board(b.taken, b.black);
-            copy.doMove(hashed, s);
-            nodes++;
-            score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+            if (entry->depth >= 5) {
+                hashed = entry->move;
+                Board copy = b.copy();
+                copy.doMove(hashed, s);
+                nodes++;
+                score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
 
-            if (alpha < score)
-                alpha = score;
-            if (alpha >= beta)
-                return beta;
+                if (alpha < score)
+                    alpha = score;
+                if (alpha >= beta)
+                    return beta;
+            }
         }
     }
 
@@ -288,7 +285,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
     // internal iterative deepening
     if (depth >= 2) {
         MoveList scores;
-        if(depth >= 9)
+        if(depth >= 10)
             sortSearch(b, legalMoves, scores, s, 4);
         else if(depth >= 5)
             sortSearch(b, legalMoves, scores, s, 2);
@@ -304,7 +301,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
     for (unsigned int i = 0; i < legalMoves.size; i++) {
         if (legalMoves.get(i) == hashed)
             continue;
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(legalMoves.get(i), s);
         nodes++;
 
@@ -321,10 +318,10 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
             toHash = legalMoves.get(i);
         }
         if (alpha >= beta) {
-            if(depth >= 5 && depth <= maxDepth-2)
+            if(depth >= 5)
                 transpositionTable.add(b, beta, legalMoves.get(i), s,
                     turn+attemptingDepth-depth, depth, CUT_NODE);
-            break;
+            return beta;
         }
     }
 
@@ -342,10 +339,9 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
     int depth) {
 
     for (unsigned int i = 0; i < moves.size; i++) {
-        Board copy = Board(b.taken, b.black);
+        Board copy = b.copy();
         copy.doMove(moves.get(i), side);
         nodes++;
-
         scores.add(-pvs_h(copy, -side, depth-1, NEG_INFTY, INFTY));
     }
 }
