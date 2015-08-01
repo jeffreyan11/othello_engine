@@ -29,7 +29,7 @@ Player::Player(Side side) {
     }
 
     // initialize the evaluation functions
-    evaluater = new Eval(mySide);
+    evaluater = new Eval();
 
     #if defined(__x86_64__)
         cerr << "x86-64 processor detected." << endl;
@@ -115,7 +115,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(empties <= endgameDepth &&
             (msLeft >= endgameTime[empties] || msLeft == -1)) {
         // timing
-        endgameSolver.endgameTimeMS = (msLeft + endgameTime[empties]) / 4;
+        endgameSolver.endgameTimeMS = (msLeft + endgameTime[empties]) / 2;
         if(msLeft == -1)
             endgameSolver.endgameTimeMS = 100000000;
         cerr << "Endgame solver: depth " << empties << endl;
@@ -209,7 +209,7 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
         duration<double> time_span = duration_cast<duration<double>>(
             end_time-start_time);
 
-        if (time_span.count() * moves.size * 1000 > timeLimit * (i+1))
+        if (time_span.count() * moves.size * 1000 > 2 * timeLimit * (i+1))
             return MOVE_BROKEN;
 
         Board copy = Board(b.taken, b.black);
@@ -241,8 +241,7 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
 */
 int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0) {
-        return (s == mySide) ? evaluater->heuristic(b, turn+attemptingDepth)
-                             : -evaluater->heuristic(b, turn+attemptingDepth);
+        return evaluater->heuristic(b, turn+attemptingDepth, s);
     }
 
     int score;

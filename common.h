@@ -13,6 +13,9 @@ const int MOVE_BROKEN = -1;
 const int OPENING_NOT_FOUND = -3;
 const int CBLACK = 1;
 const int CWHITE = -1;
+const uint8_t PV_NODE = 0;
+const uint8_t CUT_NODE = 1;
+const uint8_t ALL_NODE = 2;
 
 int countSetBits(bitbrd i);
 int bitScanForward(bitbrd bb);

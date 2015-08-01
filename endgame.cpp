@@ -34,21 +34,26 @@ const int STAB_THRESHOLD[40] = {
     64, 64, 64, 64, 64
 };
 
-const int ENDGAME_SORT_DEPTHS[30] = {
+const int ENDGAME_SORT_DEPTHS[35] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 2, 2, 2, 2, 4, 4,
-    6, 6, 8, 8, 10, 10, 12, 12, 14, 14
+    6, 6, 8, 8, 10, 10, 10, 12, 12, 12,
+    12, 12, 12, 12, 12
 };
 
 Endgame::Endgame() {
-    #if USE_BESTMOVE_TABLE
-    endgame_table = new Hash(4000);
+    endgame_table = new EndHash(16000);
+    killer_table = new EndHash(16000000);
+    #if USE_ALL_TABLE
+    all_table = new EndHash(2000000);
     #endif
 }
 
 Endgame::~Endgame() {
-    #if USE_BESTMOVE_TABLE
     delete endgame_table;
+    delete killer_table;
+    #if USE_ALL_TABLE
+    delete all_table;
     #endif
 }
 
@@ -56,14 +61,12 @@ Endgame::~Endgame() {
  * @brief Solves the endgame for perfect play.
  */
 int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
-    #if USE_BESTMOVE_TABLE
     // if best move for this position has already been found and stored
-    BoardData *entry = endgame_table->get(b, mySide);
+    EndgameEntry *entry = endgame_table->get(b, mySide);
     if(entry != NULL) {
-        cerr << "Endgame hashtable hit. Score: " << entry->score << endl;
+        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
         return entry->move;
     }
-    #endif
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -137,11 +140,11 @@ int Endgame::endgame(Board &b, MoveList &moves, int depth, Eval *eval) {
             break;
     }
 
-    #if USE_BESTMOVE_TABLE
     cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+    cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
+    #if USE_ALL_TABLE
+    cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
     #endif
-    cerr << "Killer table has: " << killer_table.keys << " keys." << endl;
-    //endgame_table.test();
     cerr << "Score: " << alpha << endl;
 
     auto end_time = high_resolution_clock::now();
@@ -188,12 +191,10 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     int prevAlpha = alpha;
 
     // play best move, if recorded
-    #if USE_BESTMOVE_TABLE
-    BoardData *exactEntry = endgame_table->get(b, s);
+    EndgameEntry *exactEntry = endgame_table->get(b, s);
     if(exactEntry != NULL) {
         return exactEntry->score;
     }
-    #endif
 
     // Stability cutoff: if the current position is hopeless compared to a
     // known lower bound, then we need not waste time searching it.
@@ -206,24 +207,26 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     }
     #endif
 
+    #if USE_ALL_TABLE
+    EndgameEntry *allEntry = all_table->get(b, s);
+    if(allEntry != NULL) {
+        if (allEntry->score <= alpha)
+            return alpha;
+        if (beta > allEntry->score)
+            beta = allEntry->score;
+    }
+    #endif
+
     // attempt killer heuristic cutoff, using saved alpha
     int killer = -1;
-    BoardData *killerEntry = killer_table.get(b, s);
+    EndgameEntry *killerEntry = killer_table->get(b, s);
     if(killerEntry != NULL) {
-        //if (killerEntry->nodeType == CUT_NODE) {
-            if (killerEntry->score >= beta)
-                return beta;
-            // Fail high is lower bound on score so this is valid
-            if (alpha < killerEntry->score)
-                alpha = killerEntry->score;
-            killer = killerEntry->move;
-        /*}
-        else {
-            if (killerEntry->score <= alpha)
-                return alpha;
-            if (beta > killerEntry->score)
-                beta = killerEntry->score;
-        }*/
+        if (killerEntry->score >= beta)
+            return beta;
+        // Fail high is lower bound on score so this is valid
+        if (alpha < killerEntry->score)
+            alpha = killerEntry->score;
+        killer = killerEntry->move;
     }
 
     MoveList legalMoves = b.getLegalMoves(s);
@@ -261,9 +264,7 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
-    #if USE_BESTMOVE_TABLE
     int tempMove = -1;
-    #endif
     for(unsigned int i = 0; i < legalMoves.size; i++) {
         Board copy = Board(b.taken, b.black);
         copy.doMove(legalMoves.get(i), s);
@@ -273,11 +274,13 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         #endif
 
         // Enhanced TT cutoff: searches one move ahead for a TT cutoff
-        /*BoardData *etcEntry = killer_table.get(copy, -s);
-        if(etcEntry != NULL && etcEntry->nodeType == ALL_NODE) {
+        /*#if USE_ALL_TABLE
+        EndgameEntry *etcEntry = all_table->get(copy, -s);
+        if(etcEntry != NULL) {
             if (etcEntry->score <= -beta)
                 return beta;
-        }*/
+        }
+        #endif*/
 
         if (i != 0) {
             score = -endgame_h(copy, -s, depth-1, -alpha-1, -alpha, false);
@@ -292,22 +295,21 @@ int Endgame::endgame_h(Board &b, int s, int depth, int alpha, int beta,
         #endif
         if (alpha < score) {
             alpha = score;
-            #if USE_BESTMOVE_TABLE
             tempMove = legalMoves.get(i);
-            #endif
         }
         if (alpha >= beta) {
-            killer_table.add(b, beta, legalMoves.get(i), s, 0, depth, CUT_NODE);
+            killer_table->add(b, beta, legalMoves.get(i), s, depth);
             return alpha;
         }
     }
-    #if USE_BESTMOVE_TABLE
+
     // Best move with exact score if alpha < score < beta
     if (tempMove != -1 && prevAlpha < alpha && alpha < beta)
-        endgame_table->add(b, alpha, tempMove, s, 0, depth, PV_NODE);
+        endgame_table->add(b, alpha, tempMove, s, depth);
+    #if USE_ALL_TABLE
+    if (alpha <= prevAlpha)
+        all_table->add(b, alpha, MOVE_NULL, s, depth);
     #endif
-    //if (alpha <= prevAlpha)
-    //    killer_table.add(b, alpha, MOVE_NULL, s, 0, depth, ALL_NODE);
 
     return alpha;
 }

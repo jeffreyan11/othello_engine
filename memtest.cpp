@@ -98,17 +98,17 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 23.26, 267955526
+    total_nodes += ffo("ffotest/end40.pos");       // 23.22, 258515289
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 119.81, 1543494166
-    //total_nodes += ffo("ffotest/end46.pos");        // 21.31, 195573937
-    //total_nodes += ffo("ffotest/end47.pos");        // 12.57, 43199418
-    //total_nodes += ffo("ffotest/end48.pos");        // 105.84, 728328702
-    //total_nodes += ffo("ffotest/end59.pos");
+    //total_nodes += ffo("ffotest/end45.pos");        // 99.87, 1422115577
+    //total_nodes += ffo("ffotest/end46.pos");        // 17.92, 153717062
+    //total_nodes += ffo("ffotest/end47.pos");        // 12.43, 40816447
+    //total_nodes += ffo("ffotest/end48.pos");        // 85.85, 655022185
+    //total_nodes += ffo("ffotest/end59.pos");        // 29.3, 46040
 
     /*Player p(BLACK);
     Player p2(WHITE);

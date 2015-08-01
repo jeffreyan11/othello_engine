@@ -61,8 +61,6 @@ const int SQ_VAL[64] = {
 class Board {
 
 private:
-    bool checkMove(int index, int side);
-
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
     bitbrd eastFill(int index, bitbrd self, bitbrd pos);

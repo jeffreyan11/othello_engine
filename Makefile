@@ -1,6 +1,6 @@
 CC          = g++
 CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3
-OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o
+OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = ShallowKwok
 
 all: $(PLAYERNAME) testgame memtest

@@ -3,21 +3,22 @@
 
 #include "common.h"
 #include "board.h"
-#include "hash.h"
+#include "endhash.h"
 #include "eval.h"
 
 #define END_SHLLW 8
-#define USE_BESTMOVE_TABLE true
 #define USE_STABILITY true
 #define USE_REGION_PAR false
+#define USE_ALL_TABLE false
 
 class Endgame {
 
 private:
-    #if USE_BESTMOVE_TABLE
-    Hash *endgame_table;
+    EndHash *endgame_table;
+    EndHash *killer_table;
+    #if USE_ALL_TABLE
+    EndHash *all_table;
     #endif
-    Hash killer_table;
 
     Eval *evaluater;
 

@@ -1,7 +1,7 @@
 An othello engine, forked from a CS2 project at Caltech.
-The engine itself uses a principal variation search, bitboards, an opening book, an endgame solver, hash tables, and pattern evaluations.
+The engine uses a principal variation search, bitboards, an opening book, an endgame solver, hash tables, and pattern evaluations.
 
 TODO:
-Better evaluation function
+Code cleanup
 Faster doMove
-Efficiency in midgame search
+Change board to black/white instead of taken/white?

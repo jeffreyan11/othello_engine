@@ -6,10 +6,6 @@
 
 #define USE_HASH64 false
 
-const uint8_t PV_NODE = 0;
-const uint8_t CUT_NODE = 1;
-const uint8_t ALL_NODE = 2;
-
 struct BoardData {
     bitbrd taken;
     bitbrd black;
@@ -62,7 +58,6 @@ private:
     HashLL **table;
     int size;
 
-    //void process(int index);
     #if USE_HASH64
     bitbrd hash(const Board &b);
     #else
@@ -70,7 +65,6 @@ private:
     #endif
 
 public:
-    //TODO for testing
     int keys;
     void test();
 

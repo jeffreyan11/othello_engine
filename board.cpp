@@ -375,14 +375,6 @@ bool Board::checkMove(Move *m, Side side) {
 }
 
 /**
- * @brief Overloaded function for internal use with getLegalMoves().
-*/
-bool Board::checkMove(int index, int side) {
-    bitbrd legal = getLegal(side);
-    return legal & MOVEMASK[index];
-}
-
-/**
  * @brief Modifies the board to reflect the specified move.
  * 
  * This algorithm modifies the bitboards by lookup with precalculated tables in
@@ -394,9 +386,6 @@ void Board::doMove(int index, int side) {
     if (index == MOVE_NULL) {
         return;
     }
-
-    // Ignore if move is invalid.
-    //if (!checkMove(index, side)) return;
 
     bitbrd changeMask = 0;
     bitbrd pos = (side == CWHITE) ? ~black : ~(taken^black);

@@ -17,9 +17,6 @@ const bitbrd X_CORNERS = 0x0042000000004200;
 
 class Eval {
 private:
-    int mySide;
-    int oppSide;
-
     int **edgeTable;
     int **p24Table;
     int **pE2XTable;
@@ -42,10 +39,10 @@ private:
     void readEndTable(std::string fileName, int lines, int **tableArray);
 
 public:
-    Eval(int s);
+    Eval();
     ~Eval();
 
-    int heuristic(Board &b, int turn);
+    int heuristic(Board &b, int turn, int s);
     int end_heuristic(Board &b);
     int stability(Board &b, int s);
 };
