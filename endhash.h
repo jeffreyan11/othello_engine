@@ -37,7 +37,7 @@ private:
     EndgameEntry **table;
     int size;
 
-    uint32_t hash(Board &b, int ptm);
+    uint32_t hash(Board &b);
 
 public:
     int keys;

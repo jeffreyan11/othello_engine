@@ -23,7 +23,6 @@ Player::Player(Side side) {
     endgameDepth = 25;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
-    endgameSolver.mySide = mySide;
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
     timeLimit = -2;
@@ -117,8 +116,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
                                           : (msLeft + endgameTime[empties]) / 2;
         cerr << "Endgame solver: depth " << empties << endl;
 
-        myMove = endgameSolver.endgame(game, legalMoves, empties, endgameLimit,
-            evaluater);
+        myMove = endgameSolver.solveEndgame(game, legalMoves, mySide, empties,
+            endgameLimit, evaluater);
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
@@ -211,12 +210,12 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
         copy.doMove(moves.get(i), s);
         nodes++;
         if (i != 0) {
-            score = -pvs_h(copy, -s, depth-1, -alpha-1, -alpha);
+            score = -pvs_h(copy, s^1, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
-                score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
         }
         else
-            score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+            score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
 
         if (score > alpha) {
             alpha = score;
@@ -263,7 +262,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
                 Board copy = b.copy();
                 copy.doMove(hashed, s);
                 nodes++;
-                score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
 
                 if (alpha < score)
                     alpha = score;
@@ -275,7 +274,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
 
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
-        score = -pvs_h(b, -s, depth-1, -beta, -alpha);
+        score = -pvs_h(b, s^1, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
@@ -306,12 +305,12 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
         nodes++;
 
         if (depth > 2 && i != 0) {
-            score = -pvs_h(copy, -s, depth-1, -alpha-1, -alpha);
+            score = -pvs_h(copy, s^1, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
-                score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
         }
         else
-            score = -pvs_h(copy, -s, depth-1, -beta, -alpha);
+            score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
 
         if (alpha < score) {
             alpha = score;
@@ -342,6 +341,6 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         Board copy = b.copy();
         copy.doMove(moves.get(i), side);
         nodes++;
-        scores.add(-pvs_h(copy, -side, depth-1, NEG_INFTY, INFTY));
+        scores.add(-pvs_h(copy, side^1, depth-1, NEG_INFTY, INFTY));
     }
 }

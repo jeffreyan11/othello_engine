@@ -80,9 +80,6 @@ public:
     Board copy();
     Board *dynamicCopy();
 
-    bool isDone();
-    bool hasMoves(int side);
-    bool checkMove(Move *m, Side side);
     void doMove(int index, int side);
     bitbrd getDoMove(int index, int side);
     void makeMove(int index, bitbrd changeMask, int side);
@@ -90,7 +87,7 @@ public:
     bitbrd getLegal(int side);
     MoveList getLegalMoves(int side);
     int getLegalMoves4(int side, int *moves);
-    int getLegalMoves3(int side, int &m1, int &m2);
+    int getLegalMoves3(int side, int *moves);
 
     int numLegalMoves(int side);
     int potentialMobility(int side);

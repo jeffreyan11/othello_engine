@@ -172,10 +172,10 @@ int Eval::heuristic(Board &b, int turn, int s) {
     #endif
 
     int myLM = b.numLegalMoves(s);
-    int oppLM = b.numLegalMoves(-s);
+    int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
     score += 100 * (60 + (64 - turn) / 2) * (myLM - oppLM) / (oppLM + 1);
-    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(-s));
+    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
 }

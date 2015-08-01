@@ -42,14 +42,14 @@ unsigned long long perft(Board &b, int depth, int side, bool passed) {
         if(passed)
             return 1;
 
-        nodes += perft(b, depth-1, -side, true);
+        nodes += perft(b, depth-1, side^1, true);
         return nodes;
     }
 
     for(unsigned int i = 0; i < lm.size; i++) {
         Board copy = b.copy();
         copy.doMove(lm.get(i), side);
-        nodes += perft(copy, depth-1, -side, false);
+        nodes += perft(copy, depth-1, side^1, false);
     }
 
     return nodes;
@@ -65,7 +65,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
         if(passed)
             return 1;
 
-        nodes += perftu(b, depth-1, -side, true);
+        nodes += perftu(b, depth-1, side^1, true);
         return nodes;
     }
 
@@ -75,7 +75,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
         b.makeMove(movestack[top], cstack[top], side);
         top++;
 
-        nodes += perftu(b, depth-1, -side, false);
+        nodes += perftu(b, depth-1, side^1, false);
 
         top--;
         b.undoMove(movestack[top], cstack[top], side);
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 23.22, 258515289
+    total_nodes += ffo("ffotest/end40.pos");       // 23.22, 258600793
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
@@ -118,24 +118,6 @@ int main(int argc, char **argv) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
     }*/
-
-/*
-    Board b;
-    string bstr = "OOOO----O-OOX---OOOOXO--OOOOXO--OOOOXOX-OOOOXO--OOXXXOOXOOOOOOOO";
-    char board[64];
-    for(int i = 0; i < 63; i++) {
-        board[i] = bstr[i];
-    }
-    b.setBoard(board);
-    MoveList lm = b.getLegalMoves(CWHITE);
-    int empties = b.countEmpty();
-    Player p(BLACK);
-    Endgame e;
-    e.endgameTimeMS = 100000000;
-    e.mySide = CWHITE;
-    int result = e.endgame(b, lm, empties, p.evaluater);
-    cerr << "Best move: " << result << endl;
-*/
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
@@ -178,8 +160,7 @@ unsigned long long ffo(std::string file) {
 
     Player p(BLACK);
     Endgame e;
-    e.mySide = side;
-    int result = e.endgame(b, lm, empties, 100000000, p.evaluater);
+    int result = e.solveEndgame(b, lm, side, empties, 100000000, p.evaluater);
     cerr << "Best move: " << result << endl;
     return e.nodes;
 }

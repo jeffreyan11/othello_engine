@@ -349,34 +349,6 @@ Board *Board::dynamicCopy() {
     Board *newBoard = new Board(taken, black);
     return newBoard;
 }
- 
-/**
- * @brief Returns true if the game is finished; false otherwise. The game is
- * finished if neither side has a legal move.
- */
-bool Board::isDone() {
-    return !(hasMoves(CBLACK) || hasMoves(CWHITE));
-}
-
-/**
- * @brief Returns true if there are legal moves for the given side.
- */
-bool Board::hasMoves(int side) {
-    return numLegalMoves(side);
-}
-
-/**
- * @brief Returns true if a move is legal for the given side; false otherwise.
- * For debugging only, not used anywhere in this program.
- */
-bool Board::checkMove(Move *m, Side side) {
-    // Passing is only legal if you have no moves.
-    if (m == NULL) return !hasMoves((side == BLACK) ? CBLACK : CWHITE);
-
-    bitbrd legal = getLegal(side);
-
-    return legal & MOVEMASK[m->getX() + 8 * m->getY()];
-}
 
 /**
  * @brief Modifies the board to reflect the specified move.
@@ -391,71 +363,7 @@ void Board::doMove(int index, int side) {
         return;
     }
 
-    bitbrd changeMask = 0;
-    bitbrd pos = (side == CWHITE) ? ~black : ~(taken^black);
-    bitbrd self = (side == CBLACK) ? black : taken^black;
-
-    switch(BOARD_REGIONS[index]) {
-        case 1:
-            changeMask = southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 2:
-            changeMask = southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 3:
-            changeMask = southFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            break;
-        case 4:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 5:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 6:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            break;
-        case 7:
-            changeMask = northFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            break;
-        case 8:
-            changeMask = northFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            break;
-        case 9:
-            changeMask = northFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            break;
-    }
-
+    bitbrd changeMask = getDoMove(index, side);
     changeMask |= MOVEMASK[index];
 
     // update taken, black
@@ -540,12 +448,13 @@ bitbrd Board::getDoMove(int index, int side) {
 
 void Board::makeMove(int index, bitbrd changeMask, int side) {
     taken |= MOVEMASK[index];
-    black ^= changeMask | ((side == CBLACK) * MOVEMASK[index]);
+    // MOVEMASK is included if side is CBLACK == 1
+    black ^= changeMask | (MOVEMASK[index] * ((bitbrd) side));
 }
 
 void Board::undoMove(int index, bitbrd changeMask, int side) {
     taken ^= MOVEMASK[index];
-    black ^= changeMask | ((side == CBLACK) * MOVEMASK[index]);
+    black ^= changeMask | (MOVEMASK[index] * ((bitbrd) side));
 }
 
 /**
@@ -657,8 +566,10 @@ int Board::getLegalMoves4(int side, int *moves) {
 /**
  * @brief Returns a list of all legal moves, given 3 or less empty squares.
 */
-int Board::getLegalMoves3(int side, int &m1, int &m2) {
-    int result = MOVE_NULL;
+int Board::getLegalMoves3(int side, int *moves) {
+    int m1 = MOVE_NULL;
+    int m2 = MOVE_NULL;
+    int m3 = MOVE_NULL;
     bitbrd temp = getLegal(side);
     int n = 0;
 
@@ -669,7 +580,7 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
           m2 = bitScanForward(temp);
           temp &= temp-1; n++;
         if(temp) {
-            result = bitScanForward(temp);
+            m3 = bitScanForward(temp);
             n++;
         }
       }
@@ -690,15 +601,18 @@ int Board::getLegalMoves3(int side, int &m1, int &m2) {
                 m1 = m2;
                 m2 = temp;
             }
-            else if ( !(NEIGHBORS[result] & ~taken) ) {
+            else if ( !(NEIGHBORS[m3] & ~taken) ) {
                 int temp = m1;
-                m1 = result;
-                result = temp;
+                m1 = m3;
+                m3 = temp;
             }
         }
     }
 
-    return result;
+    moves[0] = m1;
+    moves[1] = m2;
+    moves[2] = m3;
+    return n;
 }
 
 /**

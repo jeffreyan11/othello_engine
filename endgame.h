@@ -27,6 +27,14 @@ private:
     #endif
 
     int dispatch(Board &b, int s, int depth, int alpha, int beta);
+    int endgameDeep(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgameShallow(Board &b, int s, int depth, int alpha, int beta,
+            bool passedLast);
+    int endgame4(Board &b, int s, int alpha, int beta, bool passedLast);
+    int endgame3(Board &b, int s, int alpha, int beta, bool passedLast);
+    int endgame2(Board &b, int s, int alpha, int beta);
+    int endgame1(Board &b, int s, int alpha, int legalMove);
 
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
@@ -35,21 +43,13 @@ private:
     int nextMoveShallow(int *moves, int *scores, int size, int index);
 
 public:
-    int mySide;
     unsigned long long nodes;
 
     Endgame();
     ~Endgame();
 
-    int endgame(Board &b, MoveList &moves, int depth, int timeLimit, Eval *eval);
-    int endgame_h(Board &b, int s, int depth, int alpha, int beta,
-            bool passedLast);
-    int endgame_shallow(Board &b, int s, int depth, int alpha, int beta,
-            bool passedLast);
-    int endgame4(Board &b, int s, int alpha, int beta, bool passedLast);
-    int endgame3(Board &b, int s, int alpha, int beta, bool passedLast);
-    int endgame2(Board &b, int s, int alpha, int beta);
-    int endgame1(Board &b, int s, int alpha, int legalMove);
+    int solveEndgame(Board &b, MoveList &moves, int s, int depth, int timeLimit,
+        Eval *eval);
 };
 
 #endif
