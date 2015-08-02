@@ -170,7 +170,7 @@ void checkGames() {
         for(int j = 0; j < 46; j++) {
             if(!tracker.checkMove(game->moves[j], side)) {
                 // If one side must pass it is not indicated in the database?
-                side = -side;
+                side = side^1;
                 if(!tracker.checkMove(game->moves[j], side)) {
                     if (tracker.getLegalMoves(CBLACK).size != 0
                      || tracker.getLegalMoves(CWHITE).size != 0) {
@@ -183,7 +183,7 @@ void checkGames() {
                 }
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
     }
     cout << errors << " errors." << endl;
@@ -203,10 +203,10 @@ void replaceEnd() {
         for(int j = 0; j < 46; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
-                side = -side;
+                side = side^1;
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
 
         Endgame e;
@@ -258,24 +258,24 @@ void searchFeatures() {
         for(int j = 0; j < 10; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
-                side = -side;
+                side = side^1;
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
 
         // starting recording statistics
         for(int j = 10; j < 46; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
-                side = -side;
+                side = side^1;
             }
             tracker.doMove(game->moves[j], side);
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);
             boardToE2XPV(&tracker, score, j);
             boardTo33PV(&tracker, score, j);
-            side = -side;
+            side = side^1;
         }
     }
 }

@@ -119,6 +119,9 @@ int main(int argc, char **argv) {
         m = p.doMove(m, -1);
     }*/
 
+    //117802417229721632
+    //18328941656479632604
+
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
         end_time-start_time);

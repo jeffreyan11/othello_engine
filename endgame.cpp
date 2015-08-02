@@ -76,12 +76,15 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
-        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        //cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
         return entry->move;
     }
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(
+        end_time-start_time);
 
     nodes = 0;
     hashHits = 0;
@@ -102,8 +105,8 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     #endif
 
     int score;
-    //int alpha = -64;
-    //int beta = 64;
+    int alpha = -64;
+    int beta = 64;
     int bestIndex = 0;
 
     // Initial sorting of moves
@@ -121,7 +124,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     else if (depth > 11)
         sortSearch(b, moves, scores, s, 2);
     sort(moves, scores, 0, moves.size-1);
-
+/*
     cerr << "Starting WLD search" << endl;
     int alpha = -1;
     int beta = 1;
@@ -172,10 +175,10 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         }
         if (bestIndex != 0)
             moves.swap(bestIndex, 0);
-
+*/
         isWLD = false;
-        delete endgame_table;
-        endgame_table = new EndHash(16000);
+        //delete endgame_table;
+        //endgame_table = new EndHash(16000);
 
         for (unsigned int i = 0; i < moves.size; i++) {
             end_time = high_resolution_clock::now();
@@ -200,7 +203,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             else
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
+//            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
             #if USE_REGION_PAR
             region_parity ^= QUADRANT_ID[moves.get(i)];
             #endif
@@ -211,9 +214,9 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             if (alpha >= beta)
                 break;
         }
-    }
+    //}
 
-    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+/*    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
@@ -228,7 +231,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     cerr << "Hash hits: " << hashHits << endl;
     cerr << "Hash cuts: " << hashCuts << endl;
     cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
-
+*/
     if (exactScore != NULL)
         *exactScore = alpha;
     return moves.get(bestIndex);

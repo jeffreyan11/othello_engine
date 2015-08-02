@@ -166,7 +166,7 @@ void checkGames() {
         for(int j = 0; j < 42; j++) {
             if(!tracker.checkMove(game->moves[j], side)) {
                 // If one side must pass it is not indicated in the database?
-                side = -side;
+                side = side^1;
                 if(!tracker.checkMove(game->moves[j], side)) {
                     errors++;
                     games[i] = NULL;
@@ -176,7 +176,7 @@ void checkGames() {
                 }
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
     }
     cout << errors << " errors." << endl;
@@ -196,10 +196,10 @@ void replaceEnd() {
         for(int j = 0; j < 42; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
-                side = -side;
+                side = side^1;
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
 
         Endgame e;
@@ -212,18 +212,30 @@ void replaceEnd() {
         int score = 0;
         for(int j = 42; j < 55; j++) {
             MoveList lm = tracker.getLegalMoves(side);
+            if (lm.size == 0) {
+                cerr << "passing" << endl;
+                games[i] = NULL;
+                break;
+                /*side = side^1;
+                lm = tracker.getLegalMoves(side);
+                if (lm.size == 0)
+                    break;*/
+            }
             int best = e.solveEndgame(tracker, lm, side, tracker.countEmpty(),
                 10000000, &evaluater, &score);
 
             game->moves[j] = best;
             tracker.doMove(best, side);
 
-            side = -side;
+            if (j == 42) {
+                // We want everything from black's POV
+                if (side == CWHITE)
+                    score = -score;
+                game->final = (score + 64) / 2;
+            }
+
+            side = side^1;
         }
-        // We want everything from black's POV
-        if (side == CWHITE)
-            score = -score;
-        game->final = (score + 64) / 2;
     }
 }
 
@@ -256,10 +268,10 @@ void searchFeatures() {
         for(int j = 0; j < 42; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
-                side = -side;
+                side = side^1;
             }
             tracker.doMove(game->moves[j], side);
-            side = -side;
+            side = side^1;
         }
 
         // starting recording statistics
@@ -268,7 +280,7 @@ void searchFeatures() {
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);
             boardToE2XPV(&tracker, score, j);
-            side = -side;
+            side = side^1;
         }
     }
 }
