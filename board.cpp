@@ -350,6 +350,13 @@ Board *Board::dynamicCopy() {
     return newBoard;
 }
 
+bool Board::checkMove(int index, int side) {
+    bitbrd legal = getLegal(side);
+    if((index < 0 || index > 63) && !legal)
+        return true;
+    return legal & MOVEMASK[index];
+}
+
 /**
  * @brief Modifies the board to reflect the specified move.
  * 

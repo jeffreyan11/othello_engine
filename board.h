@@ -79,6 +79,7 @@ public:
     Board copy();
     Board *dynamicCopy();
 
+    bool checkMove(int index, int side);
     void doMove(int index, int side);
     bitbrd getDoMove(int index, int side);
     void makeMove(int index, bitbrd changeMask, int side);

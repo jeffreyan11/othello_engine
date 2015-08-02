@@ -58,7 +58,7 @@ public:
     ~Endgame();
 
     int solveEndgame(Board &b, MoveList &moves, int s, int depth, int timeLimit,
-        Eval *eval);
+        Eval *eval, int *exactScore = NULL);
 };
 
 #endif

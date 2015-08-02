@@ -5,9 +5,9 @@
 #include "endgame.h"
 using namespace std;
 
-#define DIVS 1
-#define IOFFSET 1
-#define TURNSPERDIV 64
+#define DIVS 4
+#define IOFFSET 10
+#define TURNSPERDIV 9
 #define USE_WIN_PROB false
 
 struct thor_game {
@@ -30,9 +30,11 @@ unsigned int totalSize;
 pv* pvTable2x4[DIVS][6561];
 pv* edgeTable[DIVS][6561];
 pv* e2xTable[DIVS][59049];
+pv* p33Table[DIVS][19683];
 int used[DIVS][6561];
 int eused[DIVS][6561];
 int exused[DIVS][59049];
+int p33used[DIVS][19683];
 
 const int PIECES_TO_INDEX[1024] = {
 0, 1, 3, 4, 9, 10, 12, 13, 27, 28, 30, 31, 36, 37, 39, 40, 81, 82, 84, 85, 90, 
@@ -139,6 +141,8 @@ const int PIECES_TO_INDEX[1024] = {
 29511, 29512, 29514, 29515, 29520, 29521, 29523, 29524
 };
 
+Eval evaluater;
+
 void readThorGame(string file);
 void readGame(string file, unsigned int n);
 void writeFile();
@@ -150,6 +154,7 @@ bitbrd reflectDiag(bitbrd x);
 void boardToEPV(Board *b, int score, int turn);
 void boardTo24PV(Board *b, int score, int turn);
 void boardToE2XPV(Board *b, int score, int turn);
+void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 void checkGames() {
@@ -157,20 +162,24 @@ void checkGames() {
     int errors = 0;
     for(unsigned int i = 0; i < totalSize; i++) {
         thor_game *game = games[i];
+        if(game == NULL) continue;
 
         Board tracker;
         int side = CBLACK;
 
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < 46; j++) {
             if(!tracker.checkMove(game->moves[j], side)) {
                 // If one side must pass it is not indicated in the database?
                 side = -side;
                 if(!tracker.checkMove(game->moves[j], side)) {
-                    errors++;
-                    games[i] = NULL;
-                    /*cerr << "error at " << i << " " << j << endl;
-                    cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;*/
-                    break;
+                    if (tracker.getLegalMoves(CBLACK).size != 0
+                     || tracker.getLegalMoves(CWHITE).size != 0) {
+                        errors++;
+                        games[i] = NULL;
+                        cerr << "error at " << i << " " << j << endl;
+                        cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;
+                        break;
+                    }
                 }
             }
             tracker.doMove(game->moves[j], side);
@@ -191,7 +200,7 @@ void replaceEnd() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < 46; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = -side;
@@ -201,23 +210,19 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 22) {
+        if(tracker.countEmpty() > 20) {
             games[i] = NULL;
             continue;
         }
 
-        // start filling in moves
-        for(int j = 42; j < 55; j++) {
-            e.mySide = side;
-            MoveList lm = tracker.getLegalMoves(side);
-            int best = e.endgame(
-                    tracker, lm, tracker.countEmpty());
-
-            game->moves[j] = best;
-            tracker.doMove(best, side);
-
-            side = -side;
-        }
+        MoveList lm = tracker.getLegalMoves(side);
+        int score = 0;
+        e.solveEndgame(tracker, lm, side, tracker.countEmpty(), 10000000,
+            &evaluater, &score);
+        // We want everything from black's POV
+        if (side == CWHITE)
+            score = -score;
+        game->final = (score + 64) / 2;
     }
 }
 
@@ -231,6 +236,9 @@ void searchFeatures() {
             }
             for(int j = 0; j < 59049; j++) {
                 exused[n][j] = 0;
+            }
+            for(int j = 0; j < 19683; j++) {
+                p33used[n][j] = 0;
             }
         }
         thor_game *game = games[i];
@@ -247,7 +255,7 @@ void searchFeatures() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < 10; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = -side;
@@ -257,11 +265,16 @@ void searchFeatures() {
         }
 
         // starting recording statistics
-        for(int j = 42; j < 55; j++) {
+        for(int j = 10; j < 46; j++) {
+            // If one side must pass it is not indicated in the database?
+            if(!tracker.checkMove(game->moves[j], side)) {
+                side = -side;
+            }
             tracker.doMove(game->moves[j], side);
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);
             boardToE2XPV(&tracker, score, j);
+            boardTo33PV(&tracker, score, j);
             side = -side;
         }
     }
@@ -269,14 +282,19 @@ void searchFeatures() {
 
 int main(int argc, char **argv) {
     totalSize = 0;
-    games = NULL;
+    games = new thor_game*[159000];
     for(int n = 0; n < DIVS; n++) {
         for(int i = 0; i < 6561; i++) {
             pvTable2x4[n][i] = new pv();
+        }
+        for(int i = 0; i < 6561; i++) {
             edgeTable[n][i] = new pv();
         }
         for(int i = 0; i < 59049; i++) {
             e2xTable[n][i] = new pv();
+        }
+        for(int i = 0; i < 19683; i++) {
+            p33Table[n][i] = new pv();
         }
     }
 
@@ -314,9 +332,7 @@ int main(int argc, char **argv) {
     //readGame("gamedb042714.txt", 8200);
 
     checkGames();
-
     replaceEnd();
-
     searchFeatures();
 
     writeFile();
@@ -328,28 +344,25 @@ int main(int argc, char **argv) {
 void readThorGame(string file) {
     unsigned int prevSize = totalSize;
 
+    // Thor games are stored as a binary stream
     std::ifstream is (file, std::ifstream::binary);
     if(is) {
+        // 16 byte header for each file, then each game record is 68 bytes
         char *header = new char[16];
         char *buffer = new char[68];
 
         is.read(header, 16);
 
-        totalSize = (unsigned char)(header[5]);
-        totalSize <<= 8;
-        totalSize += (unsigned char)(header[4]);
+        //cout << "Century: " << (unsigned)(header[0]) << endl;
+        //cout << "Year: " << (unsigned)(header[1]) << endl;
+
+        // We are only interested in the number of games, which is stored as a
+        // longint (4 bytes), starting at header[7] or header[1] as an int array
+        totalSize = ((unsigned int *)(header))[1];
 
         cout << "Reading " << totalSize << " games." << endl;
 
         totalSize += prevSize;
-
-        thor_game** e = games;
-        games = new thor_game*[totalSize];
-        for(unsigned int i = 0; i < prevSize; i++) {
-            games[i] = e[i];
-        }
-        if(prevSize > 0)
-            delete[] e;
 
         for(unsigned int i = prevSize; i < totalSize; i++) {
             is.read(buffer, 68);
@@ -378,14 +391,6 @@ void readGame(string file, unsigned int n) {
     unsigned int prevSize = totalSize;
     totalSize += n;
 
-    thor_game** e = games;
-    games = new thor_game*[totalSize];
-    for(unsigned int i = 0; i < prevSize; i++) {
-        games[i] = e[i];
-    }
-    if(prevSize > 0)
-        delete[] e;
-
     for(unsigned int i = prevSize; i < totalSize; i++) {
         std::string::size_type sz = 0;
         thor_game *temp = new thor_game();
@@ -405,7 +410,7 @@ void readGame(string file, unsigned int n) {
 
 void writeFile() {
     ofstream out;
-    out.open("p24end.txt");
+    out.open("patterns/new/p24table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             pv *a = pvTable2x4[n][i];
@@ -418,16 +423,15 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int) (to * 100.0) << " ";
+                out << to << " " << a->sum << " " << a->instances << endl;
             }
-            else out << 0 << " ";
-
-            if(i%9 == 8) out << endl;
+            else
+                out << 0 << " " << a->sum << " " << a->instances << endl;
         }
     }
     out.close();
 
-    out.open("edgeend.txt");
+    out.open("patterns/new/edgetable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             pv *a = edgeTable[n][i];
@@ -440,7 +444,7 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int) (to * 100.0) << " ";
+                out << to << " ";
             }
             else out << 0 << " ";
 
@@ -449,7 +453,7 @@ void writeFile() {
     }
     out.close();
 
-    out.open("pE2Xend.txt");
+    out.open("patterns/new/pE2Xtable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 59049; i++) {
             pv *a = e2xTable[n][i];
@@ -462,7 +466,29 @@ void writeFile() {
                 if(a->instances < 2) to /= 6;
                 else if(a->instances < 3) to /= 3;
                 else if(a->instances < 6) to /= 2;
-                out << (int) (to * 100.0) << " ";
+                out << to << " ";
+            }
+            else out << 0 << " ";
+
+            if(i % 9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("patterns/new/p33table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 19683; i++) {
+            pv *a = p33Table[n][i];
+            if(a->instances != 0) {
+            #if USE_WIN_PROB
+                int to = 100*(a->sum)/(a->instances);
+            #else
+                double to = ((double)(a->sum))/((double)(a->instances));
+            #endif
+                if(a->instances < 2) to /= 6;
+                else if(a->instances < 3) to /= 3;
+                else if(a->instances < 6) to /= 2;
+                out << to << " ";
             }
             else out << 0 << " ";
 
@@ -474,8 +500,8 @@ void writeFile() {
 
 void boardToEPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b->toBits(BLACK);
-    bitbrd white = b->toBits(WHITE);
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
     int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
     int r7 = bitsToPI( (int)((black >> 48) & 0xFF), (int)((white >> 48) & 0xFF) );
     int c2 = bitsToPI(
@@ -510,8 +536,8 @@ void boardToEPV(Board *b, int score, int turn) {
 
 void boardTo24PV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b->toBits(BLACK);
-    bitbrd white = b->toBits(WHITE);
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
     int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
     int ulw = (int) ((white&0xF) + ((white>>4)&0xF0));
     int ul = bitsToPI(ulb, ulw);
@@ -604,8 +630,8 @@ void boardTo24PV(Board *b, int score, int turn) {
 
 void boardToE2XPV(Board *b, int score, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    bitbrd black = b->toBits(BLACK);
-    bitbrd white = b->toBits(WHITE);
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
     int r1b = (int) ( (black & 0xFF) +
         ((black & 0x200) >> 1) + ((black & 0x4000) >> 5) );
     int r1w = (int) ( (white & 0xFF) +
@@ -656,6 +682,55 @@ void boardToE2XPV(Board *b, int score, int turn) {
     exused[index][r8] = 1;
     exused[index][c1] = 1;
     exused[index][c8] = 1;
+}
+
+void boardTo33PV(Board *b, int score, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
+    int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
+    int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
+    int ul = bitsToPI(ulb, ulw);
+
+    bitbrd rvb = reflectVertical(black);
+    bitbrd rvw = reflectVertical(white);
+    int llb = (int) ((rvb&7) + ((rvb>>5)&0x38) + ((rvb>>10)&0x1C0));
+    int llw = (int) ((rvw&7) + ((rvw>>5)&0x38) + ((rvw>>10)&0x1C0));
+    int ll = bitsToPI(llb, llw);
+
+    bitbrd rhb = reflectHorizontal(black);
+    bitbrd rhw = reflectHorizontal(white);
+    int urb = (int) ((rhb&7) + ((rhb>>5)&0x38) + ((rhb>>10)&0x1C0));
+    int urw = (int) ((rhw&7) + ((rhw>>5)&0x38) + ((rhw>>10)&0x1C0));
+    int ur = bitsToPI(urb, urw);
+
+    bitbrd rbb = reflectVertical(rhb);
+    bitbrd rbw = reflectVertical(rhw);
+    int lrb = (int) ((rbb&7) + ((rbb>>5)&0x38) + ((rbb>>10)&0x1C0));
+    int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
+    int lr = bitsToPI(lrb, lrw);
+
+    if(!p33used[index][ul]) {
+        p33Table[index][ul]->sum += score;
+        p33Table[index][ul]->instances++;
+    }
+    if(!p33used[index][ur]) {
+        p33Table[index][ur]->sum += score;
+        p33Table[index][ur]->instances++;
+    }
+    if(!p33used[index][ll]) {
+        p33Table[index][ll]->sum += score;
+        p33Table[index][ll]->instances++;
+    }
+    if(!p33used[index][lr]) {
+        p33Table[index][lr]->sum += score;
+        p33Table[index][lr]->instances++;
+    }
+
+    p33used[index][ul] = 1;
+    p33used[index][ur] = 1;
+    p33used[index][ll] = 1;
+    p33used[index][lr] = 1;
 }
 
 int bitsToPI(int b, int w) {
@@ -719,6 +794,9 @@ void freemem() {
         }
         for(int i = 0; i < 59049; i++) {
             delete e2xTable[n][i];
+        }
+        for(int i = 0; i < 19683; i++) {
+            delete p33Table[n][i];
         }
     }
 }

@@ -72,7 +72,7 @@ Endgame::~Endgame() {
  * @brief Solves the endgame for perfect play.
  */
 int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
-    int timeLimit, Eval *eval) {
+    int timeLimit, Eval *eval, int *exactScore) {
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
@@ -229,6 +229,8 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     cerr << "Hash cuts: " << hashCuts << endl;
     cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
 
+    if (exactScore != NULL)
+        *exactScore = alpha;
     return moves.get(bestIndex);
 }
 
