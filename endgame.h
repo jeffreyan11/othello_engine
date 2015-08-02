@@ -21,6 +21,14 @@ private:
 
     Eval *evaluater;
 
+    int hashHits;
+    int hashCuts;
+    int firstFailHigh;
+    int failHighs;
+    int searchSpaces;
+
+    bool isWLD;
+
     #if USE_REGION_PAR
     int region_parity;
     #endif

@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     //ffo("ffoeasy/end41.pos");
     //ffo("ffoeasy/end42.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 18.44, 212021703
+    total_nodes += ffo("ffotest/end40.pos");       // 18.35, 211713808
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
