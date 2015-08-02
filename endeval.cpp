@@ -140,6 +140,7 @@ const int PIECES_TO_INDEX[1024] = {
 };
 
 Eval evaluater;
+const int startIndex = 44;
 
 void readThorGame(string file);
 void readGame(string file, unsigned int n);
@@ -163,7 +164,7 @@ void checkGames() {
         Board tracker;
         int side = CBLACK;
 
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < 55; j++) {
             if(!tracker.checkMove(game->moves[j], side)) {
                 // If one side must pass it is not indicated in the database?
                 side = side^1;
@@ -193,7 +194,7 @@ void replaceEnd() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < startIndex; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;
@@ -203,31 +204,35 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 22) {
+        if(tracker.countEmpty() > 20) {
             games[i] = NULL;
             continue;
         }
 
         // start filling in moves
         int score = 0;
-        for(int j = 42; j < 55; j++) {
+        for(int j = startIndex; j < 55; j++) {
+            if(!tracker.checkMove(game->moves[j], side)) {
+                side = side^1;
+            }
             MoveList lm = tracker.getLegalMoves(side);
-            if (lm.size == 0) {
+            /*if (lm.size == 0) {
                 cerr << "passing" << endl;
-                games[i] = NULL;
-                break;
-                /*side = side^1;
+                //games[i] = NULL;
+                //break;
+                side = side^1;
+                continue;
                 lm = tracker.getLegalMoves(side);
                 if (lm.size == 0)
-                    break;*/
-            }
+                    break;
+            }*/
             int best = e.solveEndgame(tracker, lm, side, tracker.countEmpty(),
                 10000000, &evaluater, &score);
 
             game->moves[j] = best;
             tracker.doMove(best, side);
 
-            if (j == 42) {
+            if (j == startIndex) {
                 // We want everything from black's POV
                 if (side == CWHITE)
                     score = -score;
@@ -265,7 +270,7 @@ void searchFeatures() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < startIndex; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;
@@ -275,7 +280,7 @@ void searchFeatures() {
         }
 
         // starting recording statistics
-        for(int j = 42; j < 55; j++) {
+        for(int j = startIndex; j < 55; j++) {
             tracker.doMove(game->moves[j], side);
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);

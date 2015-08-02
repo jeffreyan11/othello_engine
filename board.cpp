@@ -366,7 +366,7 @@ bool Board::checkMove(int index, int side) {
  */
 void Board::doMove(int index, int side) {
     // A NULL move means pass.
-    if (index == MOVE_NULL) {
+    if (index < 0 || index > 63 || index == MOVE_NULL) {
         return;
     }
 
