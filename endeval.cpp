@@ -504,7 +504,7 @@ void writeFile() {
     }
     out.close();
 
-    out.open("patterns/new/p33table.txt");
+    out.open("patterns/new/p33end.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 19683; i++) {
             pv *a = p33Table[n][i];

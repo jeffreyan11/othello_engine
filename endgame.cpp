@@ -76,7 +76,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
-        //cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
         return entry->move;
     }
 
@@ -112,11 +112,11 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     // Initial sorting of moves
     MoveList scores;
     if (depth > 23)
-        rootSearch(b, moves, scores, s, 12);
+        sortSearch(b, moves, scores, s, 12);
     else if (depth > 21)
-        rootSearch(b, moves, scores, s, 10);
+        sortSearch(b, moves, scores, s, 10);
     else if (depth > 19)
-        rootSearch(b, moves, scores, s, 8);
+        sortSearch(b, moves, scores, s, 8);
     else if (depth > 17)
         sortSearch(b, moves, scores, s, 6);
     else if (depth > 15)
@@ -207,7 +207,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             else
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-            //cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
+            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
             #if USE_REGION_PAR
             region_parity ^= QUADRANT_ID[moves.get(i)];
             #endif
@@ -220,7 +220,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         }
     //}
 
-/*    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
@@ -233,7 +233,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         (int)((double)nodes / time_span.count()) << endl;
     cerr << "Hash hits: " << hashHits << endl;
     cerr << "Hash cuts: " << hashCuts << endl;
-    cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;*/
+    cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
 
     if (exactScore != NULL)
         *exactScore = alpha;
@@ -891,7 +891,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
     return alpha;
 }
-
+/*
 // Performs an alpha-beta search on each legal move to get a score.
 void Endgame::rootSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth) {
@@ -954,7 +954,7 @@ int Endgame::rootPVS(Board &b, int s, int depth, int alpha, int beta) {
     }
     return alpha;
 }
-
+*/
 //--------------------------------Utilities-------------------------------------
 
 // Retrieves the next move with the highest score, starting from index using a

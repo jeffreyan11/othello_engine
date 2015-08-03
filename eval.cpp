@@ -134,6 +134,7 @@ Eval::Eval() {
     readEndTable("patterns/edgeend.txt", 729, edgeTable);
     readEndTable("patterns/p24end.txt", 729, p24Table);
     readEndTable("patterns/pE2Xend.txt", 6561, pE2XTable);
+    readEndTable("patterns/p33end.txt", 2187, p33Table);
 }
 
 Eval::~Eval() {
@@ -223,12 +224,12 @@ int Eval::end_heuristic(Board &b) {
 
     score += boardTo24PV(b, t);
     score += boardToEPV(b, t);
-    score += 2*boardToE2XPV(b, t);
-    //score += boardTo33PV(b, t);
+    score += 4*boardToE2XPV(b, t);
+    score += boardTo33PV(b, t);
     //score += 1024 * (b.getStability(CBLACK) - b.getStability(CWHITE));
     score += 256*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
-    return score;
+    return score/2;
 }
 
 int Eval::stability(Board &b, int s) {
