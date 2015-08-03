@@ -8,6 +8,10 @@
 #include "common.h"
 
 const int PERFT6 = 8200;
+const int sortDepth = 2;
+const int minDepth = 4;
+const int maxDepth = 6;
+const int endgameDepth = 16;
 
 vector<string*> positions;
 int wins;
@@ -19,17 +23,19 @@ void freemem();
 
 void play(string position) {
     std::string::size_type sz = 0;
-    uint64_t taken = std::stoull(position, &sz, 0);
+    uint64_t takenBits = std::stoull(position, &sz, 0);
     position = position.substr(sz);
-    uint64_t black = std::stoull(position, &sz, 0);
-    Board b(taken^black, black);
+    uint64_t blackBits = std::stoull(position, &sz, 0);
+    Board b(takenBits^blackBits, blackBits);
 
     // Run game on one side
     Player black(BLACK);
     Player white(WHITE);
-    black.setDepths(4, 6, 10, 18);
-    white.setDepths(4, 6, 10, 18);
+    black.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
+    white.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
     black.otherHeuristic = true;
+    black.game = b;
+    white.game = b;
 
     Move *m = NULL;
     bool passed = false;
@@ -41,58 +47,65 @@ void play(string position) {
                 break;
             passed = true;
         }
+        else passed = false;
         m = white.doMove(m, -1);
         if (m == NULL) {
             if (passed)
                 break;
             passed = true;
         }
+        else passed = false;
     }
 
-    int bf = b.count(CBLACK);
-    int wf = b.count(CWHITE);
+    int bf = black.game.count(CBLACK);
+    int wf = black.game.count(CWHITE);
+    cout << bf << " " << wf << endl;
     if(bf > wf)
         wins++;
     else if (wf > bf)
         losses++;
     else
         draws++;
-    cout << wins << "-" << losses << "-" << draws << endl;
 
     // Run game on the other side
-    Player black(BLACK);
-    Player white(WHITE);
-    black.setDepths(4, 6, 10, 18);
-    white.setDepths(4, 6, 10, 18);
-    white.otherHeuristic = true;
+    Player black2(BLACK);
+    Player white2(WHITE);
+    black2.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
+    white2.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
+    white2.otherHeuristic = true;
+    black2.game = b;
+    white2.game = b;
 
-    Move *m = NULL;
-    bool passed = false;
+    m = NULL;
+    passed = false;
     while(true) {
-        m = black.doMove(m, -1);
+        m = black2.doMove(m, -1);
         // two passes in a row is end of game
         if (m == NULL) {
             if (passed)
                 break;
             passed = true;
         }
-        m = white.doMove(m, -1);
+        else passed = false;
+        m = white2.doMove(m, -1);
         if (m == NULL) {
             if (passed)
                 break;
             passed = true;
         }
+        else passed = false;
     }
 
-    int bf = b.count(CBLACK);
-    int wf = b.count(CWHITE);
+    bf = black2.game.count(CBLACK);
+    wf = black2.game.count(CWHITE);
+    cout << bf << " " << wf << endl;
     if(bf > wf)
         losses++;
     else if (wf > bf)
         wins++;
     else
         draws++;
-    cout << wins << "-" << losses << "-" << draws << endl;
+    cout << "" << wins << "-" << losses << "-" << draws << endl;
 }
 
 int main(int argc, char **argv) {
@@ -105,7 +118,7 @@ int main(int argc, char **argv) {
     cout << "Score from other heuristic POV" << endl;
 
     for(int i = 0; i < PERFT6; i++) {
-        string *pos = positions[0];
+        string *pos = positions[i];
         play(*pos);
     }
 

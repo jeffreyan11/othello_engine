@@ -106,6 +106,11 @@ const int PIECES_TO_INDEX[1024] = {
 29511, 29512, 29514, 29515, 29520, 29521, 29523, 29524
 };
 
+const bitbrd CORNERS = 0x8100000000000081;
+const bitbrd EDGES = 0x3C0081818181003C;
+const bitbrd ADJ_CORNERS = 0x4281000000008142;
+const bitbrd X_CORNERS = 0x0042000000004200;
+
 Eval::Eval() {
     edgeTable = new int *[TSPLITS+1];
     p24Table = new int *[TSPLITS+1];
@@ -152,7 +157,6 @@ int Eval::heuristic(Board &b, int turn, int s) {
 
     int score = 0;
 
-    #if USE_EDGE_TABLE
     int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
             + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
@@ -161,7 +165,6 @@ int Eval::heuristic(Board &b, int turn, int s) {
         score += patterns;
     else
         score -= patterns;
-    #else
     //bitbrd bm = b->getBits(mySide);
     //bitbrd bo = b->getBits(oppSide);
     //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
@@ -169,7 +172,6 @@ int Eval::heuristic(Board &b, int turn, int s) {
     //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
     //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
-    #endif
 
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(s^1);
@@ -186,7 +188,6 @@ int Eval::heuristic2(Board &b, int turn, int s) {
 
     int score = 0;
 
-    #if USE_EDGE_TABLE
     int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
             + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
@@ -195,7 +196,6 @@ int Eval::heuristic2(Board &b, int turn, int s) {
         score += patterns;
     else
         score -= patterns;
-    #else
     //bitbrd bm = b->getBits(mySide);
     //bitbrd bo = b->getBits(oppSide);
     //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
@@ -203,7 +203,6 @@ int Eval::heuristic2(Board &b, int turn, int s) {
     //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
     //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
-    #endif
 
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(s^1);

@@ -85,7 +85,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         game.doMove(MOVE_NULL, oppSide);
     }
     int empties = game.countEmpty();
-    cerr << endl;
+    //cerr << endl;
 
     // check opening book
     #if USE_OPENING_BOOK
@@ -103,7 +103,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     if (legalMoves.size <= 0) {
         game.doMove(MOVE_NULL, mySide);
-        cerr << "No legal moves. Passing." << endl;
+        //cerr << "No legal moves. Passing." << endl;
         return NULL;
     }
 
@@ -115,7 +115,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // timing
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : (msLeft + endgameTime[empties]) / 2;
-        cerr << "Endgame solver: depth " << empties << endl;
+        //cerr << "Endgame solver: depth " << empties << endl;
 
         myMove = endgameSolver.solveEndgame(game, legalMoves, mySide, empties,
             endgameLimit, evaluater);
@@ -126,14 +126,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
             end_time = high_resolution_clock::now();
             time_span = duration_cast<duration<double>>(end_time-start_time);
-            cerr << "Endgame took: " << time_span.count() << endl;
-            cerr << "Playing: " << myMove << endl;
-            cerr << endl;
+            //cerr << "Endgame took: " << time_span.count() << endl;
+            //cerr << "Playing: " << myMove << endl;
+            //cerr << endl;
 
             return indexToMove[myMove];
         }
 
-        cerr << "Broken out of endgame solver." << endl;
+        //cerr << "Broken out of endgame solver." << endl;
         endgameDepth -= 2;
         start_time = high_resolution_clock::now();
     }
@@ -143,7 +143,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     nodes = 0;
 
     // sort search
-    cerr << "Sort search: depth " << sortDepth << endl;
+    //cerr << "Sort search: depth " << sortDepth << endl;
     attemptingDepth = sortDepth;
     MoveList scores;
     sortSearch(game, legalMoves, scores, mySide, sortDepth);
@@ -153,11 +153,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     attemptingDepth = minDepth;
     int chosenScore = 0;
     do {
-        cerr << "Depth " << attemptingDepth << ": ";
+        //cerr << "Depth " << attemptingDepth << ": ";
 
         int newBest = pvs(game, legalMoves, chosenScore, mySide, attemptingDepth);
         if(newBest == MOVE_BROKEN) {
-            cerr << " Broken out of search!" << endl;
+            //cerr << " Broken out of search!" << endl;
             end_time = high_resolution_clock::now();
             time_span = duration_cast<duration<double>>(end_time-start_time);
             break;
@@ -165,7 +165,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         legalMoves.swap(0, newBest);
         attemptingDepth += 2;
 
-        cerr << "bestmove (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << ") score " << ((double)(chosenScore)) / 1000.0 << endl;
+        //cerr << "bestmove (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << ") score " << ((double)(chosenScore)) / 1000.0 << endl;
 
         end_time = high_resolution_clock::now();
         time_span = duration_cast<duration<double>>(end_time-start_time);
@@ -174,11 +174,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
-    cerr << "Playing (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << "). Score: " << ((double)(chosenScore)) / 1000.0 << endl;
-    cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
+    //cerr << "Playing (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << "). Score: " << ((double)(chosenScore)) / 1000.0 << endl;
+    //cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     transpositionTable.clean(turn+2);
-    cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
-    cerr << endl;
+    //cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
+    //cerr << endl;
 
     game.doMove(myMove, mySide);
     turn++;

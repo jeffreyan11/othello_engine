@@ -37,6 +37,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o $(PLAYERNAME) testgame memtest
+	rm -f *.o $(PLAYERNAME) testgame memtest testheuristic evalbuilder endeval blur
 	
 .PHONY: java

@@ -4,16 +4,9 @@
 #include <string>
 #include "board.h"
 
-#define USE_EDGE_TABLE true
-
 const int TSPLITS = 4;
 const int IOFFSET = 6;
 const int TURNSPERDIV = 13;
-
-const bitbrd CORNERS = 0x8100000000000081;
-const bitbrd EDGES = 0x3C0081818181003C;
-const bitbrd ADJ_CORNERS = 0x4281000000008142;
-const bitbrd X_CORNERS = 0x0042000000004200;
 
 class Eval {
 private:

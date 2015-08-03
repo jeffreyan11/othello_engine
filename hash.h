@@ -25,14 +25,7 @@ struct BoardData {
     }
 
     BoardData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d, uint8_t nt) {
-        taken = t;
-        black = b;
-        score = s;
-        move = (uint8_t) m;
-        ptm = (uint8_t) p;
-        turn = (uint8_t) tu;
-        depth = (uint8_t) d;
-        nodeType = nt;
+        setData(t, b, s, m, p, tu, d, nt);
     }
 
     void setData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d,
