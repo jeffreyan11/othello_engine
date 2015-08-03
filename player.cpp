@@ -35,6 +35,7 @@ Player::Player(Side side) {
 
     // initialize the evaluation functions
     evaluater = new Eval();
+    otherHeuristic = false;
 }
 
 /**
@@ -235,7 +236,11 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
 */
 int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0) {
-        return evaluater->heuristic(b, turn+attemptingDepth, s);
+        if (otherHeuristic) {
+            return evaluater->heuristic2(b, turn+attemptingDepth, s);
+        }
+        else
+            return evaluater->heuristic(b, turn+attemptingDepth, s);
     }
 
     int score;
@@ -343,4 +348,11 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         nodes++;
         scores.add(-pvs_h(copy, side^1, depth-1, NEG_INFTY, INFTY));
     }
+}
+
+void Player::setDepths(int sort, int min, int max, int end) {
+    maxDepth = max;
+    minDepth = min;
+    sortDepth = sort;
+    endgameDepth = end;
 }

@@ -30,9 +30,11 @@ unsigned int totalSize;
 pv* pvTable2x4[DIVS][6561];
 pv* edgeTable[DIVS][6561];
 pv* e2xTable[DIVS][59049];
+pv* p33Table[DIVS][19683];
 int used[DIVS][6561];
 int eused[DIVS][6561];
 int exused[DIVS][59049];
+int p33used[DIVS][19683];
 
 const int PIECES_TO_INDEX[1024] = {
 0, 1, 3, 4, 9, 10, 12, 13, 27, 28, 30, 31, 36, 37, 39, 40, 81, 82, 84, 85, 90, 
@@ -140,7 +142,7 @@ const int PIECES_TO_INDEX[1024] = {
 };
 
 Eval evaluater;
-const int startIndex = 44;
+const int startIndex = 46;
 
 void readThorGame(string file);
 void readGame(string file, unsigned int n);
@@ -153,6 +155,7 @@ bitbrd reflectDiag(bitbrd x);
 void boardToEPV(Board *b, int score, int turn);
 void boardTo24PV(Board *b, int score, int turn);
 void boardToE2XPV(Board *b, int score, int turn);
+void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 void checkGames() {
@@ -204,7 +207,7 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 20) {
+        if(tracker.countEmpty() > 18) {
             games[i] = NULL;
             continue;
         }
@@ -255,6 +258,9 @@ void searchFeatures() {
             for(int j = 0; j < 59049; j++) {
                 exused[n][j] = 0;
             }
+            for(int j = 0; j < 19683; j++) {
+                p33used[n][j] = 0;
+            }
         }
         thor_game *game = games[i];
         if(game == NULL)
@@ -285,6 +291,7 @@ void searchFeatures() {
             boardTo24PV(&tracker, score, j);
             boardToEPV(&tracker, score, j);
             boardToE2XPV(&tracker, score, j);
+            boardTo33PV(&tracker, score, j);
             side = side^1;
         }
     }
@@ -300,6 +307,9 @@ int main(int argc, char **argv) {
         }
         for(int i = 0; i < 59049; i++) {
             e2xTable[n][i] = new pv();
+        }
+        for(int i = 0; i < 19683; i++) {
+            p33Table[n][i] = new pv();
         }
     }
 
@@ -476,6 +486,28 @@ void writeFile() {
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 59049; i++) {
             pv *a = e2xTable[n][i];
+            if(a->instances != 0) {
+            #if USE_WIN_PROB
+                int to = 100*(a->sum)/(a->instances);
+            #else
+                double to = ((double)(a->sum))/((double)(a->instances));
+            #endif
+                if(a->instances < 2) to /= 6;
+                else if(a->instances < 3) to /= 3;
+                else if(a->instances < 6) to /= 2;
+                out << (int) (to * 100.0) << " ";
+            }
+            else out << 0 << " ";
+
+            if(i % 9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("patterns/new/p33table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 19683; i++) {
+            pv *a = p33Table[n][i];
             if(a->instances != 0) {
             #if USE_WIN_PROB
                 int to = 100*(a->sum)/(a->instances);
@@ -679,6 +711,55 @@ void boardToE2XPV(Board *b, int score, int turn) {
     exused[index][r8] = 1;
     exused[index][c1] = 1;
     exused[index][c8] = 1;
+}
+
+void boardTo33PV(Board *b, int score, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
+    int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
+    int ulw = (int) ((white&7) + ((white>>5)&0x38) + ((white>>10)&0x1C0));
+    int ul = bitsToPI(ulb, ulw);
+
+    bitbrd rvb = reflectVertical(black);
+    bitbrd rvw = reflectVertical(white);
+    int llb = (int) ((rvb&7) + ((rvb>>5)&0x38) + ((rvb>>10)&0x1C0));
+    int llw = (int) ((rvw&7) + ((rvw>>5)&0x38) + ((rvw>>10)&0x1C0));
+    int ll = bitsToPI(llb, llw);
+
+    bitbrd rhb = reflectHorizontal(black);
+    bitbrd rhw = reflectHorizontal(white);
+    int urb = (int) ((rhb&7) + ((rhb>>5)&0x38) + ((rhb>>10)&0x1C0));
+    int urw = (int) ((rhw&7) + ((rhw>>5)&0x38) + ((rhw>>10)&0x1C0));
+    int ur = bitsToPI(urb, urw);
+
+    bitbrd rbb = reflectVertical(rhb);
+    bitbrd rbw = reflectVertical(rhw);
+    int lrb = (int) ((rbb&7) + ((rbb>>5)&0x38) + ((rbb>>10)&0x1C0));
+    int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
+    int lr = bitsToPI(lrb, lrw);
+
+    if(!p33used[index][ul]) {
+        p33Table[index][ul]->sum += score;
+        p33Table[index][ul]->instances++;
+    }
+    if(!p33used[index][ur]) {
+        p33Table[index][ur]->sum += score;
+        p33Table[index][ur]->instances++;
+    }
+    if(!p33used[index][ll]) {
+        p33Table[index][ll]->sum += score;
+        p33Table[index][ll]->instances++;
+    }
+    if(!p33used[index][lr]) {
+        p33Table[index][lr]->sum += score;
+        p33Table[index][lr]->instances++;
+    }
+
+    p33used[index][ul] = 1;
+    p33used[index][ur] = 1;
+    p33used[index][ll] = 1;
+    p33used[index][lr] = 1;
 }
 
 int bitsToPI(int b, int w) {

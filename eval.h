@@ -43,6 +43,7 @@ public:
     ~Eval();
 
     int heuristic(Board &b, int turn, int s);
+    int heuristic2(Board &b, int turn, int s);
     int end_heuristic(Board &b);
     int stability(Board &b, int s);
 };

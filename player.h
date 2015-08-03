@@ -44,11 +44,13 @@ public:
     int mySide;
     int oppSide;
     Eval *evaluater;
+    bool otherHeuristic;
 
     Player(Side side);
     ~Player();
 
     Move *doMove(Move *opponentsMove, int msLeft);
+    void setDepths(int sort, int min, int max, int end);
 };
 
 #endif

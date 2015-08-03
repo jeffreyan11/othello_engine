@@ -76,7 +76,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
-        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        //cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
         return entry->move;
     }
 
@@ -126,7 +126,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     sort(moves, scores, 0, moves.size-1);
     end_time = high_resolution_clock::now();
     time_span = duration_cast<duration<double>>(end_time-start_time);
-    cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+    //cerr << "Sort search took: " << time_span.count() << " sec" << endl;
 
 /*
     cerr << "Starting WLD search" << endl;
@@ -207,7 +207,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             else
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
+            //cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
             #if USE_REGION_PAR
             region_parity ^= QUADRANT_ID[moves.get(i)];
             #endif
@@ -220,7 +220,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         }
     //}
 
-    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+/*    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
@@ -233,7 +233,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         (int)((double)nodes / time_span.count()) << endl;
     cerr << "Hash hits: " << hashHits << endl;
     cerr << "Hash cuts: " << hashCuts << endl;
-    cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
+    cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;*/
 
     if (exactScore != NULL)
         *exactScore = alpha;

@@ -180,6 +180,40 @@ int Eval::heuristic(Board &b, int turn, int s) {
     return score;
 }
 
+int Eval::heuristic2(Board &b, int turn, int s) {
+    if(b.count(s) == 0)
+        return NEG_INFTY;
+
+    int score = 0;
+
+    #if USE_EDGE_TABLE
+    int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
+            + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
+            + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+            //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
+    if(s == CBLACK)
+        score += patterns;
+    else
+        score -= patterns;
+    #else
+    //bitbrd bm = b->getBits(mySide);
+    //bitbrd bo = b->getBits(oppSide);
+    //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+    //if(turn > 35)
+    //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+    //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
+    #endif
+
+    int myLM = b.numLegalMoves(s);
+    int oppLM = b.numLegalMoves(s^1);
+    //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
+    score += 100 * (30 + (64 - turn)) * (myLM - oppLM) / (oppLM + 1);
+    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
+
+    return score;
+}
+
 /**
  * @brief An evaluation function for endgame move ordering. Always returns a
  * score from black's point of view.

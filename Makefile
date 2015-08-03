@@ -3,7 +3,8 @@ CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = ShallowKwok
 
-all: $(PLAYERNAME) testgame memtest evalbuilder endeval blur
+all: $(PLAYERNAME) testgame memtest testheuristic
+evaltools: evalbuilder endeval blur
 	
 $(PLAYERNAME): $(OBJS) wrapper.o
 	$(CC) -o $@ $^
@@ -12,6 +13,9 @@ testgame: testgame.o
 	$(CC) -o $@ $^
 
 memtest: $(OBJS) memtest.o
+	$(CC) -o $@ $^
+
+testheuristic: $(OBJS) testheuristic.o
 	$(CC) -o $@ $^
 
 evalbuilder: common.o board.o endgame.o eval.o endhash.o evalbuilder.o
