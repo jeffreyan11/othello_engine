@@ -107,11 +107,21 @@ int main(int argc, char **argv) {
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    //total_nodes += ffo("ffotest/end45.pos");        // 76.40, 1171771939
-    //total_nodes += ffo("ffotest/end46.pos");        // 12.03, 100501059
-    //total_nodes += ffo("ffotest/end47.pos");        // 7.65, 41599770
-    //total_nodes += ffo("ffotest/end48.pos");        // 33.47, 293635397
-    //total_nodes += ffo("ffotest/end59.pos");        // 25.84, 11113
+    total_nodes += ffo("ffotest/end45.pos");        // 76.40, 1171771939
+    total_nodes += ffo("ffotest/end46.pos");        // 12.03, 100501059
+    total_nodes += ffo("ffotest/end47.pos");        // 7.65, 41599770
+    total_nodes += ffo("ffotest/end48.pos");        // 33.47, 293635397
+    total_nodes += ffo("ffotest/end49.pos");
+    total_nodes += ffo("ffotest/end50.pos");
+    total_nodes += ffo("ffotest/end51.pos");
+    total_nodes += ffo("ffotest/end52.pos");
+    total_nodes += ffo("ffotest/end53.pos");
+    total_nodes += ffo("ffotest/end54.pos");
+    total_nodes += ffo("ffotest/end55.pos");
+    total_nodes += ffo("ffotest/end56.pos");
+    total_nodes += ffo("ffotest/end57.pos");
+    total_nodes += ffo("ffotest/end58.pos");
+    total_nodes += ffo("ffotest/end59.pos");        // 25.84, 11113
 
     /*Player p(BLACK);
     Player p2(WHITE);

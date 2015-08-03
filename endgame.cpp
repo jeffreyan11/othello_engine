@@ -126,7 +126,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     sort(moves, scores, 0, moves.size-1);
     end_time = high_resolution_clock::now();
     time_span = duration_cast<duration<double>>(end_time-start_time);
-    //cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+    cerr << "Sort search took: " << time_span.count() << " sec" << endl;
 
 /*
     cerr << "Starting WLD search" << endl;
@@ -234,6 +234,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     cerr << "Hash hits: " << hashHits << endl;
     cerr << "Hash cuts: " << hashCuts << endl;
     cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
+    cerr << "Time spent: " << time_span.count() << endl;
 
     if (exactScore != NULL)
         *exactScore = alpha;

@@ -142,7 +142,7 @@ const int PIECES_TO_INDEX[1024] = {
 };
 
 Eval evaluater;
-const int startIndex = 46;
+const int startIndex = 42;
 
 void readThorGame(string file);
 void readGame(string file, unsigned int n);
@@ -207,7 +207,7 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 18) {
+        if(tracker.countEmpty() > 22) {
             games[i] = NULL;
             continue;
         }
