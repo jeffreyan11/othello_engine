@@ -6,9 +6,11 @@
 #include "endhash.h"
 #include "eval.h"
 
-#define USE_STABILITY true
+#define USE_STABILITY false
 #define USE_REGION_PAR false
 #define USE_ALL_TABLE false
+
+struct EndgameStatistics;
 
 class Endgame {
 
@@ -21,11 +23,7 @@ private:
 
     Eval *evaluater;
 
-    int hashHits;
-    int hashCuts;
-    int firstFailHigh;
-    int failHighs;
-    int searchSpaces;
+    EndgameStatistics *egStats;
 
     bool isWLD;
 

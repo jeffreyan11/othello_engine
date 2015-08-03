@@ -127,7 +127,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             end_time = high_resolution_clock::now();
             time_span = duration_cast<duration<double>>(end_time-start_time);
             //cerr << "Endgame took: " << time_span.count() << endl;
-            //cerr << "Playing: " << myMove << endl;
+            //cerr << "Playing: (" << (myMove & 7) + 1 << ", " << (myMove >> 3) + 1 << ")" << endl;
             //cerr << endl;
 
             return indexToMove[myMove];

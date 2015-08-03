@@ -373,6 +373,8 @@ void readThorGame(string file) {
                 int x = movetoparse % 10;
                 int y = movetoparse / 10;
                 temp->moves[j] = (x-1) + 8*(y-1);
+                if (temp->moves[j] == -9)
+                    temp->moves[j] = MOVE_NULL;
             }
             games[i] = temp;
         }

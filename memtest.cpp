@@ -8,10 +8,6 @@
 #include "endgame.h"
 #include "eval.h"
 
-bitbrd cstack[20];
-int movestack[20];
-int top;
-
 Eval evaluater;
 
 unsigned long long ffo(std::string file);
@@ -73,22 +69,18 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
     }
 
     for(unsigned int i = 0; i < lm.size; i++) {
-        cstack[top] = b.getDoMove(lm.get(i), side);
-        movestack[top] = lm.get(i);
-        b.makeMove(movestack[top], cstack[top], side);
-        top++;
+        bitbrd changeMask = b.getDoMove(lm.get(i), side);
+        b.makeMove(lm.get(i), changeMask, side);
 
         nodes += perftu(b, depth-1, side^1, false);
 
-        top--;
-        b.undoMove(movestack[top], cstack[top], side);
+        b.undoMove(lm.get(i), changeMask, side);
     }
 
     return nodes;
 }
 
 int main(int argc, char **argv) {
-    top = 0;
     unsigned long long total_nodes = 0;
 
     using namespace std::chrono;
@@ -96,22 +88,20 @@ int main(int argc, char **argv) {
 
     //Board b;
     //cerr << perft(b, 11, CBLACK, false) << endl;
+    //cerr << perftu(b, 11, CBLACK, false) << endl;
 
-    //ffo("ffoeasy/end40.pos");
-    //ffo("ffoeasy/end41.pos");
-    //ffo("ffoeasy/end42.pos");
-
-    total_nodes += ffo("ffotest/end40.pos");       // 19.70, 239303983
+    total_nodes += ffo("ffotest/end40.pos");       // 17.53, 208474305
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
 
-    total_nodes += ffo("ffotest/end45.pos");        // 76.40, 1171771939
-    total_nodes += ffo("ffotest/end46.pos");        // 12.03, 100501059
-    total_nodes += ffo("ffotest/end47.pos");        // 7.65, 41599770
-    total_nodes += ffo("ffotest/end48.pos");        // 33.47, 293635397
-    total_nodes += ffo("ffotest/end49.pos");
+    //total_nodes += ffo("ffotest/end45.pos");        // 89.73, 1303031098
+    //total_nodes += ffo("ffotest/end46.pos");        // 12.25, 110282297
+    //total_nodes += ffo("ffotest/end47.pos");        // 8.00, 44019984
+    //total_nodes += ffo("ffotest/end48.pos");        // 31.88, 286917078
+    //total_nodes += ffo("ffotest/end49.pos");
+/*
     total_nodes += ffo("ffotest/end50.pos");
     total_nodes += ffo("ffotest/end51.pos");
     total_nodes += ffo("ffotest/end52.pos");
@@ -121,7 +111,8 @@ int main(int argc, char **argv) {
     total_nodes += ffo("ffotest/end56.pos");
     total_nodes += ffo("ffotest/end57.pos");
     total_nodes += ffo("ffotest/end58.pos");
-    total_nodes += ffo("ffotest/end59.pos");        // 25.84, 11113
+*/
+    //total_nodes += ffo("ffotest/end59.pos");        // 27.17, 32143
 
     /*Player p(BLACK);
     Player p2(WHITE);
@@ -131,9 +122,6 @@ int main(int argc, char **argv) {
         m = p2.doMove(m, -1);
         m = p.doMove(m, -1);
     }*/
-
-    //117802417229721632
-    //18328941656479632604
 
     auto end_time = high_resolution_clock::now();
     duration<double> time_span = duration_cast<duration<double>>(
@@ -170,13 +158,53 @@ unsigned long long ffo(std::string file) {
 
     Board b;
     b.setBoard(board);
+    // TODO debug stability using this?
+/*    b.doMove(62, side);
+    b.doMove(49, side^1);
+    b.doMove(22, side);
+    b.doMove(31, side^1);
+    b.doMove(15, side);
+    b.doMove(14, side^1);
+    b.doMove(5, side);
+    b.doMove(6, side^1);
+    b.doMove(7, side);
+    b.doMove(13, side);
+    b.doMove(33, side);
+    b.doMove(25, side^1);
+    b.doMove(57, side);
+    b.doMove(32, side);
+    b.doMove(48, side^1);
+    b.doMove(56, side);
+    b.doMove(24, side^1);
+    b.doMove(16, side);
+    b.doMove(17, side^1);
+    b.doMove(21, side);
+    b.doMove(20, side^1);
+    b.doMove(9, side);
+    b.doMove(8, side^1);
+    b.doMove(11, side);
+    b.doMove(1, side^1);
+    b.doMove(60, side);
+    b.doMove(19, side);
+    b.doMove(18, side^1);
+    b.doMove(0, side);
+    b.doMove(2, side);*/
+    /*char *pos = b.toString();
+    for (int i = 0; i < 64; i++) {
+        cerr << pos[i];
+        if (i % 8 == 7)
+            cerr << endl;
+    }
+    cerr << endl;*/
+    //side ^= 1;
+
     MoveList lm = b.getLegalMoves(side);
     int empties = b.countEmpty();
     cerr << empties << " empty" << endl;
 
     Endgame e;
     int result = e.solveEndgame(b, lm, side, empties, 100000000, &evaluater);
-    cerr << "Best move: " << result << endl;
+    cerr << "Best move: (" << (result & 7) + 1 << ", " << (result >> 3) + 1 << ")" << endl;
     return e.nodes;
 }
 

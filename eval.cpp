@@ -222,14 +222,14 @@ int Eval::end_heuristic(Board &b) {
     int score = 0;
     int t = 60;
 
-    score += boardTo24PV(b, t);
+    score += 2*boardTo24PV(b, t);
     score += boardToEPV(b, t);
-    score += 4*boardToE2XPV(b, t);
+    score += 3*boardToE2XPV(b, t);
     score += boardTo33PV(b, t);
     //score += 1024 * (b.getStability(CBLACK) - b.getStability(CWHITE));
-    score += 256*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+    score += 128*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
-    return score/2;
+    return score;
 }
 
 int Eval::stability(Board &b, int s) {
