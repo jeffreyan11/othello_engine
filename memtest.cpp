@@ -6,10 +6,13 @@
 #include "player.h"
 #include "board.h"
 #include "endgame.h"
+#include "eval.h"
 
 bitbrd cstack[20];
 int movestack[20];
 int top;
+
+Eval evaluater;
 
 unsigned long long ffo(std::string file);
 
@@ -161,9 +164,8 @@ unsigned long long ffo(std::string file) {
     int empties = b.countEmpty();
     cerr << empties << " empty" << endl;
 
-    Player p(BLACK);
     Endgame e;
-    int result = e.solveEndgame(b, lm, side, empties, 100000000, p.evaluater);
+    int result = e.solveEndgame(b, lm, side, empties, 100000000, &evaluater);
     cerr << "Best move: " << result << endl;
     return e.nodes;
 }

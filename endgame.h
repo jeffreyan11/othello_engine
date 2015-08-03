@@ -48,6 +48,9 @@ private:
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
+    void rootSearch(Board &b, MoveList &moves, MoveList &scores, int side,
+        int depth);
+    int rootPVS(Board &b, int s, int depth, int alpha, int beta);
 
     int nextMoveShallow(int *moves, int *scores, int size, int index);
 

@@ -174,7 +174,7 @@ int Eval::heuristic(Board &b, int turn, int s) {
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
-    score += 100 * (60 + (64 - turn) / 2) * (myLM - oppLM) / (oppLM + 1);
+    score += 100 * (30 + (64 - turn)) * (myLM - oppLM) / (oppLM + 1);
     score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
@@ -190,10 +190,10 @@ int Eval::end_heuristic(Board &b) {
 
     score += boardTo24PV(b, t);
     score += boardToEPV(b, t);
-    score += boardToE2XPV(b, t);
+    score += 2*boardToE2XPV(b, t);
     //score += boardTo33PV(b, t);
-    //score += 10 * (b->getStability(CBLACK) - b->getStability(CWHITE));
-    score += 128*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
+    //score += 1024 * (b.getStability(CBLACK) - b.getStability(CWHITE));
+    score += 256*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;
 }

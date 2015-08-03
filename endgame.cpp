@@ -37,15 +37,15 @@ const int STAB_THRESHOLD[40] = {
 
 const int WLD_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 2, 2, 2, 2, 4, 4, 6,
-    6, 8, 8, 10, 10, 10, 10, 10, 10, 10,
-    10, 10, 12, 12, 12
+    0, 0, 0, 2, 2, 2, 2, 4, 4, 4,
+    6, 6, 8, 8, 10, 10, 10, 12, 12, 12,
+    12, 12, 12, 12, 12
 };
 
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 2, 2, 2, 2, 4, 4, 6,
-    6, 8, 8, 10, 10, 10, 10, 12, 12, 12,
+    0, 0, 0, 2, 2, 2, 2, 4, 4, 4,
+    6, 6, 8, 8, 10, 10, 10, 12, 12, 12,
     12, 12, 12, 12, 12
 };
 
@@ -76,7 +76,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
-        //cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
         return entry->move;
     }
 
@@ -111,23 +111,28 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
 
     // Initial sorting of moves
     MoveList scores;
-    if (depth > 24)
-        sortSearch(b, moves, scores, s, 12);
-    else if (depth > 22)
-        sortSearch(b, moves, scores, s, 10);
-    else if (depth > 20)
-        sortSearch(b, moves, scores, s, 8);
-    else if (depth > 18)
+    if (depth > 23)
+        rootSearch(b, moves, scores, s, 12);
+    else if (depth > 21)
+        rootSearch(b, moves, scores, s, 10);
+    else if (depth > 19)
+        rootSearch(b, moves, scores, s, 8);
+    else if (depth > 17)
         sortSearch(b, moves, scores, s, 6);
     else if (depth > 15)
         sortSearch(b, moves, scores, s, 4);
     else if (depth > 11)
         sortSearch(b, moves, scores, s, 2);
     sort(moves, scores, 0, moves.size-1);
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast<duration<double>>(end_time-start_time);
+    cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+
 /*
     cerr << "Starting WLD search" << endl;
-    int alpha = -1;
-    int beta = 1;
+    start_time = high_resolution_clock::now();
+    alpha = -1;
+    beta = 1;
     isWLD = true;
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = b.copy();
@@ -155,9 +160,8 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         if (alpha >= beta)
             break;
     }
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "WLD search took: " << time_span.count() << " sec" << endl;
     if (alpha == 0) {
         cerr << "Game is draw" << endl;
@@ -175,15 +179,15 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         }
         if (bestIndex != 0)
             moves.swap(bestIndex, 0);
-*/
+
+        delete endgame_table;
+        endgame_table = new EndHash(16000);*/
         isWLD = false;
-        //delete endgame_table;
-        //endgame_table = new EndHash(16000);
+        start_time = high_resolution_clock::now();
 
         for (unsigned int i = 0; i < moves.size; i++) {
             end_time = high_resolution_clock::now();
-            time_span = duration_cast<duration<double>>(
-                end_time-start_time);
+            time_span = duration_cast<duration<double>>(end_time-start_time);
 
             if(time_span.count() * 1000 * moves.size > timeLimit * (i+1))
                 return MOVE_BROKEN;
@@ -203,7 +207,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             else
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-//            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
+            cerr << "Searched move: " << moves.get(i) << " | alpha: " << score << endl;
             #if USE_REGION_PAR
             region_parity ^= QUADRANT_ID[moves.get(i)];
             #endif
@@ -216,7 +220,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         }
     //}
 
-/*    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
@@ -224,14 +228,13 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     cerr << "Score: " << alpha << endl;
 
     end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(
-        end_time-start_time);
+    time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
         (int)((double)nodes / time_span.count()) << endl;
     cerr << "Hash hits: " << hashHits << endl;
     cerr << "Hash cuts: " << hashCuts << endl;
     cerr << "First fail high rate: " << firstFailHigh << " / " << failHighs << " / " << searchSpaces << endl;
-*/
+
     if (exactScore != NULL)
         *exactScore = alpha;
     return moves.get(bestIndex);
@@ -860,7 +863,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
             sortSearch(b, legalMoves, scores, s, 4);
         else if (depth >= 5)
             sortSearch(b, legalMoves, scores, s, 2);
-        else if (depth >= 3)
+        else if (depth >= 4)
             sortSearch(b, legalMoves, scores, s, 0);
         else {
             for (unsigned int i = 0; i < legalMoves.size; i++)
@@ -880,6 +883,69 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
         else
             score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+        if (alpha >= beta)
+            break;
+    }
+    return alpha;
+}
+
+// Performs an alpha-beta search on each legal move to get a score.
+void Endgame::rootSearch(Board &b, MoveList &moves, MoveList &scores, int side,
+        int depth) {
+    for (unsigned int i = 0; i < moves.size; i++) {
+        Board copy = b.copy();
+        copy.doMove(moves.get(i), side);
+        scores.add(-rootPVS(copy, side^1, depth-1, NEG_INFTY, INFTY));
+    }
+}
+
+// Helper function for the alpha-beta search.
+int Endgame::rootPVS(Board &b, int s, int depth, int alpha, int beta) {
+    if (depth <= 0) {
+        return evaluater->heuristic(b, 60, s);
+    }
+
+    int score;
+
+    MoveList legalMoves = b.getLegalMoves(s);
+    if (legalMoves.size <= 0) {
+        score = -rootPVS(b, s^1, depth-1, -beta, -alpha);
+
+        if (alpha < score)
+            alpha = score;
+
+        return alpha;
+    }
+
+    if (depth >= 2) {
+        MoveList scores;
+        if (depth >= 9)
+            rootSearch(b, legalMoves, scores, s, 4);
+        else if (depth >= 5)
+            rootSearch(b, legalMoves, scores, s, 2);
+        else if (depth >= 4)
+            rootSearch(b, legalMoves, scores, s, 0);
+        else {
+            for (unsigned int i = 0; i < legalMoves.size; i++)
+                scores.add(SQ_VAL[legalMoves.get(i)]);
+        }
+        sort(legalMoves, scores, 0, legalMoves.size-1);
+    }
+
+    for (unsigned int i = 0; i < legalMoves.size; i++) {
+        Board copy = b.copy();
+        copy.doMove(legalMoves.get(i), s);
+
+        if (depth > 2 && i != 0) {
+            score = -rootPVS(copy, s^1, depth-1, -alpha-1, -alpha);
+            if (alpha < score && score < beta)
+                score = -rootPVS(copy, s^1, depth-1, -beta, -alpha);
+        }
+        else
+            score = -rootPVS(copy, s^1, depth-1, -beta, -alpha);
 
         if (alpha < score)
             alpha = score;
