@@ -137,10 +137,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             turn++;
             return indexToMove[myMove];
         }
-
-        #if PRINT_SEARCH_INFO
-        cerr << "Broken out of endgame solver." << endl;
-        #endif
+        // Otherwise, we broke out of the endgame solver.
         endgameDepth -= 2;
     }
 
@@ -219,7 +216,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 int Player::getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int s,
     int depth) {
     int score;
-    int bestMove = 0;
+    int bestMove = MOVE_BROKEN;
     int alpha = -INFTY;
     int beta = INFTY;
 

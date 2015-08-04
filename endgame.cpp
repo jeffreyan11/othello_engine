@@ -117,7 +117,8 @@ int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
         }
     }
     // We must delete "exact" score entries since they are not actually exact.
-    resetEGTable();
+    // TODO do we really need to?
+    //resetEGTable();
     return bestMove;
 }
 
@@ -133,7 +134,10 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
         #if PRINT_SEARCH_INFO
-        cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        cerr << "Endgame hashtable hit." << endl;
+        cerr << "Best move: ";
+        printMove(entry->move);
+        cerr << " Score: " << (int) (entry->score) << endl;
         #endif
         return entry->move;
     }
@@ -174,6 +178,11 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         #if PRINT_SEARCH_INFO
         cerr << "Sort search took: " << time_span.count() << " sec" << endl;
         #endif
+        for (unsigned int i = 0; i < moves.size; i++) {
+            cerr << "Move: ";
+            printMove(moves.get(i));
+            cerr << " Score: " << scores.get(i) << endl;
+        }
     }
 
     start_time = high_resolution_clock::now();
@@ -215,7 +224,6 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         if (alpha >= beta)
             break;
     }
-    //}
 
     #if PRINT_SEARCH_INFO
     cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
@@ -232,10 +240,9 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
     cerr << "Time spent: " << time_span.count() << endl;
-    cerr << "Score: " << alpha << endl;
     cerr << "Best move: ";
     printMove(moves.get(bestIndex));
-    cerr << endl;
+    cerr << " Score: " << alpha << endl;
     #endif
 
     if (exactScore != NULL)
@@ -444,7 +451,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgame_table->add(b, alpha, tempMove, s, depth);
     #if USE_ALL_TABLE
-    if (alpha <= prevAlpha)
+    else if (alpha <= prevAlpha)
         all_table->add(b, alpha, MOVE_NULL, s, depth);
     #endif
 
@@ -593,7 +600,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgame_table->add(b, alpha, tempMove, s, depth);
     #if USE_ALL_TABLE
-    if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
+    else if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
         all_table->add(b, alpha, MOVE_NULL, s, depth);
     #endif
 

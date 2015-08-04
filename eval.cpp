@@ -197,9 +197,9 @@ int Eval::heuristic2(Board &b, int turn, int s) {
         score += patterns;
     else
         score -= patterns;
-    //bitbrd bm = b->getBits(mySide);
-    //bitbrd bo = b->getBits(oppSide);
-    //score += 100 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
+    //bitbrd bm = b.getBits(s);
+    //bitbrd bo = b.getBits(s^1);
+    //score += 1000 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
     //if(turn > 35)
     //    score += 3 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
     //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));

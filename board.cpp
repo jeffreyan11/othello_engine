@@ -624,7 +624,7 @@ int Board::getLegalMoves3(int side, int *moves) {
  * 
  * This method operates by checking in all eight directions, first for the line
  * of pieces of the opposite color, then for the anchor once the line ends.
-*/
+ */
 bitbrd Board::getLegal(int side) {
     bitbrd result = 0;
     bitbrd self = pieces[side];

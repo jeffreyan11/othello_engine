@@ -1,5 +1,7 @@
 #include "openings.h"
+#include <fstream>
 #include <iostream>
+#include <string>
 
 Openings::Openings() {
     readFile();
@@ -11,15 +13,15 @@ Openings::~Openings() {
     }
 }
 
-int Openings::get(bitbrd pos, bitbrd black) {
-    int index = binarySearch(pos, black);
+int Openings::get(bitbrd taken, bitbrd black) {
+    int index = binarySearch(taken, black);
     if(index == -1) {
         return OPENING_NOT_FOUND;
     }
     else return openings[index]->move;
 }
 
-int Openings::binarySearch(bitbrd pos, bitbrd black) {
+int Openings::binarySearch(bitbrd taken, bitbrd black) {
     int min = 0;
     int max = OPENING_BOOK_SIZE - 1;
 
@@ -27,9 +29,9 @@ int Openings::binarySearch(bitbrd pos, bitbrd black) {
         int mid = min + (max - min) / 2;
         bitbrd ttaken = openings[mid]->taken;
         bitbrd tblack = openings[mid]->black;
-        if((ttaken == pos) && (tblack == black))
+        if((ttaken == taken) && (tblack == black))
             return mid;
-        else if( (ttaken < pos) || ((ttaken == pos) && (tblack < black)) ) {
+        else if( (ttaken < taken) || ((ttaken == taken) && (tblack < black)) ) {
             min = mid + 1;
         }
         else {
