@@ -1,6 +1,8 @@
 #include <iostream>
 #include "endgame.h"
 
+using namespace std;
+
 const int STAB_THRESHOLD[40] = {
 /*
     64, 64, 64, 64, 64,
@@ -12,7 +14,6 @@ const int STAB_THRESHOLD[40] = {
     60, 60, 62, 62, 64,
     64, 64, 64, 64, 64
 */
-
     64, 64, 64, 64, 64,
     14, 16, 18, 20, 22,
     24, 26, 28, 30, 32,
@@ -74,16 +75,66 @@ Endgame::~Endgame() {
 
     delete egStats;
 }
-
 /**
  * @brief Solves the endgame for perfect play.
+ * @param b The board to solve
+ * @param moves The list of legal moves for the side to move
+ * @param isSorted Whether the legal moves list is already sorted or not. If not,
+ * it must be sorted within the endgame solver.
+ * @param s The side to move
+ * @param depth The number of empty squares left on the board
+ * @param timeLimit The time limit in milliseconds
+ * @param eval A pointer to the evaluater object
+ * @param exactScore An optional parameter to also get the exact score
+ * @return The index of the best move
  */
-int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
-    int timeLimit, Eval *eval, int *exactScore) {
+int Endgame::solveEndgame(Board &b, MoveList &moves, bool isSorted, int s,
+    int depth, int timeLimit, Eval *eval, int *exactScore) {
+    isWLD = false;
+    return solveEndgameWithWindow(b, moves, isSorted, s, depth, -64, 64,
+        timeLimit, eval, exactScore);
+}
+
+/**
+ * @brief Solve the game for final result: win, loss, or draw.
+ */
+int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
+    int depth, int timeLimit, Eval *eval, int *exactScore) {
+    cerr << "Starting WLD search" << endl;
+    isWLD = true;
+    int bestMove = solveEndgameWithWindow(b, moves, isSorted, s, depth, -1, 1,
+        timeLimit, eval, exactScore);
+
+    if (bestMove != MOVE_BROKEN) {
+        if (*exactScore == 0) {
+            cerr << "Game is draw" << endl;
+        }
+        else if (*exactScore == -1) {
+            cerr << "Game is loss" << endl;
+        }
+        else {
+            cerr << "Game is win" << endl;
+        }
+    }
+    // We must delete "exact" score entries since they are not actually exact.
+    resetEGTable();
+    return bestMove;
+}
+
+/**
+ * @brief "Solve" the game for a result based on the given alpha-beta window.
+ * A window of -64, 64 is exact result.
+ * A window of -1, 1 is win/loss/draw.
+ */
+int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
+    int s, int depth, int alpha, int beta, int timeLimit, Eval *eval,
+    int *exactScore) {
     // if best move for this position has already been found and stored
     EndgameEntry *entry = endgame_table->get(b, s);
     if(entry != NULL) {
+        #if PRINT_SEARCH_INFO
         cerr << "Endgame hashtable hit. Score: " << (int) (entry->score) << endl;
+        #endif
         return entry->move;
     }
 
@@ -100,35 +151,33 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     timeout = timeLimit;
 
     int score;
-    int alpha = -64;
-    int beta = 64;
-    int bestIndex = 0;
+    int bestIndex = -1;
 
     // Initial sorting of moves
-    MoveList scores;
-    if (depth > 23)
-        sortSearch(b, moves, scores, s, 12);
-    else if (depth > 21)
-        sortSearch(b, moves, scores, s, 10);
-    else if (depth > 19)
-        sortSearch(b, moves, scores, s, 8);
-    else if (depth > 17)
-        sortSearch(b, moves, scores, s, 6);
-    else if (depth > 15)
-        sortSearch(b, moves, scores, s, 4);
-    else if (depth > 11)
-        sortSearch(b, moves, scores, s, 2);
-    sort(moves, scores, 0, moves.size-1);
-    end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(end_time-start_time);
-    cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+    if (!isSorted) {
+        MoveList scores;
+        if (depth > 23)
+            sortSearch(b, moves, scores, s, 12);
+        else if (depth > 21)
+            sortSearch(b, moves, scores, s, 10);
+        else if (depth > 19)
+            sortSearch(b, moves, scores, s, 8);
+        else if (depth > 17)
+            sortSearch(b, moves, scores, s, 6);
+        else if (depth > 15)
+            sortSearch(b, moves, scores, s, 4);
+        else if (depth > 11)
+            sortSearch(b, moves, scores, s, 2);
+        sort(moves, scores, 0, moves.size-1);
+        end_time = high_resolution_clock::now();
+        time_span = duration_cast<duration<double>>(end_time-start_time);
+        #if PRINT_SEARCH_INFO
+        cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+        #endif
+    }
 
-/*
-    cerr << "Starting WLD search" << endl;
     start_time = high_resolution_clock::now();
-    alpha = -1;
-    beta = 1;
-    isWLD = true;
+
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = b.copy();
         copy.doMove(moves.get(i), s);
@@ -142,6 +191,23 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         else
             score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
+        // TODO use information already gathered?
+        if (score == SCORE_TIMEOUT) {
+            #if PRINT_SEARCH_INFO
+            cerr << "Breaking out of endgame solver." << endl;
+            #endif
+            if (bestIndex != -1 && alpha > 0)
+                return moves.get(bestIndex);
+            else
+                return MOVE_BROKEN;
+        }
+
+        #if PRINT_SEARCH_INFO
+        cerr << "Searched move: ";
+        printMove(moves.get(i));
+        cerr << " | alpha: " << score << endl;
+        #endif
+
         if (alpha < score) {
             alpha = score;
             bestIndex = i;
@@ -149,65 +215,14 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         if (alpha >= beta)
             break;
     }
-    end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(end_time-start_time);
-    cerr << "WLD search took: " << time_span.count() << " sec" << endl;
-    if (alpha == 0) {
-        cerr << "Game is draw" << endl;
-    }
-    else { // If game is win or loss, we must find the best move and score
-        if (alpha == -1) {
-            cerr << "Game is loss" << endl;
-            alpha = -64;
-            beta = -1;
-        }
-        else {
-            cerr << "Game is win" << endl;
-            alpha = 1;
-            beta = 64;
-        }
-        if (bestIndex != 0)
-            moves.swap(bestIndex, 0);
-
-        delete endgame_table;
-        endgame_table = new EndHash(16000);*/
-        isWLD = false;
-        start_time = high_resolution_clock::now();
-
-        for (unsigned int i = 0; i < moves.size; i++) {
-            Board copy = b.copy();
-            copy.doMove(moves.get(i), s);
-            nodes++;
-
-            if (i != 0) {
-                score = -dispatch(copy, s^1, depth-1, -alpha-1, -alpha);
-                if (alpha < score && score < beta)
-                    score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
-            }
-            else
-                score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
-
-            // TODO use information already gathered?
-            if (score == SCORE_TIMEOUT)
-                return MOVE_BROKEN;
-
-            cerr << "Searched move: (" << (moves.get(i) & 7) + 1 << ", " << (moves.get(i) >> 3) + 1 << ") | alpha: " << score << endl;
-
-            if (alpha < score) {
-                alpha = score;
-                bestIndex = i;
-            }
-            if (alpha >= beta)
-                break;
-        }
     //}
 
+    #if PRINT_SEARCH_INFO
     cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
     #endif
-    cerr << "Score: " << alpha << endl;
 
     end_time = high_resolution_clock::now();
     time_span = duration_cast<duration<double>>(end_time-start_time);
@@ -217,10 +232,21 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
     cerr << "Time spent: " << time_span.count() << endl;
+    cerr << "Score: " << alpha << endl;
+    cerr << "Best move: ";
+    printMove(moves.get(bestIndex));
+    cerr << endl;
+    #endif
 
     if (exactScore != NULL)
         *exactScore = alpha;
     return moves.get(bestIndex);
+}
+
+// Resets the exact scores hash table
+void Endgame::resetEGTable() {
+    delete endgame_table;
+    endgame_table = new EndHash(16000);
 }
 
 // From root, this function chooses the correct helper to call.
@@ -662,7 +688,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
  * @brief Endgame solver, to be used with exactly 2 empty squares.
  */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
-    int score = NEG_INFTY;
+    int score = -INFTY;
     bitbrd empty = ~b.getTaken();
     bitbrd opp = b.getBits(s^1);
 
@@ -696,7 +722,7 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             alpha = score;
     }
 
-    if (score == NEG_INFTY) {
+    if (score == -INFTY) {
         opp = b.getBits(s);
 
         // if no legal moves... try other player
@@ -723,7 +749,7 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
         }
 
         // if both players passed, game over
-        if (score == NEG_INFTY)
+        if (score == -INFTY)
             return (2 * b.count(s) - 62);
 
         return beta;
@@ -768,7 +794,7 @@ void Endgame::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = b.copy();
         copy.doMove(moves.get(i), side);
-        scores.add(-pvs(copy, side^1, depth-1, NEG_INFTY, INFTY));
+        scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
     }
 }
 

@@ -1,17 +1,19 @@
 #include <iostream>
 #include "player.h"
 
-#define PRINT_SEARCH_INFO true
-
-const int endgameTime[28] = { 0,
+// Only try an endgame solve if more than this amount of time (in milliseconds)
+// if left. Indexed by empties.
+const int endgameTime[31] = { 0,
 25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
 50, 50, 75, 100, 150, // 11-15
-250, 400, 750, 1500, 3000, // 16 - 20
-6000, 15000, 32000, 75000, 200000,
-500000, 1200000
+250, 400, 750, 1500, 3000, // 16-20
+6000, 15000, 32000, 75000, 200000, // 21-25
+500000, 1200000, 2500000, 6000000, 15000000
 };
 
 const int TIMEOUT = (1 << 21);
+
+using namespace std;
 
 /**
  * @brief Constructor for the player.
@@ -77,12 +79,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         timeLimit = 60000;
     }
 
-    using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span;
-    timeElapsed = high_resolution_clock::now();
-
     // register opponent's move
     if(opponentsMove != NULL) {
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
@@ -100,7 +96,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     #if USE_OPENING_BOOK
     int openMove = openingBook.get(game.getTaken(), game.toBits(CBLACK));
     if(openMove != OPENING_NOT_FOUND) {
-        cerr << "Opening book used! Played " << openMove << endl;
+        #if PRINT_SEARCH_INFO
+        cerr << "Opening book used! Played ";
+        printMove(openMove);
+        cerr << endl;
+        #endif
         turn++;
         game.doMove(openMove, mySide);
         return indexToMove[openMove];
@@ -109,7 +109,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // find and test all legal moves
     MoveList legalMoves = game.getLegalMoves(mySide);
-
     if (legalMoves.size <= 0) {
         game.doMove(MOVE_NULL, mySide);
         #if PRINT_SEARCH_INFO
@@ -123,28 +122,19 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // endgame solver
     if(empties <= endgameDepth &&
             (msLeft >= endgameTime[empties] || msLeft == -1)) {
-        // timing
+        // timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : msLeft / 4;
         #if PRINT_SEARCH_INFO
         cerr << "Endgame solver: depth " << empties << endl;
         #endif
 
-        myMove = endgameSolver.solveEndgame(game, legalMoves, mySide, empties,
-            endgameLimit, evaluater);
+        myMove = endgameSolver.solveEndgame(game, legalMoves, false, mySide,
+            empties, endgameLimit, evaluater);
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
             turn++;
-
-            end_time = high_resolution_clock::now();
-            time_span = duration_cast<duration<double>>(end_time-start_time);
-            #if PRINT_SEARCH_INFO
-            cerr << "Endgame took: " << time_span.count() << endl;
-            cerr << "Playing: (" << (myMove & 7) + 1 << ", " << (myMove >> 3) + 1 << ")" << endl;
-            cerr << endl;
-            #endif
-
             return indexToMove[myMove];
         }
 
@@ -152,13 +142,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << "Broken out of endgame solver." << endl;
         #endif
         endgameDepth -= 2;
-        start_time = high_resolution_clock::now();
-        timeElapsed = high_resolution_clock::now();
     }
 
     // Reset node count. Nodes are counted in the most conservative way (only
     // when doMove() is called), so that pruning does not inflate node counts.
     nodes = 0;
+    // Start timers
+    using namespace std::chrono;
+    auto start_time = high_resolution_clock::now();
+    auto end_time = high_resolution_clock::now();
+    duration<double> time_span;
+    timeElapsed = high_resolution_clock::now();
 
     // sort search
     #if PRINT_SEARCH_INFO
@@ -177,7 +171,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << "Depth " << attemptingDepth << ": ";
         #endif
 
-        int newBest = pvs(game, legalMoves, chosenScore, mySide, attemptingDepth);
+        int newBest = getBestMoveIndex(game, legalMoves, chosenScore, mySide,
+            attemptingDepth);
         if(newBest == MOVE_BROKEN) {
             #if PRINT_SEARCH_INFO
             cerr << " Broken out of search!" << endl;
@@ -191,7 +186,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         attemptingDepth += 2;
 
         #if PRINT_SEARCH_INFO
-        cerr << "bestmove (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << ") score " << ((double)(chosenScore)) / 1000.0 << endl;
+        cerr << "bestmove ";
+        printMove(legalMoves.get(0));
+        cerr << " score " << ((double)(chosenScore)) / 1000.0 << endl;
         #endif
 
         end_time = high_resolution_clock::now();
@@ -202,10 +199,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     myMove = legalMoves.get(0);
     transpositionTable.clean(turn+2);
     #if PRINT_SEARCH_INFO
-    cerr << "Playing (" << (legalMoves.get(0) & 7) + 1 << ", " << (legalMoves.get(0) >> 3) + 1 << "). Score: " << ((double)(chosenScore)) / 1000.0 << endl;
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
-    cerr << endl;
+    cerr << "Playing ";
+    printMove(legalMoves.get(0));
+    cerr << ". Score: " << ((double)(chosenScore)) / 1000.0 << endl;
     #endif
 
     game.doMove(myMove, mySide);
@@ -218,10 +216,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
  * @brief Performs a principal variation null-window search.
  * Returns the index of the best move.
 */
-int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
+int Player::getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int s,
+    int depth) {
     int score;
     int bestMove = 0;
-    int alpha = NEG_INFTY;
+    int alpha = -INFTY;
     int beta = INFTY;
 
     for (unsigned int i = 0; i < moves.size; i++) {
@@ -229,12 +228,12 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
         copy.doMove(moves.get(i), s);
         nodes++;
         if (i != 0) {
-            score = -pvs_h(copy, s^1, depth-1, -alpha-1, -alpha);
+            score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
-                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
         }
         else
-            score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
+            score = -pvs(copy, s^1, depth-1, -beta, -alpha);
         // Handle timeouts
         if (score == TIMEOUT)
             return MOVE_BROKEN;
@@ -255,7 +254,7 @@ int Player::pvs(Board &b, MoveList &moves, int &bestScore, int s, int depth) {
  * stores moves which previously caused a beta cutoff, and an internal sorting
  * search of depth 2.
 */
-int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
+int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0) {
         if (otherHeuristic) {
             return evaluater->heuristic2(b, turn+attemptingDepth, s);
@@ -288,7 +287,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
                 Board copy = b.copy();
                 copy.doMove(hashed, s);
                 nodes++;
-                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
 
                 // If we received a timeout signal, propagate it upwards
                 if (score == TIMEOUT)
@@ -303,7 +302,7 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
 
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
-        score = -pvs_h(b, s^1, depth-1, -beta, -alpha);
+        score = -pvs(b, s^1, depth-1, -beta, -alpha);
 
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
@@ -345,12 +344,12 @@ int Player::pvs_h(Board &b, int s, int depth, int alpha, int beta) {
         nodes++;
 
         if (depth > 2 && i != 0) {
-            score = -pvs_h(copy, s^1, depth-1, -alpha-1, -alpha);
+            score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
-                score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
         }
         else
-            score = -pvs_h(copy, s^1, depth-1, -beta, -alpha);
+            score = -pvs(copy, s^1, depth-1, -beta, -alpha);
 
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
@@ -384,7 +383,7 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         Board copy = b.copy();
         copy.doMove(moves.get(i), side);
         nodes++;
-        scores.add(-pvs_h(copy, side^1, depth-1, NEG_INFTY, INFTY));
+        scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
     }
 }
 

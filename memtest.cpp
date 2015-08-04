@@ -8,6 +8,8 @@
 #include "endgame.h"
 #include "eval.h"
 
+using namespace std;
+
 Eval evaluater;
 
 unsigned long long ffo(std::string file);
@@ -207,8 +209,7 @@ unsigned long long ffo(std::string file) {
     cerr << empties << " empty" << endl;
 
     Endgame e;
-    int result = e.solveEndgame(b, lm, side, empties, 100000000, &evaluater);
-    cerr << "Best move: (" << (result & 7) + 1 << ", " << (result >> 3) + 1 << ")" << endl;
+    e.solveEndgame(b, lm, false, side, empties, 100000000, &evaluater);
     return e.nodes;
 }
 

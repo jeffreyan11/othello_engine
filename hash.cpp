@@ -1,6 +1,8 @@
 #include <iostream>
 #include "hash.h"
 
+using namespace std;
+
 Hash::Hash() {
     table = new HashLL* [1000000];
     size = 1000000;

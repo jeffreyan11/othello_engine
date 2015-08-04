@@ -217,7 +217,7 @@ void replaceEnd() {
 
         MoveList lm = tracker.getLegalMoves(side);
         int score = 0;
-        e.solveEndgame(tracker, lm, side, tracker.countEmpty(), 10000000,
+        e.solveEndgame(tracker, lm, false, side, tracker.countEmpty(), 10000000,
             &evaluater, &score);
         // We want everything from black's POV
         if (side == CWHITE)

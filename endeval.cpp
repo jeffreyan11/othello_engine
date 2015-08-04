@@ -229,8 +229,8 @@ void replaceEnd() {
                 if (lm.size == 0)
                     break;
             }*/
-            int best = e.solveEndgame(tracker, lm, side, tracker.countEmpty(),
-                10000000, &evaluater, &score);
+            int best = e.solveEndgame(tracker, lm, false, side,
+                tracker.countEmpty(), 10000000, &evaluater, &score);
 
             game->moves[j] = best;
             tracker.doMove(best, side);

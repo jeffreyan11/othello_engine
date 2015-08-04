@@ -8,7 +8,6 @@
 #include "endgame.h"
 #include "hash.h"
 #include "eval.h"
-using namespace std;
 
 #define USE_OPENING_BOOK false
 
@@ -36,8 +35,9 @@ private:
 
     Move* indexToMove[64];
 
-    int pvs(Board &b, MoveList &moves, int &bestScore, int side, int depth);
-    int pvs_h(Board &b, int side, int depth, int alpha, int beta);
+    int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
+        int depth);
+    int pvs(Board &b, int side, int depth, int alpha, int beta);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
 

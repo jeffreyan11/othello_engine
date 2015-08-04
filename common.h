@@ -4,9 +4,10 @@
 #include <cstdint>
 #include <cstdlib>
 
+#define PRINT_SEARCH_INFO true
+
 typedef uint64_t bitbrd;
 
-const int NEG_INFTY = -(1 << 20);
 const int INFTY = (1 << 20);
 const int MOVE_NULL = 64;
 const int MOVE_BROKEN = -1;
@@ -20,6 +21,7 @@ const uint8_t ALL_NODE = 2;
 int countSetBits(bitbrd i);
 int bitScanForward(bitbrd bb);
 int bitScanReverse(bitbrd bb);
+void printMove(int move);
 
 enum Side { 
     WHITE, BLACK

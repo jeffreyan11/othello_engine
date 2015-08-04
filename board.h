@@ -2,7 +2,6 @@
 #define __BOARD_H__
 
 #include "common.h"
-using namespace std;
 
 #define KOGGE_STONE true
 

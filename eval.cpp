@@ -154,12 +154,12 @@ Eval::~Eval() {
 
 int Eval::heuristic(Board &b, int turn, int s) {
     if(b.count(s) == 0)
-        return NEG_INFTY;
+        return -INFTY;
 
     int score = 0;
 
-    int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
-            + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
+    int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
+            + 3*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
             //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
     if(s == CBLACK)
@@ -178,19 +178,19 @@ int Eval::heuristic(Board &b, int turn, int s) {
     int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
     score += 100 * (30 + (64 - turn)) * (myLM - oppLM) / (oppLM + 1);
-    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
+    score += 100 * (2 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
 }
 
 int Eval::heuristic2(Board &b, int turn, int s) {
     if(b.count(s) == 0)
-        return NEG_INFTY;
+        return -INFTY;
 
     int score = 0;
 
-    int patterns = boardTo24PV(b, turn) + boardToEPV(b, turn)
-            + boardToE2XPV(b, turn) + boardTo33PV(b, turn)
+    int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
+            + 3*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
             //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
     if(s == CBLACK)
@@ -209,7 +209,7 @@ int Eval::heuristic2(Board &b, int turn, int s) {
     int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (10 + (64 - turn) / 4) * (myLM - oppLM);
     score += 100 * (30 + (64 - turn)) * (myLM - oppLM) / (oppLM + 1);
-    score += 100 * (4 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
+    score += 100 * (2 + (64 - turn) / 8) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
 }

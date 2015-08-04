@@ -1,3 +1,4 @@
+#include <iostream>
 #include "common.h"
 
 void swap(MoveList &moves, MoveList &scores, int i, int j);
@@ -89,6 +90,11 @@ int bitScanReverse(bitbrd bb) {
         bb |= bb >> 32;
         return index64[(int)((bb * 0x03f79d71b4cb0a89) >> 58)];
     #endif
+}
+
+// Pretty prints a move in (x, y) form indexed from 1.
+void printMove(int move) {
+    std::cerr << "(" << (move & 7) + 1 << ", " << (move >> 3) + 1 << ")";
 }
 
 void sort(MoveList &moves, MoveList &scores, int left, int right) {

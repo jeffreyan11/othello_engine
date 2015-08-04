@@ -8,7 +8,6 @@
 #include "eval.h"
 
 #define USE_STABILITY false
-#define USE_REGION_PAR true
 #define USE_ALL_TABLE true
 
 struct EndgameStatistics;
@@ -52,8 +51,14 @@ public:
     Endgame();
     ~Endgame();
 
-    int solveEndgame(Board &b, MoveList &moves, int s, int depth, int timeLimit,
-        Eval *eval, int *exactScore = NULL);
+    int solveEndgame(Board &b, MoveList &moves, bool isSorted, int s, int depth,
+        int timeLimit, Eval *eval, int *exactScore = NULL);
+    int solveWLD(Board &b, MoveList &moves, bool isSorted, int s, int depth,
+        int timeLimit, Eval *eval, int *exactScore = NULL);
+    int solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted, int s,
+        int depth, int alpha, int beta, int timeLimit, Eval *eval,
+        int *exactScore = NULL);
+    void resetEGTable();
 };
 
 #endif
