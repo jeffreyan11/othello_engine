@@ -1,6 +1,7 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
+#include <chrono>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -31,6 +32,7 @@ private:
 
     int turn;
     int timeLimit;
+    std::chrono::high_resolution_clock::time_point timeElapsed;
 
     Move* indexToMove[64];
 

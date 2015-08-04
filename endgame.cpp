@@ -1,4 +1,3 @@
-#include <chrono>
 #include <iostream>
 #include "endgame.h"
 
@@ -33,6 +32,8 @@ const int ENDGAME_SORT_DEPTHS[36] = { 0,
 
 const int END_SHALLOW = 12;
 const int MIN_TT_DEPTH = 9;
+
+const int SCORE_TIMEOUT = 65;
 
 struct EndgameStatistics {
     uint64_t hashHits;
@@ -95,6 +96,8 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     nodes = 0;
     egStats->reset();
     evaluater = eval;
+    timeElapsed = high_resolution_clock::now();
+    timeout = timeLimit;
 
     int score;
     int alpha = -64;
@@ -172,12 +175,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         start_time = high_resolution_clock::now();
 
         for (unsigned int i = 0; i < moves.size; i++) {
-            end_time = high_resolution_clock::now();
-            time_span = duration_cast<duration<double>>(end_time-start_time);
-
-            if(time_span.count() * 1000 * moves.size > timeLimit * (i+1))
-                return MOVE_BROKEN;
-
             Board copy = b.copy();
             copy.doMove(moves.get(i), s);
             nodes++;
@@ -189,6 +186,10 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             }
             else
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
+
+            // TODO use information already gathered?
+            if (score == SCORE_TIMEOUT)
+                return MOVE_BROKEN;
 
             cerr << "Searched move: (" << (moves.get(i) & 7) + 1 << ", " << (moves.get(i) >> 3) + 1 << ") | alpha: " << score << endl;
 
@@ -304,6 +305,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         nodes++;
 
         score = -endgameDeep(copy, s^1, depth-1, -beta, -alpha, false);
+        // If we received a timeout signal, propagate it upwards
+        if (score == SCORE_TIMEOUT)
+            return -SCORE_TIMEOUT;
 
         if (score >= beta) {
             egStats->hashMoveCuts++;
@@ -321,6 +325,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         }
 
         score = -endgameDeep(b, s^1, depth, -beta, -alpha, true);
+        // If we received a timeout signal, propagate it upwards
+        if (score == SCORE_TIMEOUT)
+            return -SCORE_TIMEOUT;
 
         if (alpha < score)
             alpha = score;
@@ -369,6 +376,14 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     int tempMove = MOVE_NULL;
     egStats->searchSpaces++;
     for(unsigned int i = 0; i < legalMoves.size; i++) {
+        // Check for a timeout
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> time_span =
+            std::chrono::duration_cast<std::chrono::duration<double>>(
+            end_time-timeElapsed);
+        if (time_span.count() * 1000 > timeout)
+            return -SCORE_TIMEOUT;
+
         //if (legalMoves.get(i) == killer)
         //    continue;
         Board copy = b.copy();
@@ -383,6 +398,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         else
             score = -endgameDeep(copy, s^1, depth-1, -beta, -alpha, false);
 
+        // If we received a timeout signal, propagate it upwards
+        if (score == SCORE_TIMEOUT)
+            return -SCORE_TIMEOUT;
         if (score >= beta) {
             egStats->failHighs++;
             if (i == 0)

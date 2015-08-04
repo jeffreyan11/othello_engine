@@ -81,7 +81,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed) {
 }
 
 int main(int argc, char **argv) {
-    unsigned long long total_nodes = 0;
+    uint64_t total_nodes = 0;
 
     using namespace std::chrono;
     auto start_time = high_resolution_clock::now();
@@ -90,12 +90,16 @@ int main(int argc, char **argv) {
     //cerr << perft(b, 11, CBLACK, false) << endl;
     //cerr << perftu(b, 11, CBLACK, false) << endl;
 
+    // This is a very difficult depth 23 position that
+    // appeared in a test game...
+    //total_nodes += ffo("ffotest/end39.pos");
+
     total_nodes += ffo("ffotest/end40.pos");       // 17.58, 204993915
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
-
+/*
     total_nodes += ffo("ffotest/end45.pos");        // 89.02, 1243682741
     total_nodes += ffo("ffotest/end46.pos");        // 9.35, 79882193
     total_nodes += ffo("ffotest/end47.pos");        // 7.39, 43883052
@@ -113,7 +117,7 @@ int main(int argc, char **argv) {
     total_nodes += ffo("ffotest/end58.pos");
 
     total_nodes += ffo("ffotest/end59.pos");        // 20.84, 23885
-
+*/
     /*Player p(BLACK);
     Player p2(WHITE);
 

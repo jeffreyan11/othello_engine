@@ -1,6 +1,7 @@
 #ifndef __ENDGAME_H__
 #define __ENDGAME_H__
 
+#include <chrono>
 #include "common.h"
 #include "board.h"
 #include "endhash.h"
@@ -25,6 +26,8 @@ private:
 
     EndgameStatistics *egStats;
 
+    std::chrono::high_resolution_clock::time_point timeElapsed;
+    int timeout;
     bool isWLD;
 
     int dispatch(Board &b, int s, int depth, int alpha, int beta);
