@@ -226,7 +226,7 @@ int Eval::end_heuristic(Board &b) {
     score += boardToEPV(b, t);
     score += 3*boardToE2XPV(b, t);
     score += boardTo33PV(b, t);
-    //score += 1024 * (b.getStability(CBLACK) - b.getStability(CWHITE));
+    //score += 64 * (b.getStability(CBLACK) - b.getStability(CWHITE));
     score += 128*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
     return score;

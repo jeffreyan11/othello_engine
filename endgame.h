@@ -7,8 +7,8 @@
 #include "eval.h"
 
 #define USE_STABILITY false
-#define USE_REGION_PAR false
-#define USE_ALL_TABLE false
+#define USE_REGION_PAR true
+#define USE_ALL_TABLE true
 
 struct EndgameStatistics;
 
@@ -27,14 +27,8 @@ private:
 
     bool isWLD;
 
-    #if USE_REGION_PAR
-    int region_parity;
-    #endif
-
     int dispatch(Board &b, int s, int depth, int alpha, int beta);
     int endgameDeep(Board &b, int s, int depth, int alpha, int beta,
-            bool passedLast);
-    int endgameMedium(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
     int endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);
@@ -46,9 +40,6 @@ private:
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
-    /*void rootSearch(Board &b, MoveList &moves, MoveList &scores, int side,
-        int depth);
-    int rootPVS(Board &b, int s, int depth, int alpha, int beta);*/
 
     int nextMoveShallow(int *moves, int *scores, int size, int index);
 

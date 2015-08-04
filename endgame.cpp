@@ -2,17 +2,6 @@
 #include <iostream>
 #include "endgame.h"
 
-const int QUADRANT_ID[64] = {
-1, 1, 1, 1, 2, 2, 2, 2,
-1, 1, 1, 1, 2, 2, 2, 2,
-1, 1, 1, 1, 2, 2, 2, 2,
-1, 1, 1, 1, 2, 2, 2, 2,
-4, 4, 4, 4, 8, 8, 8, 8,
-4, 4, 4, 4, 8, 8, 8, 8,
-4, 4, 4, 4, 8, 8, 8, 8,
-4, 4, 4, 4, 8, 8, 8, 8
-};
-
 const int STAB_THRESHOLD[40] = {
 /*
     64, 64, 64, 64, 64,
@@ -38,16 +27,18 @@ const int STAB_THRESHOLD[40] = {
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 2, 2, 2, 4, 4, 4,
-    6, 6, 8, 8, 10, 10, 10, 12, 12, 12,
+    6, 6, 6, 8, 8, 8, 10, 10, 10, 12,
     12, 12, 12, 12, 12
 };
 
-const int END_MEDIUM = 12;
-const int END_SHLLW = 8;
+const int END_SHALLOW = 12;
+const int MIN_TT_DEPTH = 9;
 
 struct EndgameStatistics {
     uint64_t hashHits;
     uint64_t hashCuts;
+    uint64_t hashMoveAttempts;
+    uint64_t hashMoveCuts;
     uint64_t firstFailHighs;
     uint64_t failHighs;
     uint64_t searchSpaces;
@@ -55,6 +46,8 @@ struct EndgameStatistics {
     void reset() {
         hashHits = 0;
         hashCuts = 0;
+        hashMoveAttempts = 0;
+        hashMoveCuts = 0;
         firstFailHighs = 0;
         failHighs = 0;
         searchSpaces = 0;
@@ -65,7 +58,7 @@ Endgame::Endgame() {
     endgame_table = new EndHash(16000);
     killer_table = new EndHash(8000000);
     #if USE_ALL_TABLE
-    all_table = new EndHash(2000000);
+    all_table = new EndHash(4000000);
     #endif
 
     egStats = new EndgameStatistics();
@@ -103,16 +96,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     egStats->reset();
     evaluater = eval;
 
-    #if USE_REGION_PAR
-    // initialize region parity
-    region_parity = 0;
-    bitbrd empty = ~b.getTaken();
-    while(empty) {
-        region_parity ^= QUADRANT_ID[bitScanForward(empty)];
-        empty &= empty-1;
-    }
-    #endif
-
     int score;
     int alpha = -64;
     int beta = 64;
@@ -147,9 +130,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         Board copy = b.copy();
         copy.doMove(moves.get(i), s);
         nodes++;
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[moves.get(i)];
-        #endif
 
         if (i != 0) {
             score = -dispatch(copy, s^1, depth-1, -alpha-1, -alpha);
@@ -159,9 +139,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
         else
             score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[moves.get(i)];
-        #endif
         if (alpha < score) {
             alpha = score;
             bestIndex = i;
@@ -204,9 +181,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
             Board copy = b.copy();
             copy.doMove(moves.get(i), s);
             nodes++;
-            #if USE_REGION_PAR
-            region_parity ^= QUADRANT_ID[moves.get(i)];
-            #endif
 
             if (i != 0) {
                 score = -dispatch(copy, s^1, depth-1, -alpha-1, -alpha);
@@ -217,9 +191,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
                 score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
             cerr << "Searched move: (" << (moves.get(i) & 7) + 1 << ", " << (moves.get(i) >> 3) + 1 << ") | alpha: " << score << endl;
-            #if USE_REGION_PAR
-            region_parity ^= QUADRANT_ID[moves.get(i)];
-            #endif
+
             if (alpha < score) {
                 alpha = score;
                 bestIndex = i;
@@ -240,8 +212,8 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, int s, int depth,
     time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
         (int)((double)nodes / time_span.count()) << endl;
-    cerr << "Hash hits: " << egStats->hashHits << endl;
-    cerr << "Hash cuts: " << egStats->hashCuts << endl;
+    cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
+    cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
     cerr << "Time spent: " << time_span.count() << endl;
 
@@ -277,8 +249,8 @@ int Endgame::dispatch(Board &b, int s, int depth, int alpha, int beta) {
  */
 int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
-    if(depth <= END_MEDIUM)
-        return endgameMedium(b, s, depth, alpha, beta, passedLast);
+    if(depth <= END_SHALLOW)
+        return endgameShallow(b, s, depth, alpha, beta, passedLast);
 
     int score;
     int prevAlpha = alpha;
@@ -311,7 +283,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     #endif
 
     // attempt killer heuristic cutoff, using saved alpha
-    int killer = -1;
+    int killer = MOVE_NULL;
     EndgameEntry *killerEntry = killer_table->get(b, s);
     if(killerEntry != NULL) {
         egStats->hashHits++;
@@ -323,6 +295,23 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         if (alpha < killerEntry->score)
             alpha = killerEntry->score;
         killer = killerEntry->move;
+
+        // Try the move for a cutoff before move generation
+        // Somehow, leaving this in for a re-search later decreases tree size...
+        egStats->hashMoveAttempts++;
+        Board copy = b.copy();
+        copy.doMove(killer, s);
+        nodes++;
+
+        score = -endgameDeep(copy, s^1, depth-1, -beta, -alpha, false);
+
+        if (score >= beta) {
+            egStats->hashMoveCuts++;
+            return beta;
+        }
+        if (alpha < score) {
+            alpha = score;
+        }
     }
 
     MoveList legalMoves = b.getLegalMoves(s);
@@ -338,12 +327,11 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         return alpha;
     }
 
-    // Use a shallow search for move ordering
-    MoveList scores;
-
     MoveList priority;
     // Do better move ordering for PV nodes where alpha != beta - 1
     if (alpha != beta - 1) {
+        // Use a shallow search for move ordering
+        MoveList scores;
         sortSearch(b, legalMoves, scores, s, ENDGAME_SORT_DEPTHS[depth+2]);
         // Restrict opponent's mobility and potential mobility
         for(unsigned int i = 0; i < legalMoves.size; i++) {
@@ -360,6 +348,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
     // Otherwise, we focus more on fastest first for a cheaper fail-high
     else {
+        MoveList scores;
         sortSearch(b, legalMoves, scores, s, ENDGAME_SORT_DEPTHS[depth]);
         // Restrict opponent's mobility and potential mobility
         for(unsigned int i = 0; i < legalMoves.size; i++) {
@@ -377,15 +366,14 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
     sort(legalMoves, priority, 0, legalMoves.size-1);
 
-    int tempMove = -1;
+    int tempMove = MOVE_NULL;
     egStats->searchSpaces++;
     for(unsigned int i = 0; i < legalMoves.size; i++) {
+        //if (legalMoves.get(i) == killer)
+        //    continue;
         Board copy = b.copy();
         copy.doMove(legalMoves.get(i), s);
         nodes++;
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[legalMoves.get(i)];
-        #endif
 
         if (i != 0) {
             score = -endgameDeep(copy, s^1, depth-1, -alpha-1, -alpha, false);
@@ -395,9 +383,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         else
             score = -endgameDeep(copy, s^1, depth-1, -beta, -alpha, false);
 
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[legalMoves.get(i)];
-        #endif
         if (score >= beta) {
             egStats->failHighs++;
             if (i == 0)
@@ -412,7 +397,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
 
     // Best move with exact score if alpha < score < beta
-    if (tempMove != -1 && prevAlpha < alpha && alpha < beta)
+    if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgame_table->add(b, alpha, tempMove, s, depth);
     #if USE_ALL_TABLE
     if (alpha <= prevAlpha)
@@ -423,127 +408,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 }
 
 /**
- * @brief A function for the endgame solver, used when a medium number of
- * squares remain. Sort searching is no longer used here, and the MoveList is
- * dropped in favor of a faster array on the stack.
- */
-int Endgame::endgameMedium(Board &b, int s, int depth, int alpha, int beta,
-        bool passedLast) {
-    if(depth <= END_SHLLW)
-        return endgameShallow(b, s, depth, alpha, beta, passedLast);
-
-    int score;
-    int prevAlpha = alpha;
-
-    // play best move, if recorded
-    EndgameEntry *exactEntry = endgame_table->get(b, s);
-    if(exactEntry != NULL) {
-        return exactEntry->score;
-    }
-
-    #if USE_STABILITY
-    if(alpha >= STAB_THRESHOLD[depth]) {
-        score = 64 - 2*b.getStability(s^1);
-        if(score <= alpha) {
-            return score;
-        }
-    }
-    #endif
-
-    // attempt killer heuristic cutoff, using saved alpha
-    int killer = -1;
-    EndgameEntry *killerEntry = killer_table->get(b, s);
-    if(killerEntry != NULL) {
-        egStats->hashHits++;
-        if (killerEntry->score >= beta) {
-            egStats->hashCuts++;
-            return beta;
-        }
-        // Fail high is lower bound on score so this is valid
-        if (alpha < killerEntry->score)
-            alpha = killerEntry->score;
-        killer = killerEntry->move;
-    }
-
-    bitbrd legal = b.getLegal(s);
-    if(!legal) {
-        if(passedLast) {
-            return (2 * b.count(s) - 64 + depth);
-        }
-
-        score = -endgameMedium(b, s^1, depth, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
-    }
-
-    // create array of legal moves
-    int moves[END_MEDIUM];
-    int priority[END_MEDIUM];
-    int n = 0;
-
-    do {
-        int m = bitScanForward(legal);
-        Board copy = b.copy();
-        copy.doMove(m, s);
-
-        priority[n] = SQ_VAL[m];
-        if(m == killer)
-            priority[n] += 1 << 16;
-        priority[n] -= 16 * copy.numLegalMoves(s^1);
-
-        moves[n] = m;
-        legal &= legal-1; n++;
-    } while(legal);
-
-    egStats->searchSpaces++;
-    int tempMove = -1;
-    // search all moves
-    int i = 0;
-    for (int move = nextMoveShallow(moves, priority, n, i); move != MOVE_NULL;
-             move = nextMoveShallow(moves, priority, n, ++i)) {
-        Board copy = b.copy();
-        copy.doMove(move, s);
-        nodes++;
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[move];
-        #endif
-
-        if (i != 0) {
-            score = -endgameMedium(copy, s^1, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta)
-                score = -endgameMedium(copy, s^1, depth-1, -beta, -alpha, false);
-        }
-        else
-            score = -endgameMedium(copy, s^1, depth-1, -beta, -alpha, false);
-
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[move];
-        #endif
-        if (score >= beta) {
-            egStats->failHighs++;
-            if (i == 0)
-                egStats->firstFailHighs++;
-            killer_table->add(b, beta, move, s, depth);
-            return beta;
-        }
-        if (alpha < score) {
-            alpha = score;
-            tempMove = move;
-        }
-    }
-
-    // Best move with exact score if alpha < score < beta
-    if (tempMove != -1 && prevAlpha < alpha && alpha < beta)
-        endgame_table->add(b, alpha, tempMove, s, depth);
-
-    return alpha;
-}
-
-/**
- * @brief Endgame solver, to be used with about 8 or less empty squares.
- * Here, it is no longer efficient to use a hash table or heavy sorting.
+ * @brief Endgame solver, to be used with about 12 or less empty squares.
+ * Here, it is no longer efficient to use heavy sorting.
+ * The hash table is used until about depth 9.
  * Fastest first is used above depth 6, otherwise, moves are just sorted by
  * hole parity.
  */
@@ -552,7 +419,14 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     if(depth == 4)
         return endgame4(b, s, alpha, beta, passedLast);
 
+    // play best move, if recorded
+    EndgameEntry *exactEntry = endgame_table->get(b, s);
+    if(exactEntry != NULL) {
+        return exactEntry->score;
+    }
+
     int score;
+    int prevAlpha = alpha;
 
     #if USE_STABILITY
     if(alpha >= STAB_THRESHOLD[depth]) {
@@ -562,6 +436,38 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         }
     }
     #endif
+
+    #if USE_ALL_TABLE
+    if (depth >= MIN_TT_DEPTH) {
+        EndgameEntry *allEntry = all_table->get(b, s);
+        if(allEntry != NULL) {
+            if (allEntry->score <= alpha)
+                return alpha;
+            if (beta > allEntry->score)
+                beta = allEntry->score;
+        }
+    }
+    #endif
+
+    // attempt killer heuristic cutoff, using saved alpha
+    int killer = MOVE_NULL;
+    if (depth >= MIN_TT_DEPTH) {
+        EndgameEntry *killerEntry = killer_table->get(b, s);
+        if(killerEntry != NULL) {
+            egStats->hashHits++;
+            if (killerEntry->score >= beta) {
+                egStats->hashCuts++;
+                return beta;
+            }
+            // Fail high is lower bound on score so this is valid
+            if (alpha < killerEntry->score)
+                alpha = killerEntry->score;
+            if (killerEntry->depth >= 10) {
+                egStats->hashMoveAttempts++;
+                killer = killerEntry->move;
+            }
+        }
+    }
 
     bitbrd legal = b.getLegal(s);
     if(!legal) {
@@ -577,42 +483,24 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     }
 
     // create array of legal moves
-    int moves[END_SHLLW];
-    int priority[END_SHLLW];
+    int moves[END_SHALLOW];
+    int priority[END_SHALLOW];
     int n = 0;
 
     bitbrd empty = ~b.getTaken();
-    #if USE_REGION_PAR
-    if(depth < 5 && region_parity) {
-        do {
-            moves[n] = bitScanForward(legal);
+    do {
+        moves[n] = bitScanForward(legal);
+        priority[n] = SQ_VAL[moves[n]];
+        if(moves[n] == killer)
+            priority[n] += 1 << 16;
 
-            int p = SQ_VAL[moves[n]];
-            if(!(NEIGHBORS[moves[n]] & empty))
-                p += 64;
-            if(QUADRANT_ID[moves[n]] & region_parity)
-                p += 1 << 15;
-            priority[n] = p;
+        if(!(NEIGHBORS[moves[n]] & empty))
+            priority[n] += 64;
 
-            legal &= legal-1; n++;
-        } while(legal);
-    }
-    else {
-    #endif
-        do {
-            moves[n] = bitScanForward(legal);
-            priority[n] = SQ_VAL[moves[n]];
+        legal &= legal-1; n++;
+    } while(legal);
 
-            if(!(NEIGHBORS[moves[n]] & empty))
-                priority[n] += 64;
-
-            legal &= legal-1; n++;
-        } while(legal);
-    #if USE_REGION_PAR
-    }
-    #endif
-
-    if(depth > 6) {
+    if(depth >= 7) {
         for(int i = 0; i < n; i++) {
             Board copy = b.copy();
             copy.doMove(moves[i], s);
@@ -624,15 +512,12 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     // search all moves
     egStats->searchSpaces++;
     int i = 0;
+    int tempMove = MOVE_NULL;
     for (int move = nextMoveShallow(moves, priority, n, i); move != MOVE_NULL;
              move = nextMoveShallow(moves, priority, n, ++i)) {
         Board copy = b.copy();
         copy.doMove(move, s);
         nodes++;
-
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[move];
-        #endif
 
         if (i != 0) {
             score = -endgameShallow(copy, s^1, depth-1, -alpha-1, -alpha, false);
@@ -644,18 +529,29 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             score = -endgameShallow(copy, s^1, depth-1, -beta, -alpha, false);
         }
 
-        #if USE_REGION_PAR
-        region_parity ^= QUADRANT_ID[move];
-        #endif
         if (score >= beta) {
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
+            if (move == killer)
+                egStats->hashMoveCuts++;
+            if (depth >= MIN_TT_DEPTH)
+                killer_table->add(b, beta, move, s, depth);
             return beta;
         }
-        if (alpha < score)
+        if (alpha < score) {
             alpha = score;
+            tempMove = move;
+        }
     }
+
+    // Best move with exact score if alpha < score < beta
+    if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
+        endgame_table->add(b, alpha, tempMove, s, depth);
+    #if USE_ALL_TABLE
+    if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
+        all_table->add(b, alpha, MOVE_NULL, s, depth);
+    #endif
 
     return alpha;
 }
@@ -911,70 +807,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
     return alpha;
 }
-/*
-// Performs an alpha-beta search on each legal move to get a score.
-void Endgame::rootSearch(Board &b, MoveList &moves, MoveList &scores, int side,
-        int depth) {
-    for (unsigned int i = 0; i < moves.size; i++) {
-        Board copy = b.copy();
-        copy.doMove(moves.get(i), side);
-        scores.add(-rootPVS(copy, side^1, depth-1, NEG_INFTY, INFTY));
-    }
-}
 
-// Helper function for the alpha-beta search.
-int Endgame::rootPVS(Board &b, int s, int depth, int alpha, int beta) {
-    if (depth <= 0) {
-        return evaluater->heuristic(b, 60, s);
-    }
-
-    int score;
-
-    MoveList legalMoves = b.getLegalMoves(s);
-    if (legalMoves.size <= 0) {
-        score = -rootPVS(b, s^1, depth-1, -beta, -alpha);
-
-        if (alpha < score)
-            alpha = score;
-
-        return alpha;
-    }
-
-    if (depth >= 2) {
-        MoveList scores;
-        if (depth >= 9)
-            rootSearch(b, legalMoves, scores, s, 4);
-        else if (depth >= 5)
-            rootSearch(b, legalMoves, scores, s, 2);
-        else if (depth >= 4)
-            rootSearch(b, legalMoves, scores, s, 0);
-        else {
-            for (unsigned int i = 0; i < legalMoves.size; i++)
-                scores.add(SQ_VAL[legalMoves.get(i)]);
-        }
-        sort(legalMoves, scores, 0, legalMoves.size-1);
-    }
-
-    for (unsigned int i = 0; i < legalMoves.size; i++) {
-        Board copy = b.copy();
-        copy.doMove(legalMoves.get(i), s);
-
-        if (depth > 2 && i != 0) {
-            score = -rootPVS(copy, s^1, depth-1, -alpha-1, -alpha);
-            if (alpha < score && score < beta)
-                score = -rootPVS(copy, s^1, depth-1, -beta, -alpha);
-        }
-        else
-            score = -rootPVS(copy, s^1, depth-1, -beta, -alpha);
-
-        if (alpha < score)
-            alpha = score;
-        if (alpha >= beta)
-            break;
-    }
-    return alpha;
-}
-*/
 //--------------------------------Utilities-------------------------------------
 
 // Retrieves the next move with the highest score, starting from index using a

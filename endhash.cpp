@@ -25,14 +25,14 @@ void EndHash::add(Board &b, int score, int move, int ptm, int depth) {
     unsigned int index = (unsigned int) (h % size);
     EndgameEntry *node = table[index];
     if (node == NULL) {
-        table[index] = new EndgameEntry(b.getTaken(), b.getBits(CBLACK), score,
-            move, ptm, depth);
+        table[index] = new EndgameEntry(b.getBits(CWHITE), b.getBits(CBLACK),
+            score, move, ptm, depth);
         keys++;
         return;
     }
     // Replacement strategy
     else if (depth + 2 >= node->depth) {
-        node->setEntry(b.getTaken(), b.getBits(CBLACK), score, move, ptm, depth);
+        node->setEntry(b.getBits(CWHITE), b.getBits(CBLACK), score, move, ptm, depth);
     }
 }
 
@@ -45,7 +45,7 @@ EndgameEntry *EndHash::get(Board &b, int ptm) {
     if (node == NULL)
         return NULL;
 
-    if (node->taken == b.getTaken() && node->black == b.getBits(CBLACK)
+    if (node->white == b.getBits(CWHITE) && node->black == b.getBits(CBLACK)
                 && node->ptm == (uint8_t) ptm)
         return node;
 

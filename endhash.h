@@ -5,24 +5,19 @@
 #include "common.h"
 
 struct EndgameEntry {
-    bitbrd taken;
+    bitbrd white;
     bitbrd black;
     int8_t score;
     uint8_t move;
     uint8_t ptm;
     uint8_t depth;
 
-    EndgameEntry(bitbrd t, bitbrd b, int s, int m, int p, int d) {
-        taken = t;
-        black = b;
-        score = (int8_t) s;
-        move = (uint8_t) m;
-        ptm = (uint8_t) p;
-        depth = (uint8_t) d;
+    EndgameEntry(bitbrd w, bitbrd b, int s, int m, int p, int d) {
+        setEntry(w, b, s, m, p, d);
     }
 
-    void setEntry(bitbrd t, bitbrd b, int s, int m, int p, int d) {
-        taken = t;
+    void setEntry(bitbrd w, bitbrd b, int s, int m, int p, int d) {
+        white = w;
         black = b;
         score = (int8_t) s;
         move = (uint8_t) m;
