@@ -117,7 +117,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         return NULL;
     }
 
-    int myMove = -1;
+    int myMove = MOVE_BROKEN;
 
     // endgame solver
     if(empties <= endgameDepth &&

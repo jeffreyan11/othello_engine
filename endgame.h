@@ -29,6 +29,8 @@ private:
     int timeout;
     bool isWLD;
 
+    int endgameAspiration(Board &b, MoveList &moves, int s, int depth,
+        int alpha, int beta, int &exactScore);
     int dispatch(Board &b, int s, int depth, int alpha, int beta);
     int endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             bool passedLast);

@@ -96,16 +96,16 @@ int main(int argc, char **argv) {
     // appeared in a test game...
     //total_nodes += ffo("ffotest/end39.pos");
 
-    total_nodes += ffo("ffotest/end40.pos");       // 17.58, 204993915
+    total_nodes += ffo("ffotest/end40.pos");       // 16.61, 189520557
     total_nodes += ffo("ffotest/end41.pos");
     total_nodes += ffo("ffotest/end42.pos");
     total_nodes += ffo("ffotest/end43.pos");
     total_nodes += ffo("ffotest/end44.pos");
-/*
-    total_nodes += ffo("ffotest/end45.pos");        // 89.02, 1243682741
-    total_nodes += ffo("ffotest/end46.pos");        // 9.35, 79882193
-    total_nodes += ffo("ffotest/end47.pos");        // 7.39, 43883052
-    total_nodes += ffo("ffotest/end48.pos");        // 61.50, 822791669
+
+    total_nodes += ffo("ffotest/end45.pos");        // 88.97, 1219082258
+    total_nodes += ffo("ffotest/end46.pos");        // 9.28, 75989062
+    total_nodes += ffo("ffotest/end47.pos");        // 7.40, 43155904
+    total_nodes += ffo("ffotest/end48.pos");        // 58.55, 769328924
     total_nodes += ffo("ffotest/end49.pos");
 
     total_nodes += ffo("ffotest/end50.pos");
@@ -118,8 +118,8 @@ int main(int argc, char **argv) {
     total_nodes += ffo("ffotest/end57.pos");
     total_nodes += ffo("ffotest/end58.pos");
 
-    total_nodes += ffo("ffotest/end59.pos");        // 20.84, 23885
-*/
+    total_nodes += ffo("ffotest/end59.pos");        // 22.54, 23692
+
     /*Player p(BLACK);
     Player p2(WHITE);
 
@@ -139,6 +139,7 @@ int main(int argc, char **argv) {
 
 unsigned long long ffo(std::string file) {
     std::string line;
+    std::string ffostring;
     std::ifstream cfile(file);
     char board[64];
 
@@ -149,6 +150,8 @@ unsigned long long ffo(std::string file) {
             board[i] = read[i];
 
         getline(cfile, line);
+        getline(cfile, ffostring);
+        cerr << ffostring << endl;
     }
 
     const char *read_color = line.c_str();
@@ -210,6 +213,7 @@ unsigned long long ffo(std::string file) {
 
     Endgame e;
     e.solveEndgame(b, lm, false, side, empties, 100000000, &evaluater);
+    cerr << endl;
     return e.nodes;
 }
 

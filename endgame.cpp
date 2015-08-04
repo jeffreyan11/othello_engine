@@ -35,6 +35,7 @@ const int END_SHALLOW = 12;
 const int MIN_TT_DEPTH = 9;
 
 const int SCORE_TIMEOUT = 65;
+const int MOVE_FAIL_LOW = -1;
 
 struct EndgameStatistics {
     uint64_t hashHits;
@@ -139,6 +140,8 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         printMove(entry->move);
         cerr << " Score: " << (int) (entry->score) << endl;
         #endif
+        if (exactScore != NULL)
+            *exactScore = entry->score;
         return entry->move;
     }
 
@@ -154,12 +157,9 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     timeElapsed = high_resolution_clock::now();
     timeout = timeLimit;
 
-    int score;
-    int bestIndex = -1;
-
+    MoveList scores;
     // Initial sorting of moves
-    if (!isSorted) {
-        MoveList scores;
+    if (!isSorted && depth > 11) {
         if (depth > 23)
             sortSearch(b, moves, scores, s, 12);
         else if (depth > 21)
@@ -170,7 +170,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
             sortSearch(b, moves, scores, s, 6);
         else if (depth > 15)
             sortSearch(b, moves, scores, s, 4);
-        else if (depth > 11)
+        else
             sortSearch(b, moves, scores, s, 2);
         sort(moves, scores, 0, moves.size-1);
         end_time = high_resolution_clock::now();
@@ -178,15 +178,86 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         #if PRINT_SEARCH_INFO
         cerr << "Sort search took: " << time_span.count() << " sec" << endl;
         #endif
-        for (unsigned int i = 0; i < moves.size; i++) {
-            cerr << "Move: ";
-            printMove(moves.get(i));
-            cerr << " Score: " << scores.get(i) << endl;
-        }
+        cerr << "PV: ";
+        printMove(moves.get(0));
+        cerr << " Score: " << scores.get(0) / 800 << endl;
     }
 
     start_time = high_resolution_clock::now();
 
+    // Playing with aspiration windows...
+    int score;
+    int aspAlpha = alpha;
+    int aspBeta = beta;
+    int bestMove = MOVE_BROKEN;
+    if (!isSorted && depth > 11) {
+        aspAlpha = max(scores.get(0) / 800 - 8, alpha);
+        aspBeta = min(scores.get(0) / 800 + 8, beta);
+    }
+    while (true) {
+        // Try a search
+        bestMove = endgameAspiration(b, moves, s, depth, aspAlpha, aspBeta,
+            score);
+        // If we got broken out
+        if (bestMove == MOVE_BROKEN)
+            return MOVE_BROKEN;
+        // If we failed low. This is really bad :(
+        if (bestMove == MOVE_FAIL_LOW && score > alpha) {
+            // We were < than the lower bound, so this is the new upper bound
+            aspBeta = score + 1;
+            // Using 8 wide windows for now...
+            aspAlpha = max(score - 7, alpha);
+        }
+        // If we failed high.
+        else if (score >= aspBeta && score < beta) {
+            // We were > than the upper bound, so this is the new lower bound
+            aspAlpha = score - 1;
+            // Using 8 wide windows for now...
+            aspBeta = min(score + 7, beta);
+        }
+        // Otherwise we are done
+        else {
+            break;
+        }
+    }
+
+    #if PRINT_SEARCH_INFO
+    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
+    cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
+    #if USE_ALL_TABLE
+    cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
+    #endif
+
+    end_time = high_resolution_clock::now();
+    time_span = duration_cast<duration<double>>(end_time-start_time);
+    cerr << "Nodes searched: " << nodes << " | NPS: " <<
+        (int)((double)nodes / time_span.count()) << endl;
+    cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
+    cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
+    cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
+    cerr << "Time spent: " << time_span.count() << endl;
+    cerr << "Best move: ";
+    // If we failed low on the bounds we were given, that isn't our business
+    if (bestMove == MOVE_FAIL_LOW)
+        cerr << "N/A";
+    else
+        printMove(bestMove);
+    cerr << " Score: " << score << endl;
+    #endif
+
+    if (exactScore != NULL)
+        *exactScore = score;
+    return bestMove;
+}
+
+int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
+    int alpha, int beta, int &exactScore) {
+    #if PRINT_SEARCH_INFO
+    cerr << "Aspiration search: [" << alpha << ", " << beta << "]" << endl;
+    #endif
+    int score;
+    // If this doesn't change, we failed low
+    int bestIndex = MOVE_FAIL_LOW;
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = b.copy();
         copy.doMove(moves.get(i), s);
@@ -205,7 +276,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
             #if PRINT_SEARCH_INFO
             cerr << "Breaking out of endgame solver." << endl;
             #endif
-            if (bestIndex != -1 && alpha > 0)
+            if (bestIndex != MOVE_FAIL_LOW && alpha > 0)
                 return moves.get(bestIndex);
             else
                 return MOVE_BROKEN;
@@ -225,28 +296,9 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
             break;
     }
 
-    #if PRINT_SEARCH_INFO
-    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
-    cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
-    #if USE_ALL_TABLE
-    cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
-    #endif
-
-    end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(end_time-start_time);
-    cerr << "Nodes searched: " << nodes << " | NPS: " <<
-        (int)((double)nodes / time_span.count()) << endl;
-    cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
-    cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
-    cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
-    cerr << "Time spent: " << time_span.count() << endl;
-    cerr << "Best move: ";
-    printMove(moves.get(bestIndex));
-    cerr << " Score: " << alpha << endl;
-    #endif
-
-    if (exactScore != NULL)
-        *exactScore = alpha;
+    exactScore = alpha;
+    if (bestIndex == MOVE_FAIL_LOW)
+        return MOVE_FAIL_LOW;
     return moves.get(bestIndex);
 }
 

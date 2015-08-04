@@ -10,7 +10,7 @@ typedef uint64_t bitbrd;
 
 const int INFTY = (1 << 20);
 const int MOVE_NULL = 64;
-const int MOVE_BROKEN = -1;
+const int MOVE_BROKEN = -2;
 const int OPENING_NOT_FOUND = -3;
 const int CBLACK = 1;
 const int CWHITE = 0;
