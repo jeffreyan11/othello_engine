@@ -58,10 +58,13 @@ struct EndgameStatistics {
 };
 
 Endgame::Endgame() {
-    endgame_table = new EndHash(16000);
-    killer_table = new EndHash(8000000);
+    // 16384 entries
+    endgame_table = new EndHash(14);
+    // 2^23 entries
+    killer_table = new EndHash(23);
     #if USE_ALL_TABLE
-    all_table = new EndHash(4000000);
+    // 2^22 entries
+    all_table = new EndHash(22);
     #endif
 
     egStats = new EndgameStatistics();

@@ -1,9 +1,14 @@
 #include <iostream>
 #include "endhash.h"
 
-EndHash::EndHash(int isize) {
-    table = new EndgameEntry* [isize];
-    size = isize;
+// Creates a endgame hashtable, with argument in number of bits for the bitmask
+// The table will have 2^bits entries
+EndHash::EndHash(int bits) {
+    size = 1 << bits;
+    bitMask = 1;
+    for (int i = 0; i < bits - 1; i++)
+        bitMask |= bitMask << 1;
+    table = new EndgameEntry* [size];
     for (int i = 0; i < size; i++) {
         table[i] = NULL;
     }
@@ -22,7 +27,7 @@ EndHash::~EndHash() {
 // Assumes that this key has been checked with get and is not in the table.
 void EndHash::add(Board &b, int score, int move, int ptm, int depth) {
     uint32_t h = hash(b);
-    unsigned int index = (unsigned int) (h % size);
+    unsigned int index = (unsigned int) (h & bitMask);
     EndgameEntry *node = table[index];
     if (node == NULL) {
         table[index] = new EndgameEntry(b.getBits(CWHITE), b.getBits(CBLACK),
@@ -39,7 +44,7 @@ void EndHash::add(Board &b, int score, int move, int ptm, int depth) {
 // Get the move, if any, associated with a board b and player to move.
 EndgameEntry *EndHash::get(Board &b, int ptm) {
     uint32_t h = hash(b);
-    unsigned int index = (unsigned int) (h % size);
+    unsigned int index = (unsigned int) (h & bitMask);
     EndgameEntry *node = table[index];
 
     if (node == NULL)

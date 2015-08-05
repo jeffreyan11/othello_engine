@@ -31,13 +31,14 @@ class EndHash {
 private:
     EndgameEntry **table;
     int size;
+    uint32_t bitMask;
 
     uint32_t hash(Board &b);
 
 public:
     int keys;
 
-    EndHash(int isize);
+    EndHash(int bits);
     ~EndHash();
 
     void add(Board &b, int score, int move, int ptm, int depth);
