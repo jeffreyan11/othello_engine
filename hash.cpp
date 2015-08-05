@@ -40,8 +40,7 @@ Hash::~Hash() {
 void Hash::add(Board &b, int score, int move, int ptm, int turn,
         int depth, uint8_t nodeType) {
     keys++;
-    uint32_t h = hash(b);
-    unsigned int index = (unsigned int)(h % size);
+    uint32_t index = b.getHashCode() % size;
     HashLL *node = table[index];
     if(node == NULL) {
         table[index] = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move,
@@ -68,8 +67,7 @@ void Hash::add(Board &b, int score, int move, int ptm, int turn,
  * @brief Get the move, if any, associated with a board b and player to move.
 */
 BoardData *Hash::get(Board &b, int ptm) {
-    uint32_t h = hash(b);
-    unsigned int index = (unsigned int)(h % size);
+    uint32_t index = b.getHashCode() % size;
     HashLL *node = table[index];
 
     if(node == NULL)
@@ -101,22 +99,6 @@ void Hash::clean(int turn) {
                 break;
         }
     }
-}
-
-/**
- * @brief Hashes a board position using the FNV hashing algorithm.
-*/
-uint32_t Hash::hash(Board &b) {
-    uint32_t h = 2166136261UL;
-    h ^= b.getTaken() & 0xFFFFFFFF;
-    h *= 16777619;
-    h ^= (b.getTaken() >> 32);
-    h *= 16777619;
-    h ^= b.getBits(CBLACK) & 0xFFFFFFFF;
-    h *= 16777619;
-    h ^= (b.getBits(CBLACK) >> 32);
-    h *= 16777619;
-    return h;
 }
 
 void Hash::test() {

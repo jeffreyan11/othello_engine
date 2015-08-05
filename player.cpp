@@ -71,7 +71,7 @@ Player::~Player() {
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(msLeft != -1) {
-        int movesLeft = (turn > 20) ? (64 - turn) : (64 - 20);
+        int movesLeft = (turn > 12) ? (64 - turn) : (64 - 12);
         timeLimit = 2 * msLeft / movesLeft;
     }
     else {

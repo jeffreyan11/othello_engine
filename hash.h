@@ -61,8 +61,6 @@ private:
     HashLL **table;
     int size;
 
-    uint32_t hash(Board &b);
-
 public:
     int keys;
     void test();
