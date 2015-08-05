@@ -60,7 +60,6 @@ public:
     int solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted, int s,
         int depth, int alpha, int beta, int timeLimit, Eval *eval,
         int *exactScore = NULL);
-    void resetEGTable();
 };
 
 #endif

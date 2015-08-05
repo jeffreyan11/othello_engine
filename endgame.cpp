@@ -120,9 +120,7 @@ int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
             cerr << "Game is win" << endl;
         }
     }
-    // We must delete "exact" score entries since they are not actually exact.
-    // TODO do we really need to?
-    //resetEGTable();
+
     return bestMove;
 }
 
@@ -196,6 +194,10 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     if (!isSorted && depth > 11) {
         aspAlpha = max(scores.get(0) / 600 - 4, alpha);
         aspBeta = min(scores.get(0) / 600 + 4, beta);
+        if (aspAlpha > beta)
+            aspAlpha = beta - 2;
+        if (aspBeta < alpha)
+            aspBeta = alpha + 2;
     }
     while (true) {
         // Try a search
@@ -286,8 +288,10 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
             #if PRINT_SEARCH_INFO
             cerr << "Breaking out of endgame solver." << endl;
             #endif
-            if (bestIndex != MOVE_FAIL_LOW && alpha > 0)
+            if (bestIndex != MOVE_FAIL_LOW && alpha > 0) {
+                exactScore = alpha;
                 return bestIndex;
+            }
             else
                 return MOVE_BROKEN;
         }
@@ -308,12 +312,6 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
 
     exactScore = alpha;
     return bestIndex;
-}
-
-// Resets the exact scores hash table
-void Endgame::resetEGTable() {
-    delete endgame_table;
-    endgame_table = new EndHash(16000);
 }
 
 // From root, this function chooses the correct helper to call.
@@ -829,13 +827,13 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
  */
 int Endgame::endgame1(Board &b, int s, int alpha, int legalMove) {
     // Get a stand pat score
-    int score = 2 * b.count(s) - 64;
+    int score = 2 * b.count(s) - 63;
 
     bitbrd changeMask = b.getDoMove(legalMove, s);
     nodes++;
     // If the player "s" can move, calculate final score
     if (changeMask) {
-        score += 2 * countSetBits(changeMask) + 2;
+        score += 2 * countSetBits(changeMask) + 1;
     }
     // Otherwise, it is the opponent's move. If the opponent can stand pat,
     // we don't need to calculate the final score.
@@ -843,11 +841,11 @@ int Endgame::endgame1(Board &b, int s, int alpha, int legalMove) {
         bitbrd otherMask = b.getDoMove(legalMove, s^1);
         nodes++;
         if (otherMask)
-            score -= 2 * countSetBits(otherMask);
+            score -= 2 * countSetBits(otherMask) + 1;
     }
     // If both players passed, the empty square should not count against us
-    else
-        score++;
+    //else
+    //    score++;
 
     return score;
 }
