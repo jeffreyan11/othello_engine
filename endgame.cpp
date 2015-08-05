@@ -26,8 +26,8 @@ const int STAB_THRESHOLD[40] = {
 
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 2, 2, 2, 4, 4, 4,
-    6, 6, 6, 8, 8, 8, 10, 10, 10, 12,
+    0, 0, 0, 0, 2, 2, 2, 2, 4, 4,
+    4, 6, 6, 6, 8, 8, 8, 10, 10, 10,
     12, 12, 12, 12, 12
 };
 
@@ -430,7 +430,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         // Use a shallow search for move ordering
         MoveList scores;
         sortSearch(b, legalMoves, scores, s, ENDGAME_SORT_DEPTHS[depth+2]);
-        // Restrict opponent's mobility and potential mobility
         for(unsigned int i = 0; i < legalMoves.size; i++) {
             int m = legalMoves.get(i);
             Board copy = b.copy();
@@ -608,7 +607,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         legal &= legal-1; n++;
     } while(legal);
 
-    if(depth >= 7) {
+    if (depth >= 7) {
         for(int i = 0; i < n; i++) {
             Board copy = b.copy();
             copy.doMove(moves[i], s);
