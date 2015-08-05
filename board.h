@@ -62,6 +62,10 @@ class Board {
 private:
     bitbrd pieces[2];
 
+    // 16 x 256 zobrist table array
+    static uint32_t **zobristTable;
+    static uint32_t **initZobristTable();
+
     bitbrd northFill(int index, bitbrd self, bitbrd pos);
     bitbrd southFill(int index, bitbrd self, bitbrd pos);
     bitbrd eastFill(int index, bitbrd self, bitbrd pos);
@@ -77,6 +81,8 @@ public:
     ~Board();
     Board copy();
     Board *dynamicCopy();
+
+    uint32_t getHashCode();
 
     bool checkMove(int index, int side);
     void doMove(int index, int side);

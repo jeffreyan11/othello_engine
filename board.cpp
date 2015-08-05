@@ -1,5 +1,6 @@
 #include "board.h"
 #include <iostream>
+#include <random>
 
 const bitbrd NORTHRAY[64] = {
 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
@@ -315,6 +316,34 @@ const int BOARD_REGIONS[64] = {
 7, 7, 8, 8, 8, 8, 9, 9,
 7, 7, 8, 8, 8, 8, 9, 9
 };
+
+// Initialize the zobrist table
+uint32_t **Board::initZobristTable() {
+    std::mt19937 rng (61280152908);
+    uint32_t **table = new uint32_t *[16];
+    for (int i = 0; i < 16; i++)
+        table[i] = new uint32_t[256];
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 256; j++) {
+            table[i][j] = rng();
+        }
+    }
+
+    return table;
+}
+
+uint32_t **Board::zobristTable = Board::initZobristTable();
+
+uint32_t Board::getHashCode() {
+    // A clever hack borrowed from Richard Delorme, to avoid shifting and
+    // bitwise and-ing everything
+    const uint8_t *hashStrings = (const uint8_t *) (this);
+    uint32_t hash = 0;
+    for (int i = 0; i < 16; i++) {
+        hash ^= zobristTable[i][hashStrings[i]];
+    }
+    return hash;
+}
 
 /**
  * @brief Make a 8x8 othello board and initialize it to the standard setup.

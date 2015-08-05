@@ -33,8 +33,6 @@ private:
     int size;
     uint32_t bitMask;
 
-    uint32_t hash(Board &b);
-
 public:
     int keys;
 
