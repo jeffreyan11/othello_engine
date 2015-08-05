@@ -180,7 +180,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         #endif
         cerr << "PV: ";
         printMove(moves.get(0));
-        cerr << " Score: " << scores.get(0) / 800 << endl;
+        cerr << " Score: " << scores.get(0) / 600 << endl;
     }
 
     start_time = high_resolution_clock::now();
@@ -189,20 +189,20 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     int score;
     int aspAlpha = alpha;
     int aspBeta = beta;
-    int bestMove = MOVE_BROKEN;
+    int bestIndex = MOVE_FAIL_LOW;
     if (!isSorted && depth > 11) {
-        aspAlpha = max(scores.get(0) / 800 - 8, alpha);
-        aspBeta = min(scores.get(0) / 800 + 8, beta);
+        aspAlpha = max(scores.get(0) / 600 - 4, alpha);
+        aspBeta = min(scores.get(0) / 600 + 4, beta);
     }
     while (true) {
         // Try a search
-        bestMove = endgameAspiration(b, moves, s, depth, aspAlpha, aspBeta,
+        bestIndex = endgameAspiration(b, moves, s, depth, aspAlpha, aspBeta,
             score);
         // If we got broken out
-        if (bestMove == MOVE_BROKEN)
+        if (bestIndex == MOVE_BROKEN)
             return MOVE_BROKEN;
         // If we failed low. This is really bad :(
-        if (bestMove == MOVE_FAIL_LOW && score > alpha) {
+        if (bestIndex == MOVE_FAIL_LOW && score > alpha) {
             // We were < than the lower bound, so this is the new upper bound
             aspBeta = score + 1;
             // Using 8 wide windows for now...
@@ -214,12 +214,18 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
             aspAlpha = score - 1;
             // Using 8 wide windows for now...
             aspBeta = min(score + 7, beta);
+            // Swap the cut move to the front, it's the best we have right now
+            moves.swap(bestIndex, 0);
         }
         // Otherwise we are done
         else {
             break;
         }
     }
+    // Retrieve the best move
+    int bestMove = MOVE_BROKEN;
+    if (bestIndex != MOVE_FAIL_LOW)
+        bestMove = moves.get(bestIndex);
 
     #if PRINT_SEARCH_INFO
     cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
@@ -250,6 +256,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     return bestMove;
 }
 
+// Performs an aspiration search. Returns the index of the best move.
 int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
     int alpha, int beta, int &exactScore) {
     #if PRINT_SEARCH_INFO
@@ -277,7 +284,7 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
             cerr << "Breaking out of endgame solver." << endl;
             #endif
             if (bestIndex != MOVE_FAIL_LOW && alpha > 0)
-                return moves.get(bestIndex);
+                return bestIndex;
             else
                 return MOVE_BROKEN;
         }
@@ -297,9 +304,7 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
     }
 
     exactScore = alpha;
-    if (bestIndex == MOVE_FAIL_LOW)
-        return MOVE_FAIL_LOW;
-    return moves.get(bestIndex);
+    return bestIndex;
 }
 
 // Resets the exact scores hash table
