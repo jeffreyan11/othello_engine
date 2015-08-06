@@ -178,10 +178,10 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         time_span = duration_cast<duration<double>>(end_time-start_time);
         #if PRINT_SEARCH_INFO
         cerr << "Sort search took: " << time_span.count() << " sec" << endl;
-        #endif
         cerr << "PV: ";
         printMove(moves.get(0));
         cerr << " Score: " << scores.get(0) / 600 << endl;
+        #endif
     }
 
     start_time = high_resolution_clock::now();
@@ -194,9 +194,9 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     if (!isSorted && depth > 11) {
         aspAlpha = max(scores.get(0) / 600 - 4, alpha);
         aspBeta = min(scores.get(0) / 600 + 4, beta);
-        if (aspAlpha > beta)
+        if (aspAlpha >= beta)
             aspAlpha = beta - 2;
-        if (aspBeta < alpha)
+        if (aspBeta <= alpha)
             aspBeta = alpha + 2;
     }
     while (true) {

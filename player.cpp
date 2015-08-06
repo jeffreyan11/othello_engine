@@ -43,6 +43,9 @@ Player::Player(Side side) {
     // initialize the evaluation functions
     evaluater = new Eval();
     otherHeuristic = false;
+
+    // Set to false to turn on book
+    bookExhausted = true;
 }
 
 /**
@@ -95,18 +98,20 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     #endif
 
     // check opening book
-    #if USE_OPENING_BOOK
-    int openMove = openingBook.get(game.getTaken(), game.getBits(CBLACK));
-    if(openMove != OPENING_NOT_FOUND) {
-        #if PRINT_SEARCH_INFO
-        cerr << "Opening book used! Played ";
-        printMove(openMove);
-        cerr << endl;
-        #endif
-        game.doMove(openMove, mySide);
-        return indexToMove[openMove];
+    if (!bookExhausted) {
+        int openMove = openingBook.get(game.getTaken(), game.getBits(CBLACK));
+        if(openMove != OPENING_NOT_FOUND) {
+            #if PRINT_SEARCH_INFO
+            cerr << "Opening book used! Played ";
+            printMove(openMove);
+            cerr << endl;
+            #endif
+            game.doMove(openMove, mySide);
+            return indexToMove[openMove];
+        }
+        else
+            bookExhausted = true;
     }
-    #endif
 
     // find and test all legal moves
     MoveList legalMoves = game.getLegalMoves(mySide);
@@ -185,7 +190,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         #if PRINT_SEARCH_INFO
         cerr << "bestmove ";
         printMove(legalMoves.get(0));
-        cerr << " score " << ((double)(chosenScore)) / 1000.0 << endl;
+        cerr << " score " << ((double)(chosenScore)) / 1200.0 << endl;
         #endif
 
         end_time = high_resolution_clock::now();
@@ -200,7 +205,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
-    cerr << ". Score: " << ((double)(chosenScore)) / 1000.0 << endl;
+    cerr << ". Score: " << ((double)(chosenScore)) / 1200.0 << endl;
     #endif
 
     game.doMove(myMove, mySide);

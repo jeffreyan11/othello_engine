@@ -9,8 +9,6 @@
 #include "hash.h"
 #include "eval.h"
 
-#define USE_OPENING_BOOK false
-
 class Player {
 
 private:
@@ -23,9 +21,8 @@ private:
 
     Endgame endgameSolver;
 
-    #if USE_OPENING_BOOK
     Openings openingBook;
-    #endif
+    bool bookExhausted;
 
     Hash transpositionTable;
 
