@@ -7,8 +7,8 @@ const int endgameTime[31] = { 0,
 25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
 50, 50, 75, 100, 150, // 11-15
 250, 400, 750, 1500, 3000, // 16-20
-6000, 15000, 32000, 75000, 200000, // 21-25
-500000, 1200000, 2500000, 6000000, 15000000
+6000, 12000, 25000, 60000, 150000, // 21-25
+400000, 1000000, 2500000, 6000000, 15000000
 };
 
 const int TIMEOUT = (1 << 21);
@@ -44,6 +44,9 @@ Player::Player(Side side) {
     evaluater = new Eval();
     otherHeuristic = false;
 
+    // Initialize transposition table with 1 million entries
+    transpositionTable = new Hash(1000000);
+
     // Set to false to turn on book
     bookExhausted = true;
 }
@@ -57,6 +60,7 @@ Player::~Player() {
     }
 
     delete evaluater;
+    delete transpositionTable;
 }
 
 /**
@@ -199,10 +203,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
           && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
-    transpositionTable.clean(turn+2);
+    transpositionTable->clean(turn+2);
     #if PRINT_SEARCH_INFO
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
-    cerr << "Table contains " << transpositionTable.keys << " keys." << endl;
+    cerr << "Table contains " << transpositionTable->keys << " keys." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
     cerr << ". Score: " << ((double)(chosenScore)) / 1200.0 << endl;
@@ -270,7 +274,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     int toHash = MOVE_NULL;
 
     // Hash table using the killer heuristic
-    BoardData *entry = transpositionTable.get(b, s);
+    BoardData *entry = transpositionTable->get(b, s);
     if (entry != NULL) {
         if (entry->nodeType == ALL_NODE) {
             if (entry->depth >= depth && entry->score <= alpha)
@@ -377,17 +381,17 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
         if (alpha >= beta) {
             if(depth >= 5)
-                transpositionTable.add(b, beta, legalMoves.get(i), s,
+                transpositionTable->add(b, beta, legalMoves.get(i), s,
                     turn+attemptingDepth-depth, depth, CUT_NODE);
             return beta;
         }
     }
 
-    if (depth >= 5 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
-        transpositionTable.add(b, alpha, toHash, s,
+    if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
+        transpositionTable->add(b, alpha, toHash, s,
                     turn+attemptingDepth-depth, depth, PV_NODE);
     else if (depth >= 5 && alpha <= prevAlpha)
-        transpositionTable.add(b, alpha, MOVE_NULL, s,
+        transpositionTable->add(b, alpha, MOVE_NULL, s,
                     turn+attemptingDepth-depth, depth, ALL_NODE);
 
     return alpha;

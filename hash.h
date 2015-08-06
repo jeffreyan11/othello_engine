@@ -65,7 +65,6 @@ public:
     int keys;
     void test();
 
-    Hash();
     Hash(int isize);
     ~Hash();
 

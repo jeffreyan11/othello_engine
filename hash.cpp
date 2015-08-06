@@ -3,15 +3,6 @@
 
 using namespace std;
 
-Hash::Hash() {
-    table = new HashLL* [1000000];
-    size = 1000000;
-    for(int i = 0; i < size; i++) {
-        table[i] = NULL;
-    }
-    keys = 0;
-}
-
 Hash::Hash(int isize) {
     table = new HashLL* [isize];
     size = isize;
@@ -52,8 +43,8 @@ void Hash::add(Board &b, int score, int move, int ptm, int turn,
         if(node->cargo.taken == b.getTaken()
         && node->cargo.black == b.getBits(CBLACK)
         && node->cargo.ptm == (uint8_t) ptm) {
-            node->cargo.setData(b.getTaken(), b.getBits(CBLACK), score, move, ptm,
-                turn, depth, nodeType);
+            node->cargo.setData(b.getTaken(), b.getBits(CBLACK), score, move,
+                ptm, turn, depth, nodeType);
             return;
         }
         node = node->next;

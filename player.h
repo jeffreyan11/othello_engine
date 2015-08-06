@@ -24,7 +24,7 @@ private:
     Openings openingBook;
     bool bookExhausted;
 
-    Hash transpositionTable;
+    Hash *transpositionTable;
 
     int turn;
     int timeLimit;
