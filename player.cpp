@@ -24,7 +24,7 @@ using namespace std;
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 18;
+    maxDepth = 16;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 27;
@@ -271,7 +271,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
     // Hash table using the killer heuristic
     BoardData *entry = transpositionTable.get(b, s);
-    if(entry != NULL) {
+    if (entry != NULL) {
         if (entry->nodeType == ALL_NODE) {
             if (entry->depth >= depth && entry->score <= alpha)
                 return alpha;
@@ -313,14 +313,30 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         return alpha;
     }
 
+    // We want to do better move ordering at PV nodes where alpha != beta - 1
+    bool isPVNode = (alpha != beta - 1);
     // internal iterative deepening
     if (depth >= 2) {
         MoveList scores;
-        if(depth >= 10)
+        if(depth >= 10 && isPVNode)
             sortSearch(b, legalMoves, scores, s, 4);
-        else if(depth >= 5)
+        else if(depth >= 5 && isPVNode)
             sortSearch(b, legalMoves, scores, s, 2);
-        else if(depth >= 3)
+        else if(depth >= 12 && hashed == MOVE_NULL) {
+            /*int bestIndex = getBestMoveForSort(b, legalMoves, s, 4);
+            for (unsigned int i = 0; i < legalMoves.size; i++)
+                scores.add(SQ_VAL[legalMoves.get(i)]);
+            scores.set(bestIndex, 1 << 10);*/
+            sortSearch(b, legalMoves, scores, s, 4);
+        }
+        else if(depth >= 7 && hashed == MOVE_NULL) {
+            /*int bestIndex = getBestMoveForSort(b, legalMoves, s, 2);
+            for (unsigned int i = 0; i < legalMoves.size; i++)
+                scores.add(SQ_VAL[legalMoves.get(i)]);
+            scores.set(bestIndex, 1 << 10);*/
+            sortSearch(b, legalMoves, scores, s, 2);
+        }
+        else if(depth >= 4 && hashed == MOVE_NULL)
             sortSearch(b, legalMoves, scores, s, 0);
         else {
             for (unsigned int i = 0; i < legalMoves.size; i++)
@@ -387,6 +403,41 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
     }
 }
+
+// Gets a best move to try first when a hash move is not available.
+/*int Player::getBestMoveForSort(Board &b, MoveList &legalMoves, int side,
+    int depth) {
+    int tempMove = 0;
+    int score;
+    int alpha = -INFTY;
+    int beta = INFTY;
+    
+    for (unsigned int i = 0; i < legalMoves.size; i++) {
+        Board copy = b.copy();
+        copy.doMove(legalMoves.get(i), side);
+        nodes++;
+        
+        if (i != 0) {
+            score = -pvs(copy, side^1, depth-1, -alpha-1, -alpha);
+            if (alpha < score && score < beta) {
+                score = -pvs(copy, side^1, depth-1, -beta, -alpha);
+            }
+        }
+        else {
+            score = -pvs(copy, side^1, depth-1, -beta, -alpha);
+        }
+        
+        // Handle timeouts
+        if (score == TIMEOUT)
+            return 0;
+        if (score > alpha) {
+            alpha = score;
+            tempMove = i;
+        }
+    }
+
+    return tempMove;
+}*/
 
 void Player::setDepths(int sort, int min, int max, int end) {
     maxDepth = max;

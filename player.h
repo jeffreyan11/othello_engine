@@ -37,6 +37,7 @@ private:
     int pvs(Board &b, int side, int depth, int alpha, int beta);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
+    //int getBestMoveForSort(Board &b, MoveList &legalMoves, int side, int depth);
 
 public:
     Board game;

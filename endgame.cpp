@@ -881,11 +881,13 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         return alpha;
     }
 
+    // We want to do better move ordering at PV nodes where alpha != beta - 1
+    bool isPVNode = (alpha != beta - 1);
     if (depth >= 2) {
         MoveList scores;
-        if (depth >= 9)
+        if (depth >= 10 && isPVNode)
             sortSearch(b, legalMoves, scores, s, 4);
-        else if (depth >= 5)
+        else if ((depth >= 5 && isPVNode) || depth >= 7)
             sortSearch(b, legalMoves, scores, s, 2);
         else if (depth >= 4)
             sortSearch(b, legalMoves, scores, s, 0);
