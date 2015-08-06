@@ -29,6 +29,7 @@ private:
     int turn;
     int timeLimit;
     std::chrono::high_resolution_clock::time_point timeElapsed;
+    int lastScore;
 
     Move* indexToMove[64];
 

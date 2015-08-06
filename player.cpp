@@ -33,6 +33,7 @@ Player::Player(Side side) {
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
     timeLimit = -2;
+    lastScore = 0;
 
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
@@ -194,7 +195,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         #if PRINT_SEARCH_INFO
         cerr << "bestmove ";
         printMove(legalMoves.get(0));
-        cerr << " score " << ((double)(chosenScore)) / 1200.0 << endl;
+        cerr << " score " << ((double)(chosenScore)) / 1500.0 << endl;
         #endif
 
         end_time = high_resolution_clock::now();
@@ -203,13 +204,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
           && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
+    lastScore = chosenScore;
     transpositionTable->clean(turn+2);
     #if PRINT_SEARCH_INFO
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     cerr << "Table contains " << transpositionTable->keys << " keys." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
-    cerr << ". Score: " << ((double)(chosenScore)) / 1200.0 << endl;
+    cerr << ". Score: " << ((double)(chosenScore)) / 1500.0 << endl;
     #endif
 
     game.doMove(myMove, mySide);
