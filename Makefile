@@ -3,8 +3,8 @@ CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = ShallowKwok
 
-all: $(PLAYERNAME) testgame memtest testheuristic
-evaltools: evalbuilder endeval blur
+all: $(PLAYERNAME) testgame memtest
+evaltools: evalbuilder endeval blur testheuristic crtbk
 	
 $(PLAYERNAME): $(OBJS) wrapper.o
 	$(CC) -o $@ $^
@@ -27,6 +27,9 @@ endeval: common.o board.o endgame.o eval.o endhash.o endeval.o
 blur:
 	$(CC) $(CFLAGS) -o blur blur.cpp
 
+crtbk: $(OBJS) crtbk.o
+	$(CC) -o $@ $^
+
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) -x c++ $< -o $@
 	
@@ -37,6 +40,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o *.exe $(PLAYERNAME) testgame memtest testheuristic evalbuilder endeval blur
+	rm -f *.o *.exe $(PLAYERNAME) testgame memtest testheuristic evalbuilder endeval blur crtbk
 	
 .PHONY: java

@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-const int OPENING_BOOK_SIZE = 5071;
+const int OPENING_BOOK_SIZE = 8083;
 
 struct Node {
     bitbrd taken, black;

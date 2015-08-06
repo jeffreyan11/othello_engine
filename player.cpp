@@ -82,26 +82,27 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // register opponent's move
     if(opponentsMove != NULL) {
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
-        turn++;
     }
     else {
         game.doMove(MOVE_NULL, oppSide);
     }
+    // We can easily count how many moves have been made from the number of
+    // empty squares
     int empties = game.countEmpty();
+    turn = 64 - empties;
     #if PRINT_SEARCH_INFO
     cerr << endl;
     #endif
 
     // check opening book
     #if USE_OPENING_BOOK
-    int openMove = openingBook.get(game.getTaken(), game.toBits(CBLACK));
+    int openMove = openingBook.get(game.getTaken(), game.getBits(CBLACK));
     if(openMove != OPENING_NOT_FOUND) {
         #if PRINT_SEARCH_INFO
         cerr << "Opening book used! Played ";
         printMove(openMove);
         cerr << endl;
         #endif
-        turn++;
         game.doMove(openMove, mySide);
         return indexToMove[openMove];
     }
@@ -134,7 +135,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
-            turn++;
             return indexToMove[myMove];
         }
         // Otherwise, we broke out of the endgame solver.
@@ -204,7 +204,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     #endif
 
     game.doMove(myMove, mySide);
-    turn++;
 
     return indexToMove[myMove];
 }
