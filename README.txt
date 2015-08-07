@@ -12,7 +12,7 @@ Pattern evaluations were trained from the FFO's database of games (http://www.ff
 
 The endgame solver is highly optimized using internal iterative deepening, an optimized hashtable, fastest-first move ordering, special functions for solving
 1-4 squares left, and aspiration windows.
-Current performance on the FFO test suite (A good explanation is available on http://www.radagast.se/othello/ffotest.html) is 10110 seconds (2.8 hours) and 100.616.901.334 nodes searched.
+Current performance on the FFO test suite (A good explanation is available on http://www.radagast.se/othello/ffotest.html) is 9460 seconds (2.63 hours) and 95.243.311.468 nodes searched.
 The test was performed on one core of a i5-2450m, compiled with GCC version 4.6.3 on Ubuntu 12.04.
 
 Known bugs:

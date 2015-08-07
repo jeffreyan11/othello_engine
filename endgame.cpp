@@ -60,12 +60,14 @@ struct EndgameStatistics {
 Endgame::Endgame() {
     // 16384 entries
     endgame_table = new EndHash(14);
-    // 2^23 entries
+    // 2^23 entries * 28 bytes/entry = 235 MB
     killer_table = new EndHash(23);
     #if USE_ALL_TABLE
-    // 2^22 entries
+    // 2^22 entries * 28 bytes/entry = 117 MB
     all_table = new EndHash(22);
     #endif
+    // 2^20 array slots (2^21 entries) * 64 bytes/slot = 67 MB
+    transpositionTable = new Hash(20);
 
     egStats = new EndgameStatistics();
 }
@@ -76,6 +78,7 @@ Endgame::~Endgame() {
     #if USE_ALL_TABLE
     delete all_table;
     #endif
+    delete transpositionTable;
 
     delete egStats;
 }
@@ -241,6 +244,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
     #endif
+    cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
 
     end_time = high_resolution_clock::now();
     time_span = duration_cast<duration<double>>(end_time-start_time);
@@ -873,6 +877,39 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     int score;
+    int prevAlpha = alpha;
+    int hashed = MOVE_NULL;
+    int toHash = MOVE_NULL;
+
+    // Probe transposition table for a score or move
+    if (depth >= 4) {
+        BoardData *entry = transpositionTable->get(b, s);
+        if (entry != NULL) {
+            if (entry->nodeType == ALL_NODE) {
+                if (entry->depth >= depth && entry->score <= alpha)
+                    return alpha;
+            }
+            else {
+                if (entry->depth >= depth) {
+                    if (entry->nodeType == CUT_NODE && entry->score >= beta)
+                        return beta;
+                    else if (entry->nodeType == PV_NODE)
+                        return entry->score;
+                }
+
+                hashed = entry->move;
+                Board copy = b.copy();
+                copy.doMove(hashed, s);
+                nodes++;
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+
+                if (alpha < score)
+                    alpha = score;
+                if (alpha >= beta)
+                    return beta;
+            }
+        }
+    }
 
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
@@ -913,11 +950,23 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         else
             score = -pvs(copy, s^1, depth-1, -beta, -alpha);
 
-        if (alpha < score)
+        if (alpha < score) {
             alpha = score;
-        if (alpha >= beta)
-            break;
+            toHash = legalMoves.get(i);
+        }
+        if (alpha >= beta) {
+            if(depth >= 4)
+                transpositionTable->add(b, beta, legalMoves.get(i), s,
+                    60, depth, CUT_NODE);
+            return beta;
+        }
     }
+
+    if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
+        transpositionTable->add(b, alpha, toHash, s, 60, depth, PV_NODE);
+    else if (depth >= 4 && alpha <= prevAlpha)
+        transpositionTable->add(b, alpha, MOVE_NULL, s, 60, depth, ALL_NODE);
+
     return alpha;
 }
 

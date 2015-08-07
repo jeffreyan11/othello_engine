@@ -276,7 +276,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     int hashed = MOVE_NULL;
     int toHash = MOVE_NULL;
 
-    // Hash table using the killer heuristic
+    // Probe transposition table for a score or move
     BoardData *entry = transpositionTable->get(b, s);
     if (entry != NULL) {
         if (entry->nodeType == ALL_NODE) {

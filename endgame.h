@@ -6,6 +6,7 @@
 #include "board.h"
 #include "endhash.h"
 #include "eval.h"
+#include "hash.h"
 
 #define USE_STABILITY false
 #define USE_ALL_TABLE true
@@ -20,6 +21,7 @@ private:
     #if USE_ALL_TABLE
     EndHash *all_table;
     #endif
+    Hash *transpositionTable;
 
     Eval *evaluater;
 
