@@ -335,7 +335,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
             scores.set(bestIndex, 1 << 10);*/
             sortSearch(b, legalMoves, scores, s, 4);
         }
-        else if(depth >= 7 && hashed == MOVE_NULL) {
+        else if(depth >= 8 && hashed == MOVE_NULL) {
             /*int bestIndex = getBestMoveForSort(b, legalMoves, s, 2);
             for (unsigned int i = 0; i < legalMoves.size; i++)
                 scores.add(SQ_VAL[legalMoves.get(i)]);
