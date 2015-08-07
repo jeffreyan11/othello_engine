@@ -45,8 +45,8 @@ Player::Player(Side side) {
     evaluater = new Eval();
     otherHeuristic = false;
 
-    // Initialize transposition table with 1 million entries
-    transpositionTable = new Hash(1000000);
+    // Initialize transposition table with 2^20 = 1 million entries
+    transpositionTable = new Hash(20);
 
     // Set to false to turn on book
     bookExhausted = true;

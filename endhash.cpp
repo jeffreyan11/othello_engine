@@ -8,6 +8,7 @@ EndHash::EndHash(int bits) {
     bitMask = 1;
     for (int i = 0; i < bits - 1; i++)
         bitMask |= bitMask << 1;
+
     table = new EndgameEntry* [size];
     for (int i = 0; i < size; i++) {
         table[i] = NULL;

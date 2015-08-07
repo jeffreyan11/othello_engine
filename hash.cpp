@@ -3,9 +3,15 @@
 
 using namespace std;
 
-Hash::Hash(int isize) {
-    table = new HashLL* [isize];
-    size = isize;
+// Creates a hashtable, with argument in number of bits for the bitmask
+// The table will have 2^bits entries
+Hash::Hash(int bits) {
+    size = 1 << bits;
+    bitMask = 1;
+    for (int i = 0; i < bits - 1; i++)
+        bitMask |= bitMask << 1;
+
+    table = new HashLL* [size];
     for(int i = 0; i < size; i++) {
         table[i] = NULL;
     }
@@ -31,7 +37,7 @@ Hash::~Hash() {
 void Hash::add(Board &b, int score, int move, int ptm, int turn,
         int depth, uint8_t nodeType) {
     keys++;
-    uint32_t index = b.getHashCode() % size;
+    uint32_t index = b.getHashCode() & bitMask;
     HashLL *node = table[index];
     if(node == NULL) {
         table[index] = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move,
@@ -58,7 +64,7 @@ void Hash::add(Board &b, int score, int move, int ptm, int turn,
  * @brief Get the move, if any, associated with a board b and player to move.
 */
 BoardData *Hash::get(Board &b, int ptm) {
-    uint32_t index = b.getHashCode() % size;
+    uint32_t index = b.getHashCode() & bitMask;
     HashLL *node = table[index];
 
     if(node == NULL)

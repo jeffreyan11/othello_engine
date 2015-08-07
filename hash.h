@@ -60,6 +60,7 @@ class Hash {
 private:
     HashLL **table;
     int size;
+    uint32_t bitMask;
 
 public:
     int keys;
