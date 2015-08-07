@@ -45,7 +45,8 @@ Player::Player(Side side) {
     evaluater = new Eval();
     otherHeuristic = false;
 
-    // Initialize transposition table with 2^20 = 1 million entries
+    // Initialize transposition table with 2^20 = 1 million array slots and
+    // 2 * 2^20 = 2 million entries
     transpositionTable = new Hash(20);
 
     // Set to false to turn on book
@@ -205,10 +206,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     myMove = legalMoves.get(0);
     lastScore = chosenScore;
-    transpositionTable->clean(turn+2);
+    //transpositionTable->clean(turn+2);
     #if PRINT_SEARCH_INFO
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
-    cerr << "Table contains " << transpositionTable->keys << " keys." << endl;
+    cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
     cerr << ". Score: " << ((double)(chosenScore)) / 1500.0 << endl;
@@ -384,17 +385,15 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (alpha >= beta) {
             if(depth >= 5)
                 transpositionTable->add(b, beta, legalMoves.get(i), s,
-                    turn+attemptingDepth-depth, depth, CUT_NODE);
+                    turn, depth, CUT_NODE);
             return beta;
         }
     }
 
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
-        transpositionTable->add(b, alpha, toHash, s,
-                    turn+attemptingDepth-depth, depth, PV_NODE);
+        transpositionTable->add(b, alpha, toHash, s, turn, depth, PV_NODE);
     else if (depth >= 5 && alpha <= prevAlpha)
-        transpositionTable->add(b, alpha, MOVE_NULL, s,
-                    turn+attemptingDepth-depth, depth, ALL_NODE);
+        transpositionTable->add(b, alpha, MOVE_NULL, s, turn, depth, ALL_NODE);
 
     return alpha;
 }

@@ -15,27 +15,22 @@ struct BoardData {
     uint8_t nodeType;
 
     BoardData() {
-        taken = 0;
-        black = 0;
-        score = 0;
-        move = 0;
-        ptm = 0;
-        turn = 0;
-        depth = 0;
+        setData(0, 0, 0, 0, 0, 0, 0, 0);
     }
 
-    BoardData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d, uint8_t nt) {
+    BoardData(bitbrd t, bitbrd b, int s, int m, int p, uint8_t tu, int d,
+        uint8_t nt) {
         setData(t, b, s, m, p, tu, d, nt);
     }
 
-    void setData(bitbrd t, bitbrd b, int s, int m, int p, int tu, int d,
+    void setData(bitbrd t, bitbrd b, int s, int m, int p, uint8_t tu, int d,
         uint8_t nt) {
         taken = t;
         black = b;
         score = s;
         move = (uint8_t) m;
         ptm = (uint8_t) p;
-        turn = (uint8_t) tu;
+        turn = tu;
         depth = (uint8_t) d;
         nodeType = nt;
     }
@@ -44,12 +39,14 @@ struct BoardData {
 class HashLL {
 
 public:
-    HashLL *next;
-    BoardData cargo;
+    BoardData entry1;
+    BoardData entry2;
 
-    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, int tu, int d, uint8_t nt) {
-        next = NULL;
-        cargo = BoardData(t, b, s, m, ptm, tu, d, nt);
+    HashLL() {}
+
+    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, uint8_t tu, int d,
+        uint8_t nt) {
+        entry1 = BoardData(t, b, s, m, ptm, tu, d, nt);
     }
 
     ~HashLL() {}
@@ -64,15 +61,14 @@ private:
 
 public:
     int keys;
-    void test();
 
     Hash(int isize);
     ~Hash();
 
-    void add(Board &b, int score, int move, int ptm, int turn, int depth,
+    void add(Board &b, int score, int move, int ptm, uint8_t turn, int depth,
         uint8_t nodeType);
     BoardData *get(Board &b, int ptm);
-    void clean(int turn);
+    //void clean(int turn);
 };
 
 #endif

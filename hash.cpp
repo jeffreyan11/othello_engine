@@ -21,11 +21,8 @@ Hash::Hash(int bits) {
 Hash::~Hash() {
     for(int i = 0; i < size; i++) {
         HashLL* temp = table[i];
-        while(temp != NULL) {
-            HashLL *temp2 = temp->next;
+        if (temp != NULL)
             delete temp;
-            temp = temp2;
-        }
     }
     delete[] table;
 }
@@ -34,30 +31,53 @@ Hash::~Hash() {
  * @brief Adds key (b,ptm) and item move into the hashtable.
  * Assumes that this key has been checked with get and is not in the table.
 */
-void Hash::add(Board &b, int score, int move, int ptm, int turn,
+void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
         int depth, uint8_t nodeType) {
-    keys++;
     uint32_t index = b.getHashCode() & bitMask;
     HashLL *node = table[index];
-    if(node == NULL) {
+    if (node == NULL) {
+        keys++;
         table[index] = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move,
             ptm, turn, depth, nodeType);
         return;
     }
+    else if (node->entry2.taken == 0) {
+        keys++;
+        node->entry2.setData(b.getTaken(), b.getBits(CBLACK), score, move,
+            ptm, turn, depth, nodeType);
+    }
+    // Always update the same position with newer information
+    if (node->entry1.taken == b.getTaken()
+     && node->entry1.black == b.getBits(CBLACK)
+     && node->entry1.ptm == (uint8_t) ptm) {
+        node->entry1.setData(b.getTaken(), b.getBits(CBLACK), score, move,
+            ptm, turn, depth, nodeType);
+    }
+    else if (node->entry2.taken == b.getTaken()
+          && node->entry2.black == b.getBits(CBLACK)
+          && node->entry2.ptm == (uint8_t) ptm) {
+        node->entry2.setData(b.getTaken(), b.getBits(CBLACK), score, move,
+            ptm, turn, depth, nodeType);
+    }
+    else {
+        BoardData *toReplace = NULL;
+        // Prioritize entries with both a higher depth, but also from a more
+        // recent search space
+        int score1 = 4*(turn - node->entry1.turn) + depth - node->entry1.depth;
+        int score2 = 4*(turn - node->entry2.turn) + depth - node->entry2.depth;
+        if (score1 >= score2)
+            toReplace = &(node->entry1);
+        else
+            toReplace = &(node->entry2);
+        if (score1 <= 0 && score2 <= 0)
+            toReplace = NULL;
 
-    do {
-        if(node->cargo.taken == b.getTaken()
-        && node->cargo.black == b.getBits(CBLACK)
-        && node->cargo.ptm == (uint8_t) ptm) {
-            node->cargo.setData(b.getTaken(), b.getBits(CBLACK), score, move,
+        if (toReplace != NULL) {
+            toReplace->setData(b.getTaken(), b.getBits(CBLACK), score, move,
                 ptm, turn, depth, nodeType);
-            return;
         }
-        node = node->next;
-    } while (node != NULL);
-
-    node = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move, ptm,
-        turn, depth, nodeType);
+        else return;
+    }
 }
 
 /**
@@ -67,53 +87,34 @@ BoardData *Hash::get(Board &b, int ptm) {
     uint32_t index = b.getHashCode() & bitMask;
     HashLL *node = table[index];
 
-    if(node == NULL)
+    if (node == NULL)
         return NULL;
 
-    do {
-        if(node->cargo.taken == b.getTaken()
-        && node->cargo.black == b.getBits(CBLACK)
-        && node->cargo.ptm == (uint8_t) ptm)
-            return &(node->cargo);
-        node = node->next;
-    }
-    while(node != NULL);
+    if (node->entry1.taken == b.getTaken()
+     && node->entry1.black == b.getBits(CBLACK)
+     && node->entry1.ptm == (uint8_t) ptm)
+        return &(node->entry1);
+
+    if (node->entry2.taken == b.getTaken()
+     && node->entry2.black == b.getBits(CBLACK)
+     && node->entry2.ptm == (uint8_t) ptm)
+        return &(node->entry2);
 
     return NULL;
 }
-
+/*
 void Hash::clean(int turn) {
-    for(int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         HashLL *node = table[i];
-        if(node == NULL)
+        if (node == NULL)
             continue;
-        while(node->cargo.turn <= turn) {
+        if (node->cargo.turn <= turn) {
             keys--;
             table[i] = node->next;
             delete node;
             node = table[i];
-            if(node == NULL)
+            if (node == NULL)
                 break;
         }
     }
-}
-
-void Hash::test() {
-    int zeros = 0;
-    int threes = 0;
-
-    for(int i = 0; i < size; i++) {
-        int linked = 0;
-        HashLL* node = table[i];
-        if(node == NULL)
-            zeros++;
-        else {
-            linked++;
-            while(node->next != NULL) node = node->next;
-            if(linked >= 3) threes++;
-        }
-    }
-
-    cout << "zeros: " << zeros << endl;
-    cout << "threes: " << threes << endl;
-}
+}*/
