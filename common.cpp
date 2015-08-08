@@ -17,27 +17,6 @@ const int index64[64] = {
    13, 18,  8, 12,  7,  6,  5, 63
 };
 
-// Retrieves the next move with the highest score, starting from index using a
-// partial selection sort. This way, the entire list does not have to be sorted
-// if an early cutoff occurs.
-/*
-int nextMove(MoveList &moves, MoveList &scores, unsigned int index) {
-    if (index >= moves.size)
-        return MOVE_NULL;
-    // Find the index of the next best move/score
-    int bestIndex = index;
-    for (unsigned int i = index + 1; i < moves.size; i++) {
-        if (scores.get(i) > scores.get(bestIndex))
-            bestIndex = i;
-    }
-    // swap to the correct position
-    moves.swap(bestIndex, index);
-    scores.swap(bestIndex, index);
-    // return the move
-    return moves.get(index);
-}
-*/
-
 int countSetBits(bitbrd i) {
     #if defined(__x86_64__)
         asm ("popcnt %1, %0" : "=r" (i) : "r" (i));
@@ -95,6 +74,25 @@ int bitScanReverse(bitbrd bb) {
 // Pretty prints a move in (x, y) form indexed from 1.
 void printMove(int move) {
     std::cerr << "(" << (move & 7) + 1 << ", " << (move >> 3) + 1 << ")";
+}
+
+// Retrieves the next move with the highest score, starting from index using a
+// partial selection sort. This way, the entire list does not have to be sorted
+// if an early cutoff occurs.
+int nextMove(MoveList &moves, MoveList &scores, unsigned int index) {
+    if (index >= moves.size)
+        return MOVE_NULL;
+    // Find the index of the next best move/score
+    int bestIndex = index;
+    for (unsigned int i = index + 1; i < moves.size; i++) {
+        if (scores.get(i) > scores.get(bestIndex))
+            bestIndex = i;
+    }
+    // swap to the correct position
+    moves.swap(bestIndex, index);
+    scores.swap(bestIndex, index);
+    // return the move
+    return moves.get(index);
 }
 
 void sort(MoveList &moves, MoveList &scores, int left, int right) {

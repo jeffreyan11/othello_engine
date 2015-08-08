@@ -75,7 +75,7 @@ public:
     }
 };
 
-//int nextMove(MoveList &moves, MoveList &scores, unsigned int index);
+int nextMove(MoveList &moves, MoveList &scores, unsigned int index);
 void sort(MoveList &moves, MoveList &scores, int left, int right);
 
 #endif

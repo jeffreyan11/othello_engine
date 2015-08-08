@@ -45,6 +45,7 @@ struct EndgameStatistics {
     uint64_t firstFailHighs;
     uint64_t failHighs;
     uint64_t searchSpaces;
+    uint64_t sortSearchNodes;
 
     void reset() {
         hashHits = 0;
@@ -54,6 +55,7 @@ struct EndgameStatistics {
         firstFailHighs = 0;
         failHighs = 0;
         searchSpaces = 0;
+        sortSearchNodes = 0;
     }
 };
 
@@ -251,6 +253,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     time_span = duration_cast<duration<double>>(end_time-start_time);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
         (int)((double)nodes / time_span.count()) << endl;
+    cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
     cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
@@ -470,11 +473,12 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
                     - 64*copy.potentialMobility(s^1) + 32*p);
         }
     }
-    sort(legalMoves, priority, 0, legalMoves.size-1);
 
     int tempMove = MOVE_NULL;
     egStats->searchSpaces++;
-    for(unsigned int i = 0; i < legalMoves.size; i++) {
+    unsigned int i = 0;
+    for (int m = nextMove(legalMoves, priority, i); m != MOVE_NULL;
+             m = nextMove(legalMoves, priority, ++i)) {
         // Check for a timeout
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> time_span =
@@ -483,10 +487,10 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         if (time_span.count() * 1000 > timeout)
             return -SCORE_TIMEOUT;
 
-        //if (legalMoves.get(i) == killer)
-        //    continue;
+        if (legalMoves.get(i) == killer)
+            continue;
         Board copy = b.copy();
-        copy.doMove(legalMoves.get(i), s);
+        copy.doMove(m, s);
         nodes++;
 
         if (i != 0) {
@@ -504,12 +508,12 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
-            killer_table->add(b, beta, legalMoves.get(i), s, depth);
+            killer_table->add(b, beta, m, s, depth);
             return beta;
         }
         if (alpha < score) {
             alpha = score;
-            tempMove = legalMoves.get(i);
+            tempMove = m;
         }
     }
 
@@ -867,6 +871,7 @@ void Endgame::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
     for (unsigned int i = 0; i < moves.size; i++) {
         Board copy = b.copy();
         copy.doMove(moves.get(i), side);
+        egStats->sortSearchNodes++;
         scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
     }
 }
@@ -884,6 +889,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     int toHash = MOVE_NULL;
 
     // Probe transposition table for a score or move
+    // Only do this at and above depth 3 for speed
     if (depth >= 3) {
         BoardData *entry = transpositionTable->get(b, s);
         if (entry != NULL) {
@@ -902,7 +908,8 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
                 hashed = entry->move;
                 Board copy = b.copy();
                 copy.doMove(hashed, s);
-                nodes++;
+                egStats->sortSearchNodes++;
+
                 score = -pvs(copy, s^1, depth-1, -beta, -alpha);
 
                 if (alpha < score)
@@ -925,14 +932,36 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
     // We want to do better move ordering at PV nodes where alpha != beta - 1
     bool isPVNode = (alpha != beta - 1);
+    // Do internal iterative deepening
+    // TODO make this shorter and less repetitive :(
     if (depth >= 2) {
         MoveList scores;
-        if (depth >= 10 && isPVNode)
-            sortSearch(b, legalMoves, scores, s, 4);
-        else if ((depth >= 5 && isPVNode) || depth >= 7)
-            sortSearch(b, legalMoves, scores, s, 2);
-        else if (depth >= 4 && hashed == MOVE_NULL)
+        if (depth >= 5 && isPVNode) {
+            sortSearch(b, legalMoves, scores, s, (depth >= 9) ? 4 : 2);
+            /*for (unsigned int i = 0; i < legalMoves.size; i++) {
+                Board copy = b.copy();
+                copy.doMove(legalMoves.get(i), s);
+                scores.set(i, scores.get(i) - 256*copy.numLegalMoves(s^1));
+            }*/
+        }
+        else if (depth >= 4 && isPVNode)
             sortSearch(b, legalMoves, scores, s, 0);
+        else if (depth >= 6) {
+            sortSearch(b, legalMoves, scores, s, (depth >= 8) ? 2 : 0);
+            // Apparently fastest first works in sort searches too...
+            for (unsigned int i = 0; i < legalMoves.size; i++) {
+                Board copy = b.copy();
+                copy.doMove(legalMoves.get(i), s);
+                scores.set(i, scores.get(i) - 2048*copy.numLegalMoves(s^1));
+            }
+        }
+        else if (depth >= 4) {
+            for (unsigned int i = 0; i < legalMoves.size; i++) {
+                Board copy = b.copy();
+                copy.doMove(legalMoves.get(i), s);
+                scores.add(SQ_VAL[legalMoves.get(i)] - 16*copy.numLegalMoves(s^1));
+            }
+        }
         else {
             for (unsigned int i = 0; i < legalMoves.size; i++)
                 scores.add(SQ_VAL[legalMoves.get(i)]);
@@ -941,10 +970,15 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
-        if (hashed == legalMoves.get(i))
+        int m = legalMoves.get(i);
+    /*unsigned int i = 0;
+    for (int m = nextMove(legalMoves, scores, i); m != MOVE_NULL;
+             m = nextMove(legalMoves, scores, ++i)) {*/
+        if (hashed == m)
             continue;
         Board copy = b.copy();
-        copy.doMove(legalMoves.get(i), s);
+        copy.doMove(m, s);
+        egStats->sortSearchNodes++;
 
         if (depth > 2 && i != 0) {
             score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
@@ -956,12 +990,12 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
         if (alpha < score) {
             alpha = score;
-            toHash = legalMoves.get(i);
+            toHash = m;
         }
         if (alpha >= beta) {
             if(depth >= 4)
-                transpositionTable->add(b, beta, legalMoves.get(i), s,
-                    sortBranch, depth, CUT_NODE);
+                transpositionTable->add(b, beta, m, s, sortBranch, depth,
+                    CUT_NODE);
             return beta;
         }
     }
