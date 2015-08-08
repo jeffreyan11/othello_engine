@@ -26,6 +26,8 @@ private:
     Eval *evaluater;
 
     EndgameStatistics *egStats;
+    // For replacement strategy in sort search hash table
+    int sortBranch;
 
     std::chrono::high_resolution_clock::time_point timeElapsed;
     int timeout;

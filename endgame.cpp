@@ -159,6 +159,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         end_time-start_time);
 
     nodes = 0;
+    sortBranch = 0;
     egStats->reset();
     evaluater = eval;
     timeElapsed = high_resolution_clock::now();
@@ -281,6 +282,7 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
         Board copy = b.copy();
         copy.doMove(moves.get(i), s);
         nodes++;
+        sortBranch = i;
 
         if (i != 0) {
             score = -dispatch(copy, s^1, depth-1, -alpha-1, -alpha);
@@ -882,7 +884,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     int toHash = MOVE_NULL;
 
     // Probe transposition table for a score or move
-    if (depth >= 4) {
+    if (depth >= 3) {
         BoardData *entry = transpositionTable->get(b, s);
         if (entry != NULL) {
             if (entry->nodeType == ALL_NODE) {
@@ -929,7 +931,7 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
             sortSearch(b, legalMoves, scores, s, 4);
         else if ((depth >= 5 && isPVNode) || depth >= 7)
             sortSearch(b, legalMoves, scores, s, 2);
-        else if (depth >= 4)
+        else if (depth >= 4 && hashed == MOVE_NULL)
             sortSearch(b, legalMoves, scores, s, 0);
         else {
             for (unsigned int i = 0; i < legalMoves.size; i++)
@@ -939,6 +941,8 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
+        if (hashed == legalMoves.get(i))
+            continue;
         Board copy = b.copy();
         copy.doMove(legalMoves.get(i), s);
 
@@ -957,15 +961,15 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (alpha >= beta) {
             if(depth >= 4)
                 transpositionTable->add(b, beta, legalMoves.get(i), s,
-                    60, depth, CUT_NODE);
+                    sortBranch, depth, CUT_NODE);
             return beta;
         }
     }
 
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
-        transpositionTable->add(b, alpha, toHash, s, 60, depth, PV_NODE);
+        transpositionTable->add(b, alpha, toHash, s, sortBranch, depth, PV_NODE);
     else if (depth >= 4 && alpha <= prevAlpha)
-        transpositionTable->add(b, alpha, MOVE_NULL, s, 60, depth, ALL_NODE);
+        transpositionTable->add(b, alpha, MOVE_NULL, s, sortBranch, depth, ALL_NODE);
 
     return alpha;
 }
