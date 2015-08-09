@@ -26,8 +26,8 @@ The endgame solver is highly optimized using internal iterative deepening, an
 optimized hashtable, fastest-first move ordering, special functions for solving
 1-4 squares left, and aspiration windows.
 Current performance on the FFO test suite (A good explanation is available on
-http://www.radagast.se/othello/ffotest.html) is 9318 seconds (2.59 hours) and
-94.392.600.500 nodes searched.
+http://www.radagast.se/othello/ffotest.html) is 9190 seconds (2.55 hours) and
+93.279.942.553 nodes searched.
 The test was performed on one core of a i5-2450m, compiled with GCC
 version 4.6.3 on Ubuntu 12.04.
 

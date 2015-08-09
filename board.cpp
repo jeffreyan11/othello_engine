@@ -544,7 +544,7 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m1 = m2;
                 m2 = temp;
             }
-            else /*if ( !(NEIGHBORS[m3] & empty) ) */{
+            else {
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;
@@ -567,7 +567,7 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m2 = m4;
                 m4 = temp;
             }
-            else /*if ( !(NEIGHBORS[m4] & empty) )*/ {
+            else {
                 int temp = m1;
                 m1 = m4;
                 m4 = temp;
@@ -579,7 +579,7 @@ int Board::getLegalMoves4(int side, int *moves) {
                 m2 = m3;
                 m3 = temp;
             }
-            else if ( !(NEIGHBORS[m4] & empty) ) {
+            else {
                 int temp = m2;
                 m2 = m4;
                 m4 = temp;
@@ -633,7 +633,7 @@ int Board::getLegalMoves3(int side, int *moves) {
                 m1 = m2;
                 m2 = temp;
             }
-            else /*if ( !(NEIGHBORS[m3] & empty) ) */{
+            else {
                 int temp = m1;
                 m1 = m3;
                 m3 = temp;

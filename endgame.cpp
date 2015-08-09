@@ -203,6 +203,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     if (!isSorted && depth > 11) {
         aspAlpha = max(scores.get(0) / 600 - 4, alpha);
         aspBeta = min(scores.get(0) / 600 + 4, beta);
+        // To prevent errors if our sort search score was outside [alpha, beta]
         if (aspAlpha >= beta)
             aspAlpha = beta - 2;
         if (aspBeta <= alpha)
@@ -450,9 +451,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 
             int p = SQ_VAL[m];
             if (m == killer)
-                p |= 1 << 16;
+                p += 1 << 20;
 
-            priority.add(scores.get(i) /*- 128*copy.numLegalMoves(s^1)*/ + 8*p);
+            priority.add(scores.get(i) + 8*p);
         }
     }
     // Otherwise, we focus more on fastest first for a cheaper fail-high
@@ -465,9 +466,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             Board copy = b.copy();
             copy.doMove(m, s);
 
-            int p = 9 * SQ_VAL[m];
+            int p = 8 * SQ_VAL[m];
             if (m == killer)
-                p |= 1 << 16;
+                p += 1 << 20;
 
             priority.add(scores.get(i) - 2048*copy.numLegalMoves(s^1)
                     - 64*copy.potentialMobility(s^1) + 32*p);
@@ -531,9 +532,10 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 /**
  * @brief Endgame solver, to be used with about 12 or less empty squares.
  * Here, it is no longer efficient to use heavy sorting.
+ * The MoveList is dropped in favor of a faster array on the stack.
  * The hash table is used until about depth 9.
- * Fastest first is used above depth 6, otherwise, moves are just sorted by
- * hole parity.
+ * Fastest first is used until depth 7, otherwise, moves are just sorted by
+ * hole parity and piece square tables.
  */
 int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         bool passedLast) {
@@ -571,7 +573,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     #endif
 
     // attempt killer heuristic cutoff, using saved alpha
-    int killer = MOVE_NULL;
+    int hashMove = MOVE_NULL;
     if (depth >= MIN_TT_DEPTH) {
         EndgameEntry *killerEntry = killer_table->get(b, s);
         if(killerEntry != NULL) {
@@ -583,10 +585,11 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             // Fail high is lower bound on score so this is valid
             if (alpha < killerEntry->score)
                 alpha = killerEntry->score;
-            if (killerEntry->depth >= 10) {
-                egStats->hashMoveAttempts++;
-                killer = killerEntry->move;
-            }
+
+            // Otherwise, try the move early in move ordering
+            egStats->hashMoveAttempts++;
+            hashMove = killerEntry->move;
+
         }
     }
 
@@ -612,7 +615,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     do {
         moves[n] = bitScanForward(legal);
         priority[n] = SQ_VAL[moves[n]];
-        if(moves[n] == killer)
+        if(moves[n] == hashMove)
             priority[n] += 1 << 16;
 
         if(!(NEIGHBORS[moves[n]] & empty))
@@ -621,7 +624,8 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         legal &= legal-1; n++;
     } while(legal);
 
-    if (depth >= 7) {
+    // Only do fastest first on null window searches (non-PV nodes)
+    if (depth >= 7 && (alpha == beta - 1)) {
         for(int i = 0; i < n; i++) {
             Board copy = b.copy();
             copy.doMove(moves[i], s);
@@ -654,7 +658,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
-            if (move == killer)
+            if (move == hashMove)
                 egStats->hashMoveCuts++;
             if (depth >= MIN_TT_DEPTH)
                 killer_table->add(b, beta, move, s, depth);
@@ -936,14 +940,8 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
     // TODO make this shorter and less repetitive :(
     if (depth >= 2) {
         MoveList scores;
-        if (depth >= 5 && isPVNode) {
+        if (depth >= 5 && isPVNode)
             sortSearch(b, legalMoves, scores, s, (depth >= 9) ? 4 : 2);
-            /*for (unsigned int i = 0; i < legalMoves.size; i++) {
-                Board copy = b.copy();
-                copy.doMove(legalMoves.get(i), s);
-                scores.set(i, scores.get(i) - 256*copy.numLegalMoves(s^1));
-            }*/
-        }
         else if (depth >= 4 && isPVNode)
             sortSearch(b, legalMoves, scores, s, 0);
         else if (depth >= 6) {
