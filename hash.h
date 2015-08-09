@@ -68,7 +68,6 @@ public:
     void add(Board &b, int score, int move, int ptm, uint8_t turn, int depth,
         uint8_t nodeType);
     BoardData *get(Board &b, int ptm);
-    //void clean(int turn);
 };
 
 #endif

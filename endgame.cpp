@@ -24,11 +24,12 @@ const int STAB_THRESHOLD[40] = {
     64, 64, 64, 64, 64
 };
 
+// Depths for sort searching. Indexed by depth.
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 2, 2, 2, 2, 4, 4,
     4, 6, 6, 6, 8, 8, 8, 10, 10, 10,
-    12, 12, 12, 12, 12
+    10, 10, 12, 12, 12
 };
 
 const int END_SHALLOW = 12;
@@ -64,10 +65,8 @@ Endgame::Endgame() {
     endgame_table = new EndHash(14);
     // 2^23 entries * 28 bytes/entry = 235 MB
     killer_table = new EndHash(23);
-    #if USE_ALL_TABLE
     // 2^22 entries * 28 bytes/entry = 117 MB
     all_table = new EndHash(22);
-    #endif
     // 2^20 array slots (2^21 entries) * 64 bytes/slot = 67 MB
     transpositionTable = new Hash(20);
 
@@ -77,9 +76,7 @@ Endgame::Endgame() {
 Endgame::~Endgame() {
     delete endgame_table;
     delete killer_table;
-    #if USE_ALL_TABLE
     delete all_table;
-    #endif
     delete transpositionTable;
 
     delete egStats;
@@ -245,9 +242,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     #if PRINT_SEARCH_INFO
     cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
     cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
-    #if USE_ALL_TABLE
     cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
-    #endif
     cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
 
     end_time = high_resolution_clock::now();
@@ -296,11 +291,11 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
         else
             score = -dispatch(copy, s^1, depth-1, -beta, -alpha);
 
-        // TODO use information already gathered?
         if (score == SCORE_TIMEOUT) {
             #if PRINT_SEARCH_INFO
             cerr << "Breaking out of endgame solver." << endl;
             #endif
+            // If we have already found a winning move, mind as well take it.
             if (bestIndex != MOVE_FAIL_LOW && alpha > 0) {
                 exactScore = alpha;
                 return bestIndex;
@@ -377,7 +372,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
     #endif
 
-    #if USE_ALL_TABLE
     EndgameEntry *allEntry = all_table->get(b, s);
     if(allEntry != NULL) {
         if (allEntry->score <= alpha)
@@ -385,7 +379,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         if (beta > allEntry->score)
             beta = allEntry->score;
     }
-    #endif
 
     // attempt killer heuristic cutoff, using saved alpha
     int killer = MOVE_NULL;
@@ -402,7 +395,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         killer = killerEntry->move;
 
         // Try the move for a cutoff before move generation
-        // Somehow, leaving this in for a re-search later decreases tree size...
         egStats->hashMoveAttempts++;
         Board copy = b.copy();
         copy.doMove(killer, s);
@@ -487,7 +479,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             end_time-timeElapsed);
         if (time_span.count() * 1000 > timeout)
             return -SCORE_TIMEOUT;
-
+        // We already tried the hash move
         if (legalMoves.get(i) == killer)
             continue;
         Board copy = b.copy();
@@ -521,10 +513,8 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     // Best move with exact score if alpha < score < beta
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgame_table->add(b, alpha, tempMove, s, depth);
-    #if USE_ALL_TABLE
     else if (alpha <= prevAlpha)
         all_table->add(b, alpha, MOVE_NULL, s, depth);
-    #endif
 
     return alpha;
 }
@@ -542,7 +532,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     if(depth == 4)
         return endgame4(b, s, alpha, beta, passedLast);
 
-    // play best move, if recorded
+    // Immediately return an exact score, if available
     EndgameEntry *exactEntry = endgame_table->get(b, s);
     if(exactEntry != NULL) {
         return exactEntry->score;
@@ -560,7 +550,8 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     }
     #endif
 
-    #if USE_ALL_TABLE
+    int hashMove = MOVE_NULL;
+    // Probe hash tables
     if (depth >= MIN_TT_DEPTH) {
         EndgameEntry *allEntry = all_table->get(b, s);
         if(allEntry != NULL) {
@@ -569,12 +560,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             if (beta > allEntry->score)
                 beta = allEntry->score;
         }
-    }
-    #endif
 
-    // attempt killer heuristic cutoff, using saved alpha
-    int hashMove = MOVE_NULL;
-    if (depth >= MIN_TT_DEPTH) {
         EndgameEntry *killerEntry = killer_table->get(b, s);
         if(killerEntry != NULL) {
             egStats->hashHits++;
@@ -582,14 +568,12 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
                 egStats->hashCuts++;
                 return beta;
             }
-            // Fail high is lower bound on score so this is valid
             if (alpha < killerEntry->score)
                 alpha = killerEntry->score;
 
-            // Otherwise, try the move early in move ordering
+            // If no score cutoff, try the move early in move ordering
             egStats->hashMoveAttempts++;
             hashMove = killerEntry->move;
-
         }
     }
 
@@ -646,13 +630,11 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
 
         if (i != 0) {
             score = -endgameShallow(copy, s^1, depth-1, -alpha-1, -alpha, false);
-            if (alpha < score && score < beta) {
+            if (alpha < score && score < beta)
                 score = -endgameShallow(copy, s^1, depth-1, -beta, -alpha, false);
-            }
         }
-        else {
+        else
             score = -endgameShallow(copy, s^1, depth-1, -beta, -alpha, false);
-        }
 
         if (score >= beta) {
             egStats->failHighs++;
@@ -673,10 +655,8 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     // Best move with exact score if alpha < score < beta
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgame_table->add(b, alpha, tempMove, s, depth);
-    #if USE_ALL_TABLE
     else if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
         all_table->add(b, alpha, MOVE_NULL, s, depth);
-    #endif
 
     return alpha;
 }
@@ -767,6 +747,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
 
 /**
  * @brief Endgame solver, to be used with exactly 2 empty squares.
+ * Null window searches are no longer performed here.
  */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
     int score = -INFTY;
@@ -957,7 +938,8 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
             for (unsigned int i = 0; i < legalMoves.size; i++) {
                 Board copy = b.copy();
                 copy.doMove(legalMoves.get(i), s);
-                scores.add(SQ_VAL[legalMoves.get(i)] - 16*copy.numLegalMoves(s^1));
+                scores.add(SQ_VAL[legalMoves.get(i)]
+                    - 16*copy.numLegalMoves(s^1));
             }
         }
         else {

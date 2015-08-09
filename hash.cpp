@@ -61,7 +61,7 @@ void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
     }
     else {
         BoardData *toReplace = NULL;
-        // Prioritize entries with both a higher depth, but also from a more
+        // Prioritize entries with a higher depth, but also from a more
         // recent search space
         int score1 = 4*(turn - node->entry1.turn) + depth - node->entry1.depth;
         int score2 = 4*(turn - node->entry2.turn) + depth - node->entry2.depth;
@@ -102,19 +102,3 @@ BoardData *Hash::get(Board &b, int ptm) {
 
     return NULL;
 }
-/*
-void Hash::clean(int turn) {
-    for (int i = 0; i < size; i++) {
-        HashLL *node = table[i];
-        if (node == NULL)
-            continue;
-        if (node->cargo.turn <= turn) {
-            keys--;
-            table[i] = node->next;
-            delete node;
-            node = table[i];
-            if (node == NULL)
-                break;
-        }
-    }
-}*/

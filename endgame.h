@@ -9,18 +9,19 @@
 #include "hash.h"
 
 #define USE_STABILITY false
-#define USE_ALL_TABLE true
 
 struct EndgameStatistics;
 
+/**
+ * @brief This class contains a large number of functions to help solve the
+ * endgame for a game result or perfect play.
+ */
 class Endgame {
 
 private:
     EndHash *endgame_table;
     EndHash *killer_table;
-    #if USE_ALL_TABLE
     EndHash *all_table;
-    #endif
     Hash *transpositionTable;
 
     Eval *evaluater;
