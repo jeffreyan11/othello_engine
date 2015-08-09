@@ -36,9 +36,10 @@ private:
     int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
+    void sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
+        bool isPVNode);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
-    //int getBestMoveForSort(Board &b, MoveList &legalMoves, int side, int depth);
 
 public:
     Board game;
