@@ -45,7 +45,6 @@ struct EndgameStatistics {
     uint64_t hashMoveCuts;
     uint64_t firstFailHighs;
     uint64_t failHighs;
-    uint64_t searchSpaces;
     uint64_t sortSearchNodes;
 
     void reset() {
@@ -55,7 +54,6 @@ struct EndgameStatistics {
         hashMoveCuts = 0;
         firstFailHighs = 0;
         failHighs = 0;
-        searchSpaces = 0;
         sortSearchNodes = 0;
     }
 };
@@ -252,7 +250,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
     cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
-    cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << " / " << egStats->searchSpaces << endl;
+    cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
     cerr << "Time spent: " << time_span.count() << endl;
     cerr << "Best move: ";
     // If we failed low on the bounds we were given, that isn't our business
@@ -468,7 +466,6 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
 
     int tempMove = MOVE_NULL;
-    egStats->searchSpaces++;
     unsigned int i = 0;
     for (int m = nextMove(legalMoves, priority, i); m != MOVE_NULL;
              m = nextMove(legalMoves, priority, ++i)) {
@@ -619,7 +616,6 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     }
 
     // search all moves
-    egStats->searchSpaces++;
     int i = 0;
     int tempMove = MOVE_NULL;
     for (int move = nextMoveShallow(moves, priority, n, i); move != MOVE_NULL;

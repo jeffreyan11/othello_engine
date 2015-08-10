@@ -21,6 +21,10 @@ const uint8_t ALL_NODE = 2;
 int countSetBits(bitbrd i);
 int bitScanForward(bitbrd bb);
 int bitScanReverse(bitbrd bb);
+bitbrd reflectVertical(bitbrd i);
+bitbrd reflectHorizontal(bitbrd x);
+bitbrd reflectDiag(bitbrd x);
+
 void printMove(int move);
 
 enum Side { 

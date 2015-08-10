@@ -18,10 +18,10 @@ testsuites: $(OBJS) testsuites.o
 tuneheuristic: $(OBJS) tuneheuristic.o
 	$(CC) -o $@ $^
 
-evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o evalbuilder.o
+evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o evalbuilder.o
 	$(CC) -o $@ $^
 
-endeval: common.o board.o endgame.o eval.o endhash.o hash.o endeval.o
+endeval: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o endeval.o
 	$(CC) -o $@ $^
 
 blur:

@@ -1,6 +1,8 @@
 #include <fstream>
 #include "eval.h"
 
+// Converts the packed bits for one side into an index for the pattern values
+// array.
 const int PIECES_TO_INDEX[1024] = {
 0, 1, 3, 4, 9, 10, 12, 13, 27, 28, 30, 31, 36, 37, 39, 40, 81, 82, 84, 85, 90, 
 91, 93, 94, 108, 109, 111, 112, 117, 118, 120, 121, 243, 244, 246, 247, 252, 
@@ -234,44 +236,6 @@ int Eval::end_heuristic(Board &b) {
 
 int Eval::stability(Board &b, int s) {
     return boardTo44SV(b, s);
-}
-
-bitbrd Eval::reflectVertical(bitbrd i) {
-    #if defined(__x86_64__)
-        asm ("bswap %0" : "=r" (i) : "0" (i));
-        return i;
-    #else
-        const bitbrd k1 = 0x00FF00FF00FF00FF;
-        const bitbrd k2 = 0x0000FFFF0000FFFF;
-        i = ((i >>  8) & k1) | ((i & k1) <<  8);
-        i = ((i >> 16) & k2) | ((i & k2) << 16);
-        i = ( i >> 32)       | ( i       << 32);
-        return i;
-    #endif
-}
-
-bitbrd Eval::reflectHorizontal(bitbrd x) {
-    const bitbrd k1 = 0x5555555555555555;
-    const bitbrd k2 = 0x3333333333333333;
-    const bitbrd k4 = 0x0f0f0f0f0f0f0f0f;
-    x = ((x >> 1) & k1) | ((x & k1) << 1);
-    x = ((x >> 2) & k2) | ((x & k2) << 2);
-    x = ((x >> 4) & k4) | ((x & k4) << 4);
-    return x;
-}
-
-bitbrd Eval::reflectDiag(bitbrd x) {
-    bitbrd t;
-    const bitbrd k1 = 0x5500550055005500;
-    const bitbrd k2 = 0x3333000033330000;
-    const bitbrd k4 = 0x0f0f0f0f00000000;
-    t  = k4 & (x ^ (x << 28));
-    x ^=       t ^ (t >> 28) ;
-    t  = k2 & (x ^ (x << 14));
-    x ^=       t ^ (t >> 14) ;
-    t  = k1 & (x ^ (x <<  7));
-    x ^=       t ^ (t >>  7) ;
-    return x;
 }
 
 int Eval::boardToEPV(Board &b, int turn) {

@@ -16,10 +16,6 @@ private:
     int **p33Table;
     int *s44Table;
 
-    bitbrd reflectVertical(bitbrd i);
-    bitbrd reflectHorizontal(bitbrd x);
-    bitbrd reflectDiag(bitbrd x);
-
     int boardToEPV(Board &b, int turn);
     int boardTo24PV(Board &b, int turn);
     int boardToE2XPV(Board &b, int turn);

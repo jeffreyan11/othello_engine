@@ -36,6 +36,8 @@ int countSetBits(bitbrd i) {
     #endif
 }
 
+// BitScan forward and reverse algorithms from
+// https://chessprogramming.wikispaces.com/BitScan
 int bitScanForward(bitbrd bb) {
     #if defined(__x86_64__)
         asm ("bsf %1, %0" : "=r" (bb) : "r" (bb));
@@ -71,6 +73,46 @@ int bitScanReverse(bitbrd bb) {
     #endif
 }
 
+// Reflection algorithms from
+// https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating
+bitbrd reflectVertical(bitbrd i) {
+    #if defined(__x86_64__)
+        asm ("bswap %0" : "=r" (i) : "0" (i));
+        return i;
+    #else
+        const bitbrd k1 = 0x00FF00FF00FF00FF;
+        const bitbrd k2 = 0x0000FFFF0000FFFF;
+        i = ((i >>  8) & k1) | ((i & k1) <<  8);
+        i = ((i >> 16) & k2) | ((i & k2) << 16);
+        i = ( i >> 32)       | ( i       << 32);
+        return i;
+    #endif
+}
+
+bitbrd reflectHorizontal(bitbrd x) {
+    const bitbrd k1 = 0x5555555555555555;
+    const bitbrd k2 = 0x3333333333333333;
+    const bitbrd k4 = 0x0f0f0f0f0f0f0f0f;
+    x = ((x >> 1) & k1) | ((x & k1) << 1);
+    x = ((x >> 2) & k2) | ((x & k2) << 2);
+    x = ((x >> 4) & k4) | ((x & k4) << 4);
+    return x;
+}
+
+bitbrd reflectDiag(bitbrd x) {
+    bitbrd t;
+    const bitbrd k1 = 0x5500550055005500;
+    const bitbrd k2 = 0x3333000033330000;
+    const bitbrd k4 = 0x0f0f0f0f00000000;
+    t  = k4 & (x ^ (x << 28));
+    x ^=       t ^ (t >> 28) ;
+    t  = k2 & (x ^ (x << 14));
+    x ^=       t ^ (t >> 14) ;
+    t  = k1 & (x ^ (x <<  7));
+    x ^=       t ^ (t >>  7) ;
+    return x;
+}
+
 // Pretty prints a move in (x, y) form indexed from 1.
 void printMove(int move) {
     std::cerr << "(" << (move & 7) + 1 << ", " << (move >> 3) + 1 << ")";
@@ -95,6 +137,7 @@ int nextMove(MoveList &moves, MoveList &scores, unsigned int index) {
     return moves.get(index);
 }
 
+// A standard in-place quicksort that sorts moves according to scores.
 void sort(MoveList &moves, MoveList &scores, int left, int right) {
     int pivot = (left + right) / 2;
 
