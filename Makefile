@@ -3,8 +3,8 @@ CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = ShallowKwok
 
-all: $(PLAYERNAME) testgame memtest
-evaltools: evalbuilder endeval blur testheuristic crtbk
+all: $(PLAYERNAME) testgame testsuites
+evaltools: evalbuilder endeval blur tuneheuristic crtbk
 	
 $(PLAYERNAME): $(OBJS) wrapper.o
 	$(CC) -o $@ $^
@@ -12,16 +12,16 @@ $(PLAYERNAME): $(OBJS) wrapper.o
 testgame: testgame.o
 	$(CC) -o $@ $^
 
-memtest: $(OBJS) memtest.o
+testsuites: $(OBJS) testsuites.o
 	$(CC) -o $@ $^
 
-testheuristic: $(OBJS) testheuristic.o
+tuneheuristic: $(OBJS) tuneheuristic.o
 	$(CC) -o $@ $^
 
-evalbuilder: common.o board.o endgame.o eval.o endhash.o evalbuilder.o
+evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o evalbuilder.o
 	$(CC) -o $@ $^
 
-endeval: common.o board.o endgame.o eval.o endhash.o endeval.o
+endeval: common.o board.o endgame.o eval.o endhash.o hash.o endeval.o
 	$(CC) -o $@ $^
 
 blur:
@@ -40,6 +40,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o *.exe $(PLAYERNAME) testgame memtest testheuristic evalbuilder endeval blur crtbk
+	rm -f *.o *.exe $(PLAYERNAME) testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
 	
 .PHONY: java

@@ -45,7 +45,6 @@ Player::Player(Side side) {
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
     turn = 4;
     timeLimit = -2;
-    lastScore = 0;
 
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
@@ -220,7 +219,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
           && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
-    lastScore = chosenScore;
     #if PRINT_SEARCH_INFO
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
@@ -309,21 +307,19 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
                         return entry->score;
                 }
                 // Try the hash move first
-                if (entry->depth >= 5) {
-                    hashed = entry->move;
-                    Board copy = b.copy();
-                    copy.doMove(hashed, s);
-                    nodes++;
-                    score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+                hashed = entry->move;
+                Board copy = b.copy();
+                copy.doMove(hashed, s);
+                nodes++;
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
 
-                    // If we received a timeout signal, propagate it upwards
-                    if (score == TIMEOUT)
-                        return -TIMEOUT;
-                    if (alpha < score)
-                        alpha = score;
-                    if (alpha >= beta)
-                        return beta;
-                }
+                // If we received a timeout signal, propagate it upwards
+                if (score == TIMEOUT)
+                    return -TIMEOUT;
+                if (alpha < score)
+                    alpha = score;
+                if (alpha >= beta)
+                    return beta;
             }
         }
     }
@@ -379,7 +375,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
             toHash = legalMoves.get(i);
         }
         if (alpha >= beta) {
-            if(depth >= 5)
+            if(depth >= 4)
                 transpositionTable->add(b, beta, legalMoves.get(i), s,
                     turn, depth, CUT_NODE);
             return beta;
@@ -388,7 +384,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         transpositionTable->add(b, alpha, toHash, s, turn, depth, PV_NODE);
-    else if (depth >= 5 && alpha <= prevAlpha)
+    else if (depth >= 4 && alpha <= prevAlpha)
         transpositionTable->add(b, alpha, MOVE_NULL, s, turn, depth, ALL_NODE);
 
     return alpha;
