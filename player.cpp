@@ -216,7 +216,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         time_span = duration_cast<duration<double>>(end_time-start_time);
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
-    } while((timeLimit > time_span.count() * 1000.0 * legalMoves.size * 2)
+    } while((timeLimit > time_span.count() * 1000.0 * legalMoves.size)
           && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);

@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-const int OPENING_BOOK_SIZE = 8083;
-
 struct Node {
     bitbrd taken, black;
     int move;
@@ -13,7 +11,8 @@ struct Node {
 class Openings {
 
 private:
-    Node *openings[OPENING_BOOK_SIZE];
+    Node **openings;
+    int bookSize;
     int binarySearch(bitbrd taken, bitbrd black);
 
     bool readFile();

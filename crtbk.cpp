@@ -60,6 +60,7 @@ void next(Player &p, Board &b, int color, int plies) {
         std::cout << "already exists. traversing." << std::endl;
         temp.doMove(exists, color);
     }
+    // Find a best move for the current position
     else {
         Move *m = p.doMove(NULL, -1);
         int nMove = MOVE_NULL;
@@ -112,6 +113,8 @@ bool readFile() {
     std::ifstream openingbk("newbook.txt");
 
     if(openingbk.is_open()) {
+        // Discard the first line, which contains the size
+        getline(openingbk, line);
         int i = 0;
         while(getline(openingbk, line)) {
             stringForm.push_back(new std::string(line));
@@ -139,6 +142,7 @@ bool readFile() {
 void writeFile() {
     ofstream out;
     out.open("newbook.txt");
+    out << stringForm.size() << endl;
     for(unsigned int i = 0; i < stringForm.size(); i++) {
         out << *stringForm[i] << endl;
     }

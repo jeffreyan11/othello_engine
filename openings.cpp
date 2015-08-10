@@ -8,9 +8,10 @@ Openings::Openings() {
 }
 
 Openings::~Openings() {
-    for(int i = 0; i < OPENING_BOOK_SIZE; i++) {
+    for(int i = 0; i < bookSize; i++) {
         delete openings[i];
     }
+    delete openings;
 }
 
 int Openings::get(bitbrd taken, bitbrd black) {
@@ -23,7 +24,7 @@ int Openings::get(bitbrd taken, bitbrd black) {
 
 int Openings::binarySearch(bitbrd taken, bitbrd black) {
     int min = 0;
-    int max = OPENING_BOOK_SIZE - 1;
+    int max = bookSize - 1;
 
     while(max >= min) {
         int mid = min + (max - min) / 2;
@@ -47,6 +48,11 @@ bool Openings::readFile() {
     std::ifstream openingbk("openings.txt");
 
     if(openingbk.is_open()) {
+        getline(openingbk, line);
+        bookSize = std::stoi(line);
+        openings = new Node *[bookSize];
+        std::cerr << "Opening book read. Contains " << bookSize
+                  << " positions." << std::endl;
         int i = 0;
         while(getline(openingbk, line)) {
             std::string::size_type sz = 0;
