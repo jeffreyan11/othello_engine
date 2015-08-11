@@ -5,24 +5,16 @@ testgame [player1] [player2] [timelimit]
 where player1 and player2 are the names of program executables, or "Human".
 Time limit is given in milliseconds.
 
-To compile the tools used to create the opening book and pattern evaluations,
-run "make evaltools". These are currently still a work in progress and are buggy
-and not well documented.
-    - evalbuilder: creates midgame evaluation patterns
-    - endeval: creates endgame evaluation patterns
-    - tuneheuristic: self-plays engine using heuristic and heuristic2 on
-        16400 games, white and black on each of the 8200 PERFT 6 positions
-    - crtbk: creates an opening book using the engine
-
 The engine uses a principal variation search, bitboards, an opening book, an
 endgame solver, hash tables, and pattern evaluations.
 
 The midgame search uses a two bucket hashtable with Zobrist hashing,
-and move orders with internal iterative deepening and a piece-square table.
+and move orders with internal iterative deepening, fastest first, and a
+piece-square table.
 
 The bitboards are based on the "Classical Approach" to chess bitboards
 (https://chessprogramming.wikispaces.com/Classical+Approach) and achieve about
-11.5 sec PERFT 11.
+9.5 sec PERFT 11.
 
 Pattern evaluations were trained from the FFO's database of games
 (http://www.ffothello.org/informatique/la-base-wthor/).
@@ -36,7 +28,20 @@ http://www.radagast.se/othello/ffotest.html) is 9190 seconds (2.55 hours) and
 The test was performed on one core of a i5-2450m, compiled with GCC
 version 4.6.3 on Ubuntu 12.04.
 
+
+To compile the tools used to create the opening book and pattern evaluations,
+run "make evaltools". These are currently still a work in progress and are buggy
+and not well documented. It is a good idea to compile with PRINT_SEARCH_INFO
+set to false in common.h before using any of these.
+    - evalbuilder: creates midgame evaluation patterns
+    - endeval: creates endgame evaluation patterns
+    - tuneheuristic: self-plays engine using heuristic and heuristic2 on
+        16400 games, white and black on each of the 8200 PERFT 6 positions
+    - crtbk: creates an opening book using the engine
+
+
 Known bugs:
+Opening book does not take into account side to move
 tuneheuristic leaks memory from passing Move * objects around
 
 TODO:

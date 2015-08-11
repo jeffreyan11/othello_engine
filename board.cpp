@@ -354,7 +354,7 @@ Board::Board() {
 
 /**
  * @brief A constructor allowing specification of white, black.
-*/
+ */
 Board::Board(bitbrd w, bitbrd b) {
     pieces[CWHITE] = w;
     pieces[CBLACK] = b;
@@ -366,18 +366,24 @@ Board::Board(bitbrd w, bitbrd b) {
 Board::~Board() {
 }
 
+/**
+ * @brief Creates a copy of the current board on the stack
+ */
 Board Board::copy() {
     return Board(pieces[CWHITE], pieces[CBLACK]);
 }
 
 /**
- * @brief Returns a copy of this board.
+ * @brief Returns a dynamically allocated copy of this board.
  */
 Board *Board::dynamicCopy() {
     Board *newBoard = new Board(pieces[CWHITE], pieces[CBLACK]);
     return newBoard;
 }
 
+/**
+ * @brief Checks whether a move is legal. Useful for checking database accuracy.
+ */
 bool Board::checkMove(int index, int side) {
     bitbrd legal = getLegal(side);
     if((index < 0 || index > 63) && !legal)
@@ -387,10 +393,6 @@ bool Board::checkMove(int index, int side) {
 
 /**
  * @brief Modifies the board to reflect the specified move.
- * 
- * This algorithm modifies the bitboards by lookup with precalculated tables in
- * each of the eight directions. A switch with the board region is used to only
- * consider certain directions for efficiency.
  */
 void Board::doMove(int index, int side) {
     // A NULL move means pass.
@@ -404,6 +406,10 @@ void Board::doMove(int index, int side) {
 
 /**
  * @brief This function returns the mask of changed bits.
+ *
+ * This algorithm gets the mask by lookup with precalculated tables in
+ * each of the eight directions. A switch with the board region is used to only
+ * consider certain directions for efficiency.
  */
 bitbrd Board::getDoMove(int index, int side) {
     bitbrd changeMask = 0;
@@ -474,12 +480,19 @@ bitbrd Board::getDoMove(int index, int side) {
     return changeMask;
 }
 
+/**
+ * @brief Given a move and the mask of opponent stones changed by this move,
+ * updates the board to reflect the move.
+ */
 void Board::makeMove(int index, bitbrd changeMask, int side) {
     pieces[CWHITE] ^= changeMask;
     pieces[CBLACK] ^= changeMask;
     pieces[side] |= MOVEMASK[index];
 }
 
+/**
+ * @brief Undos a move with the given index and mask of opponent stones changed.
+ */
 void Board::undoMove(int index, bitbrd changeMask, int side) {
     pieces[CWHITE] ^= changeMask;
     pieces[CBLACK] ^= changeMask;
@@ -488,7 +501,7 @@ void Board::undoMove(int index, bitbrd changeMask, int side) {
 
 /**
  * @brief Returns a list of all legal moves.
-*/
+ */
 MoveList Board::getLegalMoves(int side) {
     MoveList result;
     bitbrd temp = getLegal(side);
@@ -501,7 +514,8 @@ MoveList Board::getLegalMoves(int side) {
 
 /**
  * @brief Returns a list of all legal moves, given 4 or less empty squares.
-*/
+ * Moves are sorted by hole parity (moves in holes of size 1 are prioritized).
+ */
 int Board::getLegalMoves4(int side, int *moves) {
     int m1 = MOVE_NULL;
     int m2 = MOVE_NULL;
@@ -595,7 +609,8 @@ int Board::getLegalMoves4(int side, int *moves) {
 
 /**
  * @brief Returns a list of all legal moves, given 3 or less empty squares.
-*/
+ * Moves are sorted by hole parity (moves in holes of size 1 are prioritized).
+ */
 int Board::getLegalMoves3(int side, int *moves) {
     int m1 = MOVE_NULL;
     int m2 = MOVE_NULL;
@@ -658,7 +673,6 @@ bitbrd Board::getLegal(int side) {
     bitbrd self = pieces[side];
     bitbrd opp = pieces[side^1];
 
-#if KOGGE_STONE
     bitbrd other = opp & 0x00FFFFFFFFFFFF00;
     // north and south
     bitbrd templ = other & (self << 8);
@@ -714,59 +728,23 @@ bitbrd Board::getLegal(int side) {
     result |= (templ << 9) | (tempr >> 9);
 
     return result & ~getTaken();
-
-#else
-    bitbrd other = opp & 0x00FFFFFFFFFFFF00;
-    // north and south
-    bitbrd tempM = (((self << 8) | (self >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & other);
-    result = ((tempM << 8) | (tempM >> 8));
-
-    other = opp & 0x7E7E7E7E7E7E7E7E;
-    // east and west
-    tempM = (((self << 1) | (self >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & other);
-    result |= ((tempM << 1) | (tempM >> 1));
-
-    // ne and sw
-    tempM = (((self << 7) | (self >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & other);
-    result |= ((tempM << 7) | (tempM >> 7));
-
-    // nw and se
-    tempM = (((self << 9) | (self >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & other);
-    result |= ((tempM << 9) | (tempM >> 9));
-
-    return result & ~getTaken();
-#endif
 }
 
+/**
+ * @brief Returns the mobility of the given player.
+ */
 int Board::numLegalMoves(int side) {
     return countSetBits(getLegal(side));
 }
 
+/**
+ * @brief Returns the potential mobility (frontier squares) of the given player.
+ * This is the number of empty squares adjacent to your opponent's pieces.
+ */
 int Board::potentialMobility(int side) {
     bitbrd other = pieces[side^1];
     bitbrd empty = ~getTaken();
 
-    // Potential mobility = empty squares adjacent to opponent's pieces
     bitbrd result = (other >> 8) | (other << 8);
     result &= empty;
 
@@ -779,6 +757,10 @@ int Board::potentialMobility(int side) {
     return countSetBits(result);
 }
 
+/**
+ * @brief Gets an estimate of the number of stable discs of the given player.
+ * Currently overestimates and needs to be fixed.
+ */
 int Board::getStability(int side) {
     bitbrd result = 0;
     bitbrd self = pieces[side];
@@ -940,13 +922,14 @@ int Board::countEmpty() {
     return countSetBits(~getTaken());
 }
 
-/*
- * Current count of given side's stones.
+/**
+ * @brief Returns the current count of given side's stones.
  */
 int Board::count(int side) {
     return countSetBits(pieces[side]);
 }
 
+//----------------------------doMove() helpers----------------------------------
 bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = NORTHRAY[index];
     // Capture line ends with either my piece or empty square

@@ -43,8 +43,6 @@ Player::Player(Side side) {
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     oppSide = (side == WHITE) ? CBLACK : CWHITE;
-    turn = 4;
-    timeLimit = -2;
 
     // initialize the evaluation functions
     evaluater = new Eval();
@@ -79,6 +77,17 @@ Player::~Player() {
  * @return The move the AI chose to play.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
+    // register opponent's move
+    if(opponentsMove != NULL)
+        game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
+    else
+        game.doMove(MOVE_NULL, oppSide);
+
+    // We can easily count how many moves have been made from the number of
+    // empty squares
+    int empties = game.countEmpty();
+    turn = 64 - empties;
+
     // timing
     if(msLeft != -1) {
         int movesLeft = 64 - turn;
@@ -89,17 +98,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         timeLimit = 60000;
     }
 
-    // register opponent's move
-    if(opponentsMove != NULL) {
-        game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
-    }
-    else {
-        game.doMove(MOVE_NULL, oppSide);
-    }
-    // We can easily count how many moves have been made from the number of
-    // empty squares
-    int empties = game.countEmpty();
-    turn = 64 - empties;
     #if PRINT_SEARCH_INFO
     cerr << endl;
     #endif
@@ -261,8 +259,8 @@ int Player::getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int s,
  * @brief Helper function for the principal variation search.
  * 
  * Uses alpha-beta pruning with a null-window search, a transposition table that
- * stores moves from at least depth 5, and internal iterative deepening and
- * fastest first for move ordering.
+ * stores moves from at least depth 4, and internal iterative deepening,
+ * fastest first, and a piece-square table for move ordering.
  */
 int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     if (depth <= 0) {
@@ -382,6 +380,9 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
 /**
  * @brief Sorts moves based on depth and whether the moves came from a PV node.
+ * A shallow sort search (a form of internal iterative deepening) is used along
+ * with fastest first (restricting opponent's mobility to reduce branch factor
+ * and get the cheapest possible cutoff).
  */
 void Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     bool isPVNode) {
