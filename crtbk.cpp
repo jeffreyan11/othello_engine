@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
 
     Player p(BLACK);
     Player p2(WHITE);
-    p.setDepths(4, 6, 10, 30);
-    p2.setDepths(4, 6, 10, 30);
+    p.setDepths(4, 6, 12, 30);
+    p2.setDepths(4, 6, 12, 30);
     Board b;
     // consider black
     next(p, b, CBLACK, 5);
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
         Board copy = b.copy();
         copy.doMove(lm.get(i), CBLACK);
 
-        next(p2, copy, CWHITE, 4);
+        next(p2, copy, CWHITE, 5);
     }
 
     writeFile();

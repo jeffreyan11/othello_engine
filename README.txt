@@ -8,6 +8,11 @@ Time limit is given in milliseconds.
 To compile the tools used to create the opening book and pattern evaluations,
 run "make evaltools". These are currently still a work in progress and are buggy
 and not well documented.
+    - evalbuilder: creates midgame evaluation patterns
+    - endeval: creates endgame evaluation patterns
+    - tuneheuristic: self-plays engine using heuristic and heuristic2 on
+        16400 games, white and black on each of the 8200 PERFT 6 positions
+    - crtbk: creates an opening book using the engine
 
 The engine uses a principal variation search, bitboards, an opening book, an
 endgame solver, hash tables, and pattern evaluations.
