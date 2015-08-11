@@ -1,4 +1,3 @@
-#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -27,8 +26,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    using namespace std::chrono;
-    auto startTime = high_resolution_clock::now();
+    auto startTime = OthelloClock::now();
 
     if (string(argv[1]) == "perft") {
         Board b;
@@ -69,11 +67,7 @@ int main(int argc, char **argv) {
         m = p.doMove(m, -1);
     }*/
 
-    auto endTime = high_resolution_clock::now();
-    duration<double> timeSpan = duration_cast<duration<double>>(
-        endTime-startTime);
-
-    cerr << timeSpan.count() << endl;
+    cerr << getTimeElapsed(startTime) << endl;
     cerr << totalNodes << endl;
 }
 

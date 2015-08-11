@@ -149,17 +149,14 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         return entry->move;
     }
 
-    using namespace std::chrono;
-    auto startTime = high_resolution_clock::now();
-    auto endTime = high_resolution_clock::now();
-    duration<double> timeSpan = duration_cast<duration<double>>(
-        endTime-startTime);
+    auto startTime = OthelloClock::now();
+    double timeSpan = 0.0;
 
     nodes = 0;
     sortBranch = 0;
     egStats->reset();
     evaluater = eval;
-    timeElapsed = high_resolution_clock::now();
+    timeElapsed = OthelloClock::now();
     timeout = timeLimit;
 
     MoveList scores;
@@ -178,17 +175,17 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         else
             sortSearch(b, moves, scores, s, 2);
         sort(moves, scores, 0, moves.size-1);
-        endTime = high_resolution_clock::now();
-        timeSpan = duration_cast<duration<double>>(endTime-startTime);
+
+        timeSpan = getTimeElapsed(startTime);
         #if PRINT_SEARCH_INFO
-        cerr << "Sort search took: " << timeSpan.count() << " sec" << endl;
+        cerr << "Sort search took: " << timeSpan << " sec" << endl;
         cerr << "PV: ";
         printMove(moves.get(0));
         cerr << " Score: " << scores.get(0) / 600 << endl;
         #endif
     }
 
-    startTime = high_resolution_clock::now();
+    startTime = OthelloClock::now();
 
     // Playing with aspiration windows...
     int score;
@@ -243,15 +240,14 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     cerr << "All-nodes table has: " << allTable->keys << " keys." << endl;
     cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
 
-    endTime = high_resolution_clock::now();
-    timeSpan = duration_cast<duration<double>>(endTime-startTime);
+    timeSpan = getTimeElapsed(startTime);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
-        (int)((double)nodes / timeSpan.count()) << endl;
+        (int) ((double) nodes / timeSpan) << endl;
     cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
     cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
-    cerr << "Time spent: " << timeSpan.count() << endl;
+    cerr << "Time spent: " << timeSpan << endl;
     cerr << "Best move: ";
     // If we failed low on the bounds we were given, that isn't our business
     if (bestMove == MOVE_FAIL_LOW)
@@ -470,11 +466,8 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     for (int m = nextMove(legalMoves, priority, i); m != MOVE_NULL;
              m = nextMove(legalMoves, priority, ++i)) {
         // Check for a timeout
-        auto endTime = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> timeSpan =
-            std::chrono::duration_cast<std::chrono::duration<double>>(
-            endTime-timeElapsed);
-        if (timeSpan.count() * 1000 > timeout)
+        double timeSpan = getTimeElapsed(timeElapsed);
+        if (timeSpan * 1000 > timeout)
             return -SCORE_TIMEOUT;
         // We already tried the hash move
         if (legalMoves.get(i) == killer)

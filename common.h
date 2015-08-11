@@ -3,10 +3,13 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <chrono>
 
 #define PRINT_SEARCH_INFO true
 
 typedef uint64_t bitbrd;
+typedef std::chrono::high_resolution_clock OthelloClock;
+typedef std::chrono::high_resolution_clock::time_point OthelloTimer;
 
 const int INFTY = (1 << 20);
 const int MOVE_NULL = 64;
@@ -18,6 +21,7 @@ const uint8_t PV_NODE = 0;
 const uint8_t CUT_NODE = 1;
 const uint8_t ALL_NODE = 2;
 
+// Bitboard functions
 int countSetBits(bitbrd i);
 int bitScanForward(bitbrd bb);
 int bitScanReverse(bitbrd bb);
@@ -25,6 +29,8 @@ bitbrd reflectVertical(bitbrd i);
 bitbrd reflectHorizontal(bitbrd x);
 bitbrd reflectDiag(bitbrd x);
 
+// Utility functions
+double getTimeElapsed(OthelloTimer startTime);
 void printMove(int move);
 
 enum Side { 

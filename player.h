@@ -1,7 +1,6 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-#include <chrono>
 #include "common.h"
 #include "board.h"
 #include "openings.h"
@@ -28,7 +27,7 @@ private:
 
     int turn;
     int timeLimit;
-    std::chrono::high_resolution_clock::time_point timeElapsed;
+    OthelloTimer timeElapsed;
 
     int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
         int depth);

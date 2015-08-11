@@ -1,7 +1,6 @@
 #ifndef __ENDGAME_H__
 #define __ENDGAME_H__
 
-#include <chrono>
 #include "common.h"
 #include "board.h"
 #include "endhash.h"
@@ -30,7 +29,7 @@ private:
     // For replacement strategy in sort search hash table
     int sortBranch;
 
-    std::chrono::high_resolution_clock::time_point timeElapsed;
+    OthelloTimer timeElapsed;
     int timeout;
     bool isWLD;
 

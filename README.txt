@@ -14,7 +14,7 @@ piece-square table.
 
 The bitboards are based on the "Classical Approach" to chess bitboards
 (https://chessprogramming.wikispaces.com/Classical+Approach) and achieve about
-9.5 sec PERFT 11.
+9.0 sec PERFT 11 on a i5-2450m.
 
 Pattern evaluations were trained from the FFO's database of games
 (http://www.ffothello.org/informatique/la-base-wthor/).

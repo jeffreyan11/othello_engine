@@ -113,6 +113,16 @@ bitbrd reflectDiag(bitbrd x) {
     return x;
 }
 
+// Given a std::chrono time_point, this function returns the number of seconds
+// elapsed since then.
+double getTimeElapsed(OthelloTimer startTime) {
+    auto endTime = OthelloClock::now();
+    std::chrono::duration<double> timeSpan =
+        std::chrono::duration_cast<std::chrono::duration<double>>(
+        endTime-startTime);
+    return timeSpan.count();
+}
+
 // Pretty prints a move in (x, y) form indexed from 1.
 void printMove(int move) {
     std::cerr << "(" << (move & 7) + 1 << ", " << (move >> 3) + 1 << ")";
