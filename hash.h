@@ -59,6 +59,9 @@ private:
     int size;
     uint32_t bitMask;
 
+    Hash(const Hash &other);
+    Hash& operator=(const Hash &other);
+
 public:
     int keys;
 

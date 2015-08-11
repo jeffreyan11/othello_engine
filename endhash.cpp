@@ -1,4 +1,3 @@
-#include <iostream>
 #include "endhash.h"
 
 // Creates a endgame hashtable, with argument in number of bits for the bitmask

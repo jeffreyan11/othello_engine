@@ -30,8 +30,6 @@ private:
     int timeLimit;
     std::chrono::high_resolution_clock::time_point timeElapsed;
 
-    Move* indexToMove[64];
-
     int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
@@ -39,6 +37,7 @@ private:
         bool isPVNode);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
+    Move *indexToMove(int index);
 
 public:
     Board game;

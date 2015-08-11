@@ -33,6 +33,9 @@ private:
     int size;
     uint32_t bitMask;
 
+    EndHash(const EndHash &other);
+    EndHash& operator=(const EndHash &other);
+
 public:
     int keys;
 

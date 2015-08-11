@@ -50,14 +50,13 @@ public:
 
 class MoveList {
 public:
-    int *moves;
+    int moves[32];
     unsigned int size;
 
     MoveList() {
-        moves = new int[32];
         size = 0;
     }
-    ~MoveList() { delete[] moves; }
+    ~MoveList() {}
 
     void add(int m) {
         moves[size] = m;

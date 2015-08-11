@@ -1,7 +1,4 @@
-#include <iostream>
 #include "hash.h"
-
-using namespace std;
 
 // Creates a hashtable, with argument in number of bits for the bitmask
 // The table will have 2^bits entries

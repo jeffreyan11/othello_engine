@@ -37,7 +37,7 @@ The test was performed on one core of a i5-2450m, compiled with GCC
 version 4.6.3 on Ubuntu 12.04.
 
 Known bugs:
-none
+tuneheuristic leaks memory from passing Move * objects around
 
 TODO:
 Code cleanup

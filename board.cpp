@@ -1,5 +1,4 @@
 #include "board.h"
-#include <iostream>
 #include <random>
 
 const bitbrd NORTHRAY[64] = {
