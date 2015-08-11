@@ -4,8 +4,8 @@
 // Only try an endgame solve if more than this amount of time (in milliseconds)
 // if left. Indexed by empties.
 const int endgameTime[31] = { 0,
-25, 30, 30, 40, 40, 40, 40, 50, 50, 50, // 1-10
-50, 50, 75, 100, 150, // 11-15
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1-10
+10, 20, 40, 80, 150, // 11-15
 250, 400, 750, 1500, 3000, // 16-20
 6000, 12000, 25000, 60000, 150000, // 21-25
 400000, 1000000, 2500000, 6000000, 15000000
@@ -157,9 +157,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     nodes = 0;
     // Start timers
     using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span;
+    auto startTime = high_resolution_clock::now();
+    auto endTime = high_resolution_clock::now();
+    duration<double> timeSpan;
     timeElapsed = high_resolution_clock::now();
 
     // Root move ordering: sort search
@@ -185,8 +185,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             #if PRINT_SEARCH_INFO
             cerr << " Broken out of search!" << endl;
             #endif
-            end_time = high_resolution_clock::now();
-            time_span = duration_cast<duration<double>>(end_time-start_time);
+            endTime = high_resolution_clock::now();
+            timeSpan = duration_cast<duration<double>>(endTime-startTime);
             break;
         }
         // Switch new PV to be searched first
@@ -199,16 +199,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << " score " << ((double)(chosenScore)) / 2000.0 << endl;
         #endif
 
-        end_time = high_resolution_clock::now();
-        time_span = duration_cast<duration<double>>(end_time-start_time);
+        endTime = high_resolution_clock::now();
+        timeSpan = duration_cast<duration<double>>(endTime-startTime);
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
-    } while((timeLimit > time_span.count() * 1000.0 * legalMoves.size)
+    } while((timeLimit > timeSpan.count() * 1000.0 * legalMoves.size)
           && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
     #if PRINT_SEARCH_INFO
-    cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / time_span.count()) << endl;
+    cerr << "Nodes searched: " << nodes << " | NPS: " << (int)((double)nodes / timeSpan.count()) << endl;
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
@@ -334,11 +334,11 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
         // Check for a timeout
-        auto end_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> time_span =
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> timeSpan =
             std::chrono::duration_cast<std::chrono::duration<double>>(
-            end_time-timeElapsed);
-        if (time_span.count() * 1000 > timeLimit)
+            endTime-timeElapsed);
+        if (timeSpan.count() * 1000 > timeLimit)
             return -TIMEOUT;
 
         if (legalMoves.get(i) == hashed)

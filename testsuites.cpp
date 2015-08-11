@@ -17,7 +17,7 @@ unsigned long long perftu(Board &b, int depth, int side, bool passed);
 unsigned long long ffo(std::string file);
 
 int main(int argc, char **argv) {
-    uint64_t total_nodes = 0;
+    uint64_t totalNodes = 0;
 
     if (argc != 3) {
         cerr << "Usage: testsuites  [test type] [option]" << endl;
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     }
 
     using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
+    auto startTime = high_resolution_clock::now();
 
     if (string(argv[1]) == "perft") {
         Board b;
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
             string fileString = "ffotest/end";
             fileString += to_string(40 + i);
             fileString += ".pos";
-            total_nodes += ffo(fileString);
+            totalNodes += ffo(fileString);
         }
     }
     else {
@@ -69,12 +69,12 @@ int main(int argc, char **argv) {
         m = p.doMove(m, -1);
     }*/
 
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
+    auto endTime = high_resolution_clock::now();
+    duration<double> timeSpan = duration_cast<duration<double>>(
+        endTime-startTime);
 
-    cerr << time_span.count() << endl;
-    cerr << total_nodes << endl;
+    cerr << timeSpan.count() << endl;
+    cerr << totalNodes << endl;
 }
 
 /**

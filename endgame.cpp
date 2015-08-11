@@ -60,11 +60,11 @@ struct EndgameStatistics {
 
 Endgame::Endgame() {
     // 16384 entries
-    endgame_table = new EndHash(14);
+    endgameTable = new EndHash(14);
     // 2^23 entries * 28 bytes/entry = 235 MB
-    killer_table = new EndHash(23);
+    killerTable = new EndHash(23);
     // 2^22 entries * 28 bytes/entry = 117 MB
-    all_table = new EndHash(22);
+    allTable = new EndHash(22);
     // 2^20 array slots (2^21 entries) * 64 bytes/slot = 67 MB
     transpositionTable = new Hash(20);
 
@@ -72,9 +72,9 @@ Endgame::Endgame() {
 }
 
 Endgame::~Endgame() {
-    delete endgame_table;
-    delete killer_table;
-    delete all_table;
+    delete endgameTable;
+    delete killerTable;
+    delete allTable;
     delete transpositionTable;
 
     delete egStats;
@@ -136,7 +136,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     int s, int depth, int alpha, int beta, int timeLimit, Eval *eval,
     int *exactScore) {
     // if best move for this position has already been found and stored
-    EndgameEntry *entry = endgame_table->get(b, s);
+    EndgameEntry *entry = endgameTable->get(b, s);
     if(entry != NULL) {
         #if PRINT_SEARCH_INFO
         cerr << "Endgame hashtable hit." << endl;
@@ -150,10 +150,10 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     }
 
     using namespace std::chrono;
-    auto start_time = high_resolution_clock::now();
-    auto end_time = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(
-        end_time-start_time);
+    auto startTime = high_resolution_clock::now();
+    auto endTime = high_resolution_clock::now();
+    duration<double> timeSpan = duration_cast<duration<double>>(
+        endTime-startTime);
 
     nodes = 0;
     sortBranch = 0;
@@ -178,17 +178,17 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         else
             sortSearch(b, moves, scores, s, 2);
         sort(moves, scores, 0, moves.size-1);
-        end_time = high_resolution_clock::now();
-        time_span = duration_cast<duration<double>>(end_time-start_time);
+        endTime = high_resolution_clock::now();
+        timeSpan = duration_cast<duration<double>>(endTime-startTime);
         #if PRINT_SEARCH_INFO
-        cerr << "Sort search took: " << time_span.count() << " sec" << endl;
+        cerr << "Sort search took: " << timeSpan.count() << " sec" << endl;
         cerr << "PV: ";
         printMove(moves.get(0));
         cerr << " Score: " << scores.get(0) / 600 << endl;
         #endif
     }
 
-    start_time = high_resolution_clock::now();
+    startTime = high_resolution_clock::now();
 
     // Playing with aspiration windows...
     int score;
@@ -238,20 +238,20 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         bestMove = moves.get(bestIndex);
 
     #if PRINT_SEARCH_INFO
-    cerr << "Endgame table has: " << endgame_table->keys << " keys." << endl;
-    cerr << "Killer table has: " << killer_table->keys << " keys." << endl;
-    cerr << "All-nodes table has: " << all_table->keys << " keys." << endl;
+    cerr << "Endgame table has: " << endgameTable->keys << " keys." << endl;
+    cerr << "Killer table has: " << killerTable->keys << " keys." << endl;
+    cerr << "All-nodes table has: " << allTable->keys << " keys." << endl;
     cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
 
-    end_time = high_resolution_clock::now();
-    time_span = duration_cast<duration<double>>(end_time-start_time);
+    endTime = high_resolution_clock::now();
+    timeSpan = duration_cast<duration<double>>(endTime-startTime);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
-        (int)((double)nodes / time_span.count()) << endl;
+        (int)((double)nodes / timeSpan.count()) << endl;
     cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
     cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
-    cerr << "Time spent: " << time_span.count() << endl;
+    cerr << "Time spent: " << timeSpan.count() << endl;
     cerr << "Best move: ";
     // If we failed low on the bounds we were given, that isn't our business
     if (bestMove == MOVE_FAIL_LOW)
@@ -354,7 +354,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     int prevAlpha = alpha;
 
     // play best move, if recorded
-    EndgameEntry *exactEntry = endgame_table->get(b, s);
+    EndgameEntry *exactEntry = endgameTable->get(b, s);
     if(exactEntry != NULL) {
         return exactEntry->score;
     }
@@ -370,7 +370,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
     #endif
 
-    EndgameEntry *allEntry = all_table->get(b, s);
+    EndgameEntry *allEntry = allTable->get(b, s);
     if(allEntry != NULL) {
         if (allEntry->score <= alpha)
             return alpha;
@@ -380,7 +380,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 
     // attempt killer heuristic cutoff, using saved alpha
     int killer = MOVE_NULL;
-    EndgameEntry *killerEntry = killer_table->get(b, s);
+    EndgameEntry *killerEntry = killerTable->get(b, s);
     if(killerEntry != NULL) {
         egStats->hashHits++;
         if (killerEntry->score >= beta) {
@@ -470,11 +470,11 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     for (int m = nextMove(legalMoves, priority, i); m != MOVE_NULL;
              m = nextMove(legalMoves, priority, ++i)) {
         // Check for a timeout
-        auto end_time = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> time_span =
+        auto endTime = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> timeSpan =
             std::chrono::duration_cast<std::chrono::duration<double>>(
-            end_time-timeElapsed);
-        if (time_span.count() * 1000 > timeout)
+            endTime-timeElapsed);
+        if (timeSpan.count() * 1000 > timeout)
             return -SCORE_TIMEOUT;
         // We already tried the hash move
         if (legalMoves.get(i) == killer)
@@ -498,7 +498,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
-            killer_table->add(b, beta, m, s, depth);
+            killerTable->add(b, beta, m, s, depth);
             return beta;
         }
         if (alpha < score) {
@@ -509,9 +509,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 
     // Best move with exact score if alpha < score < beta
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
-        endgame_table->add(b, alpha, tempMove, s, depth);
+        endgameTable->add(b, alpha, tempMove, s, depth);
     else if (alpha <= prevAlpha)
-        all_table->add(b, alpha, MOVE_NULL, s, depth);
+        allTable->add(b, alpha, MOVE_NULL, s, depth);
 
     return alpha;
 }
@@ -530,7 +530,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         return endgame4(b, s, alpha, beta, passedLast);
 
     // Immediately return an exact score, if available
-    EndgameEntry *exactEntry = endgame_table->get(b, s);
+    EndgameEntry *exactEntry = endgameTable->get(b, s);
     if(exactEntry != NULL) {
         return exactEntry->score;
     }
@@ -550,7 +550,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
     int hashMove = MOVE_NULL;
     // Probe hash tables
     if (depth >= MIN_TT_DEPTH) {
-        EndgameEntry *allEntry = all_table->get(b, s);
+        EndgameEntry *allEntry = allTable->get(b, s);
         if(allEntry != NULL) {
             if (allEntry->score <= alpha)
                 return alpha;
@@ -558,7 +558,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
                 beta = allEntry->score;
         }
 
-        EndgameEntry *killerEntry = killer_table->get(b, s);
+        EndgameEntry *killerEntry = killerTable->get(b, s);
         if(killerEntry != NULL) {
             egStats->hashHits++;
             if (killerEntry->score >= beta) {
@@ -639,7 +639,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             if (move == hashMove)
                 egStats->hashMoveCuts++;
             if (depth >= MIN_TT_DEPTH)
-                killer_table->add(b, beta, move, s, depth);
+                killerTable->add(b, beta, move, s, depth);
             return beta;
         }
         if (alpha < score) {
@@ -650,9 +650,9 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
 
     // Best move with exact score if alpha < score < beta
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
-        endgame_table->add(b, alpha, tempMove, s, depth);
+        endgameTable->add(b, alpha, tempMove, s, depth);
     else if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
-        all_table->add(b, alpha, MOVE_NULL, s, depth);
+        allTable->add(b, alpha, MOVE_NULL, s, depth);
 
     return alpha;
 }

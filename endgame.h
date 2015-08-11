@@ -19,9 +19,9 @@ struct EndgameStatistics;
 class Endgame {
 
 private:
-    EndHash *endgame_table;
-    EndHash *killer_table;
-    EndHash *all_table;
+    EndHash *endgameTable;
+    EndHash *killerTable;
+    EndHash *allTable;
     Hash *transpositionTable;
 
     Eval *evaluater;
