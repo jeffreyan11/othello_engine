@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include "eval.h"
 
@@ -163,7 +164,7 @@ int Eval::heuristic(Board &b, int turn, int s) {
     int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
             + 3*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
-            //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
+            //+ 200*(b.getStability(CBLACK) - b.getStability(CWHITE));
     if(s == CBLACK)
         score += patterns;
     else
@@ -171,16 +172,15 @@ int Eval::heuristic(Board &b, int turn, int s) {
     bitbrd bm = b.getBits(s);
     bitbrd bo = b.getBits(s^1);
     score += 1000 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-    //if(turn > 35)
-        score += 100 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
-    //score -= 250 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
-    //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
+    score += 80 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+    score -= 200 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    //score -= 50 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
 
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (4 + (64 - turn) / 8) * (myLM - oppLM);
-    score += 100 * (50 + (64 - turn) / 2) * (myLM - oppLM) / (std::min(oppLM, myLM) + 1);
-    score += 100 * ((64 - turn) / 16) * (b.potentialMobility(s) - b.potentialMobility(s^1));
+    score += 100 * (45 + (64 - turn) / 2) * (myLM - oppLM) / (std::min(oppLM, myLM) + 1);
+    //score += 100 * ((64 - turn) / 16) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
 }
@@ -192,9 +192,9 @@ int Eval::heuristic2(Board &b, int turn, int s) {
     int score = 0;
 
     int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
-            + 3*boardToE2XPV(b, turn) + 2*boardTo33PV(b, turn)
+            + 3*boardToE2XPV(b, turn) + boardTo33PV(b, turn)
             + 100 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
-            //+ 3*(b->getStability(CBLACK) - b->getStability(CWHITE));
+            //+ 100*(b.getStability(CBLACK) - b.getStability(CWHITE));
     if(s == CBLACK)
         score += patterns;
     else
@@ -202,16 +202,15 @@ int Eval::heuristic2(Board &b, int turn, int s) {
     bitbrd bm = b.getBits(s);
     bitbrd bo = b.getBits(s^1);
     score += 1000 * (countSetBits(bm&CORNERS) - countSetBits(bo&CORNERS));
-    //if(turn > 35)
-        score += 100 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
-    //score -= 25 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
+    score += 80 * (countSetBits(bm&EDGES) - countSetBits(bo&EDGES));
+    score -= 200 * (countSetBits(bm&X_CORNERS) - countSetBits(bo&X_CORNERS));
     //score -= 10 * (countSetBits(bm&ADJ_CORNERS) - countSetBits(bo&ADJ_CORNERS));
 
     int myLM = b.numLegalMoves(s);
     int oppLM = b.numLegalMoves(s^1);
     //score += 100 * (4 + (64 - turn) / 8) * (myLM - oppLM);
-    score += 100 * (60 + (64 - turn) / 2) * (myLM - oppLM) / (std::min(oppLM, myLM) + 1);
-    score += 100 * ((64 - turn) / 16) * (b.potentialMobility(s) - b.potentialMobility(s^1));
+    score += 100 * (45 + (64 - turn) / 2) * (myLM - oppLM) / (std::min(oppLM, myLM) + 1);
+    //score += 100 * ((64 - turn) / 16) * (b.potentialMobility(s) - b.potentialMobility(s^1));
 
     return score;
 }

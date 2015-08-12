@@ -51,8 +51,10 @@ bool Openings::readFile() {
         getline(openingbk, line);
         bookSize = std::stoi(line);
         openings = new Node *[bookSize];
+        #if PRINT_SEARCH_INFO
         std::cerr << "Opening book read. Contains " << bookSize
                   << " positions." << std::endl;
+        #endif
         int i = 0;
         while(getline(openingbk, line)) {
             std::string::size_type sz = 0;

@@ -83,8 +83,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // register opponent's move
     if(opponentsMove != NULL)
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), mySide^1);
-    else
+    else {
         game.doMove(MOVE_NULL, mySide^1);
+        // TODO a temporary hack to prevent opening book from crashing
+        bookExhausted = true;
+    }
 
     // We can easily count how many moves have been made from the number of
     // empty squares
@@ -124,6 +127,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     MoveList legalMoves = game.getLegalMoves(mySide);
     if (legalMoves.size <= 0) {
         game.doMove(MOVE_NULL, mySide);
+        // TODO a temporary hack to prevent opening book from crashing
+        bookExhausted = true;
         #if PRINT_SEARCH_INFO
         cerr << "No legal moves. Passing." << endl;
         #endif
@@ -432,4 +437,5 @@ void Player::setDepths(int sort, int min, int max, int end) {
     minDepth = min;
     sortDepth = sort;
     endgameDepth = end;
+    depthLimit = maxDepth;
 }
