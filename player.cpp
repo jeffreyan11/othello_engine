@@ -84,7 +84,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     if(opponentsMove != NULL)
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), mySide^1);
     else {
-        game.doMove(MOVE_NULL, mySide^1);
         // TODO a temporary hack to prevent opening book from crashing
         bookExhausted = true;
     }
@@ -126,7 +125,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // find and test all legal moves
     MoveList legalMoves = game.getLegalMoves(mySide);
     if (legalMoves.size <= 0) {
-        game.doMove(MOVE_NULL, mySide);
         // TODO a temporary hack to prevent opening book from crashing
         bookExhausted = true;
         #if PRINT_SEARCH_INFO

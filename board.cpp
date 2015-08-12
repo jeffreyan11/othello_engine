@@ -666,7 +666,8 @@ int Board::getLegalMoves3(int side, int *moves) {
  * for the given side.
  * 
  * This method operates by checking in all eight directions, first for the line
- * of pieces of the opposite color, then for the anchor once the line ends.
+ * of pieces of the opposite color, then for the empty square to place the
+ * anchor once the line ends.
  */
 bitbrd Board::getLegal(int side) {
     bitbrd result = 0;
@@ -939,7 +940,7 @@ bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
         int anchor = bitScanReverse(block);
         // use multiplication to reduce branching
         // confirm line ender is an anchor piece
-        return ((self & MOVEMASK[anchor]) && true)
+        return ((bool) (self & MOVEMASK[anchor]))
         // and if so, we can return the captured pieces
               * (result ^ NORTHRAYI[anchor]);
     }
@@ -951,7 +952,7 @@ bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     // Get single occupancy blocker mask, if the blocker is an anchor piece
     block &= -block & self;
-    if ((block >> 8) & ~pos) {
+    if (block) {
         int anchor = bitScanForward(block);
         return (result ^ SOUTHRAYI[anchor]);
     }
@@ -962,7 +963,7 @@ bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = EASTRAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if ((block >> 1) & ~pos) {
+    if (block) {
         int anchor = bitScanForward(block);
         return (result ^ EASTRAYI[anchor]);
     }
@@ -974,7 +975,7 @@ bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if (block) {
         int anchor = bitScanReverse(block);
-        return ((self & MOVEMASK[anchor]) && true) *
+        return ((bool) (self & MOVEMASK[anchor])) *
                 (result ^ WESTRAYI[anchor]);
     }
     return 0;
@@ -985,7 +986,7 @@ bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if (block) {
         int anchor = bitScanReverse(block);
-        return ((self & MOVEMASK[anchor]) && true) *
+        return ((bool) (self & MOVEMASK[anchor])) *
                 (result ^ NERAYI[anchor]);
     }
     return 0;
@@ -996,7 +997,7 @@ bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
     bitbrd block = result & pos;
     if (block) {
         int anchor = bitScanReverse(block);
-        return ((self & MOVEMASK[anchor]) && true) *
+        return ((bool) (self & MOVEMASK[anchor])) *
                 (result ^ NWRAYI[anchor]);
     }
     return 0;
@@ -1006,7 +1007,7 @@ bitbrd Board::swFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = SWRAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if ((block >> 7) & ~pos) {
+    if (block) {
         int anchor = bitScanForward(block);
         return (result ^ SWRAYI[anchor]);
     }
@@ -1017,7 +1018,7 @@ bitbrd Board::seFill(int index, bitbrd self, bitbrd pos) {
     bitbrd result = SERAY[index];
     bitbrd block = result & pos;
     block &= -block & self;
-    if ((block >> 9) & ~pos) {
+    if (block) {
         int anchor = bitScanForward(block);
         return (result ^ SERAYI[anchor]);
     }
