@@ -43,6 +43,7 @@ Player::Player(Side side) {
     depthLimit = maxDepth;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
+    turn = 4;
 
     // initialize the evaluation functions
     evaluater = new Eval();
@@ -83,7 +84,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // register opponent's move
     if(opponentsMove != NULL)
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), mySide^1);
-    else {
+    // If opponent is passing and it isn't the start of the game
+    else if (turn != 4) {
         // TODO a temporary hack to prevent opening book from crashing
         bookExhausted = true;
     }
