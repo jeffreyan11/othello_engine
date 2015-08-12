@@ -39,12 +39,9 @@ const int SCORE_TIMEOUT = 65;
 const int MOVE_FAIL_LOW = -1;
 
 struct EndgameStatistics {
-    uint64_t hashHits;
-    uint64_t hashCuts;
-    uint64_t hashMoveAttempts;
-    uint64_t hashMoveCuts;
-    uint64_t firstFailHighs;
-    uint64_t failHighs;
+    uint64_t hashHits, hashCuts;
+    uint64_t hashMoveAttempts, hashMoveCuts;
+    uint64_t firstFailHighs, failHighs;
     uint64_t sortSearchNodes;
 
     void reset() {
@@ -94,7 +91,6 @@ Endgame::~Endgame() {
  */
 int Endgame::solveEndgame(Board &b, MoveList &moves, bool isSorted, int s,
     int depth, int timeLimit, Eval *eval, int *exactScore) {
-    isWLD = false;
     return solveEndgameWithWindow(b, moves, isSorted, s, depth, -64, 64,
         timeLimit, eval, exactScore);
 }
@@ -105,7 +101,6 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, bool isSorted, int s,
 int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
     int depth, int timeLimit, Eval *eval, int *exactScore) {
     cerr << "Starting WLD search" << endl;
-    isWLD = true;
     int gameResult = -2;
     int bestMove = solveEndgameWithWindow(b, moves, isSorted, s, depth, -1, 1,
         timeLimit, eval, &gameResult);

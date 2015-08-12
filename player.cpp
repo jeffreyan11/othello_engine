@@ -7,8 +7,8 @@ const int endgameTime[31] = { 0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1-10
 10, 20, 40, 80, 150, // 11-15
 250, 400, 750, 1500, 3000, // 16-20
-6000, 12000, 25000, 60000, 150000, // 21-25
-400000, 1000000, 2500000, 6000000, 15000000
+6000, 12000, 25000, 50000, 120000, // 21-25
+250000, 500000, 1000000, 2500000, 8000000
 };
 
 // Internal iterative deepening depths for PV nodes
@@ -40,9 +40,9 @@ Player::Player(Side side) {
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 27;
+    depthLimit = maxDepth;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
-    oppSide = (side == WHITE) ? CBLACK : CWHITE;
 
     // initialize the evaluation functions
     evaluater = new Eval();
@@ -53,7 +53,7 @@ Player::Player(Side side) {
     transpositionTable = new Hash(20);
 
     // Set to false to turn on book
-    bookExhausted = true;
+    bookExhausted = false;
 }
 
 /**
@@ -77,11 +77,14 @@ Player::~Player() {
  * @return The move the AI chose to play.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
+    #if PRINT_SEARCH_INFO
+    cerr << endl;
+    #endif
     // register opponent's move
     if(opponentsMove != NULL)
-        game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), oppSide);
+        game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), mySide^1);
     else
-        game.doMove(MOVE_NULL, oppSide);
+        game.doMove(MOVE_NULL, mySide^1);
 
     // We can easily count how many moves have been made from the number of
     // empty squares
@@ -91,16 +94,15 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(msLeft != -1) {
         int movesLeft = 64 - turn;
-        timeLimit = 2 * msLeft / movesLeft;
+        timeLimit = 2.5 * msLeft / movesLeft;
+        #if PRINT_SEARCH_INFO
+        cerr << "Time limit: " << timeLimit / 1000.0 << " s" << endl;
+        #endif
     }
     else {
         // 1 min per move for "infinite" time
         timeLimit = 60000;
     }
-
-    #if PRINT_SEARCH_INFO
-    cerr << endl;
-    #endif
 
     // check opening book
     if (!bookExhausted) {
@@ -136,7 +138,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             (msLeft >= endgameTime[empties] || msLeft == -1)) {
         // Timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
-                                          : msLeft / 4;
+                                          : msLeft / 3;
         #if PRINT_SEARCH_INFO
         cerr << "Endgame solver: depth " << empties << endl;
         #endif
@@ -172,12 +174,13 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // Iterative deepening
     attemptingDepth = minDepth;
     int chosenScore = 0;
+    int newBest;
     do {
         #if PRINT_SEARCH_INFO
         cerr << "Depth " << attemptingDepth << ": ";
         #endif
 
-        int newBest = getBestMoveIndex(game, legalMoves, chosenScore, mySide,
+        newBest = getBestMoveIndex(game, legalMoves, chosenScore, mySide,
             attemptingDepth);
         if(newBest == MOVE_BROKEN) {
             #if PRINT_SEARCH_INFO
@@ -193,17 +196,26 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         #if PRINT_SEARCH_INFO
         cerr << "bestmove ";
         printMove(legalMoves.get(0));
-        cerr << " score " << ((double)(chosenScore)) / 2000.0 << endl;
+        cerr << " score " << ((double) (chosenScore)) / 2000.0 << endl;
         #endif
 
         timeSpan = getTimeElapsed(startTime);
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
     } while((timeLimit > timeSpan * 1000.0 * legalMoves.size)
-          && attemptingDepth <= maxDepth);
+          && attemptingDepth <= depthLimit);
+
+    if (newBest == MOVE_BROKEN) {
+        // If we broke at this depth, we only want to search 2 less next time,
+        // to prevent an infinite search and break loop.
+        depthLimit = attemptingDepth - 2;
+    }
+    else
+        depthLimit = maxDepth;
 
     myMove = legalMoves.get(0);
     #if PRINT_SEARCH_INFO
+    cerr << "Time spent: " << timeSpan << " s" << endl;
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int) ((double) nodes / timeSpan) << endl;
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";

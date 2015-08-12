@@ -31,7 +31,6 @@ private:
 
     OthelloTimer timeElapsed;
     int timeout;
-    bool isWLD;
 
     int endgameAspiration(Board &b, MoveList &moves, int s, int depth,
         int alpha, int beta, int &exactScore);

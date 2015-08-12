@@ -318,7 +318,7 @@ const int BOARD_REGIONS[64] = {
 
 // Initialize the zobrist table
 uint32_t **Board::initZobristTable() {
-    std::mt19937 rng (61280152908);
+    std::mt19937 rng (61280152908U);
     uint32_t **table = new uint32_t *[16];
     for (int i = 0; i < 16; i++)
         table[i] = new uint32_t[256];
