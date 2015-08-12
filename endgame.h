@@ -29,7 +29,7 @@ private:
     // For replacement strategy in sort search hash table
     int sortBranch;
 
-    OthelloTimer timeElapsed;
+    OthelloTime timeElapsed;
     int timeout;
 
     int endgameAspiration(Board &b, MoveList &moves, int s, int depth,

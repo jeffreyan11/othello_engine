@@ -370,7 +370,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     }
 
     // attempt killer heuristic cutoff, using saved alpha
-    int killer = MOVE_NULL;
+    int hashMove = MOVE_NULL;
     EndgameEntry *killerEntry = killerTable->get(b, s);
     if(killerEntry != NULL) {
         egStats->hashHits++;
@@ -381,12 +381,12 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         // Fail high is lower bound on score so this is valid
         if (alpha < killerEntry->score)
             alpha = killerEntry->score;
-        killer = killerEntry->move;
+        hashMove = killerEntry->move;
 
         // Try the move for a cutoff before move generation
         egStats->hashMoveAttempts++;
         Board copy = b.copy();
-        copy.doMove(killer, s);
+        copy.doMove(hashMove, s);
         nodes++;
 
         score = -endgameDeep(copy, s^1, depth-1, -beta, -alpha, false);
@@ -431,7 +431,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             copy.doMove(m, s);
 
             int p = SQ_VAL[m];
-            if (m == killer)
+            if (m == hashMove)
                 p += 1 << 20;
 
             priority.add(scores.get(i) + 8*p);
@@ -448,7 +448,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             copy.doMove(m, s);
 
             int p = 8 * SQ_VAL[m];
-            if (m == killer)
+            if (m == hashMove)
                 p += 1 << 20;
 
             priority.add(scores.get(i) - 2048*copy.numLegalMoves(s^1)
@@ -465,7 +465,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         if (timeSpan * 1000 > timeout)
             return -SCORE_TIMEOUT;
         // We already tried the hash move
-        if (legalMoves.get(i) == killer)
+        if (legalMoves.get(i) == hashMove)
             continue;
         Board copy = b.copy();
         copy.doMove(m, s);
@@ -556,17 +556,31 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             if (alpha < killerEntry->score)
                 alpha = killerEntry->score;
 
-            // If no score cutoff, try the move early in move ordering
+            // If no score cutoff, try the hash move before move generation
             egStats->hashMoveAttempts++;
             hashMove = killerEntry->move;
+            Board copy = b.copy();
+            copy.doMove(hashMove, s);
+            nodes++;
+
+            score = -endgameShallow(copy, s^1, depth-1, -beta, -alpha, false);
+
+            if (score >= beta) {
+                egStats->hashMoveCuts++;
+                egStats->failHighs++;
+                egStats->firstFailHighs++;
+                return beta;
+            }
+            if (alpha < score) {
+                alpha = score;
+            }
         }
     }
 
     bitbrd legal = b.getLegal(s);
     if(!legal) {
-        if(passedLast) {
+        if(passedLast)
             return (2 * b.count(s) - 64 + depth);
-        }
 
         score = -endgameShallow(b, s^1, depth, -beta, -alpha, true);
 
@@ -575,23 +589,25 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         return alpha;
     }
 
+    if (hashMove != MOVE_NULL)
+        legal ^= MOVEMASK[hashMove];
+
     // create array of legal moves
     int moves[END_SHALLOW];
     int priority[END_SHALLOW];
     int n = 0;
 
     bitbrd empty = ~b.getTaken();
-    do {
-        moves[n] = bitScanForward(legal);
-        priority[n] = SQ_VAL[moves[n]];
-        if(moves[n] == hashMove)
-            priority[n] += 1 << 16;
+    while (legal) {
+        int m = bitScanForward(legal);
+        legal &= legal-1;
 
-        if(!(NEIGHBORS[moves[n]] & empty))
+        priority[n] = SQ_VAL[m];
+        if(!(NEIGHBORS[m] & empty))
             priority[n] += 64;
-
-        legal &= legal-1; n++;
-    } while(legal);
+        moves[n] = m;
+        n++;
+    }
 
     // Only do fastest first on null window searches (non-PV nodes)
     if (depth >= 7 && (alpha == beta - 1)) {
@@ -612,7 +628,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         copy.doMove(move, s);
         nodes++;
 
-        if (i != 0) {
+        if (i != 0 || hashMove != MOVE_NULL) {
             score = -endgameShallow(copy, s^1, depth-1, -alpha-1, -alpha, false);
             if (alpha < score && score < beta)
                 score = -endgameShallow(copy, s^1, depth-1, -beta, -alpha, false);
@@ -624,8 +640,6 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
-            if (move == hashMove)
-                egStats->hashMoveCuts++;
             if (depth >= MIN_TT_DEPTH)
                 killerTable->add(b, beta, move, s, depth);
             return beta;

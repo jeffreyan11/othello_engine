@@ -115,7 +115,7 @@ bitbrd reflectDiag(bitbrd x) {
 
 // Given a std::chrono time_point, this function returns the number of seconds
 // elapsed since then.
-double getTimeElapsed(OthelloTimer startTime) {
+double getTimeElapsed(OthelloTime startTime) {
     auto endTime = OthelloClock::now();
     std::chrono::duration<double> timeSpan =
         std::chrono::duration_cast<std::chrono::duration<double>>(

@@ -30,7 +30,7 @@ private:
 
     int turn;
     int timeLimit;
-    OthelloTimer timeElapsed;
+    OthelloTime timeElapsed;
 
     int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
         int depth);

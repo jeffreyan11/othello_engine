@@ -9,7 +9,7 @@
 
 typedef uint64_t bitbrd;
 typedef std::chrono::high_resolution_clock OthelloClock;
-typedef std::chrono::high_resolution_clock::time_point OthelloTimer;
+typedef std::chrono::high_resolution_clock::time_point OthelloTime;
 
 const int INFTY = (1 << 20);
 const int MOVE_NULL = 64;
@@ -30,7 +30,7 @@ bitbrd reflectHorizontal(bitbrd x);
 bitbrd reflectDiag(bitbrd x);
 
 // Utility functions
-double getTimeElapsed(OthelloTimer startTime);
+double getTimeElapsed(OthelloTime startTime);
 void printMove(int move);
 
 enum Side { 
