@@ -1,9 +1,36 @@
 #include <fstream>
 #include <iostream>
+#include "board.h"
 #include "common.h"
 #include "patternbuilder.h"
 
 using namespace std;
+
+void checkGames(unsigned int totalSize, thor_game **games) {
+    cout << "Checking game validity: " << totalSize << " games." << endl;
+    int errors = 0;
+    for(unsigned int i = 0; i < totalSize; i++) {
+        thor_game *game = games[i];
+
+        Board tracker;
+        int side = CBLACK;
+
+        for(int j = 0; j < 55; j++) {
+            if(!tracker.checkMove(game->moves[j], side)) {
+                // If one side must pass it is not indicated in the database?
+                side = side^1;
+                if(!tracker.checkMove(game->moves[j], side)) {
+                    errors++;
+                    games[i] = NULL;
+                    break;
+                }
+            }
+            tracker.doMove(game->moves[j], side);
+            side = side^1;
+        }
+    }
+    cout << errors << " errors." << endl;
+}
 
 void readThorGame(string file, unsigned int &totalSize, thor_game **games) {
     unsigned int prevSize = totalSize;

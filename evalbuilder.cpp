@@ -35,38 +35,6 @@ void boardToE2XPV(Board *b, int score, int turn);
 void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
-void checkGames() {
-    cout << "Checking game validity: " << totalSize << " games." << endl;
-    int errors = 0;
-    for(unsigned int i = 0; i < totalSize; i++) {
-        thor_game *game = games[i];
-        if(game == NULL) continue;
-
-        Board tracker;
-        int side = CBLACK;
-
-        for(int j = 0; j < 46; j++) {
-            if(!tracker.checkMove(game->moves[j], side)) {
-                // If one side must pass it is not indicated in the database?
-                side = side^1;
-                if(!tracker.checkMove(game->moves[j], side)) {
-                    if (tracker.getLegalMoves(CBLACK).size != 0
-                     || tracker.getLegalMoves(CWHITE).size != 0) {
-                        errors++;
-                        games[i] = NULL;
-                        cerr << "error at " << i << " " << j << endl;
-                        cerr << game->moves[j-1] << " " << game->moves[j] << " " << game->moves[j+1] << endl;
-                        break;
-                    }
-                }
-            }
-            tracker.doMove(game->moves[j], side);
-            side = side^1;
-        }
-    }
-    cout << errors << " errors." << endl;
-}
-
 void replaceEnd() {
     for(unsigned int i = 0; i < totalSize; i++) {
         cerr << "Replacing end: " << i << endl;
@@ -203,7 +171,7 @@ int main(int argc, char **argv) {
     readThorGame("WTH_7708/WTH_1984.wtb", totalSize, games);
     //readGame("gamedb042714.txt", 8200);
 
-    checkGames();
+    checkGames(totalSize, games);
     replaceEnd();
     searchFeatures();
 

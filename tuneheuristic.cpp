@@ -6,6 +6,7 @@
 #include "board.h"
 #include "endgame.h"
 #include "common.h"
+#include "patternbuilder.h"
 
 using namespace std;
 
@@ -15,20 +16,33 @@ const int minDepth = 4;
 const int maxDepth = 6;
 const int endgameDepth = 18;
 
+thor_game *savedGames[2*PERFT6];
 vector<string*> positions;
 int wins;
 int losses;
 int draws;
 
 bool readFile();
+void writeFile();
 void freemem();
 
-void play(string position) {
+void play(string position, int saveIndex) {
+    thor_game *result1 = new thor_game();
+    thor_game *result2 = new thor_game();
+
     std::string::size_type sz = 0;
     uint64_t takenBits = std::stoull(position, &sz, 0);
     position = position.substr(sz);
     uint64_t blackBits = std::stoull(position, &sz, 0);
+    position = position.substr(sz);
     Board b(takenBits^blackBits, blackBits);
+
+    int movenum = 0;
+    for(movenum = 0; movenum < 6; movenum++) {
+        result1->moves[movenum] = std::stoi(position, &sz, 0);
+        result2->moves[movenum] = std::stoi(position, &sz, 0);
+        position = position.substr(sz);
+    }
 
     // Run game on one side
     Player black(BLACK);
@@ -49,14 +63,23 @@ void play(string position) {
                 break;
             passed = true;
         }
-        else passed = false;
+        else {
+            result1->moves[movenum] = m->getX() + 8*m->getY();
+            movenum++;
+            passed = false;
+        }
+
         m = white.doMove(m, -1);
         if (m == NULL) {
             if (passed)
                 break;
             passed = true;
         }
-        else passed = false;
+        else {
+            result1->moves[movenum] = m->getX() + 8*m->getY();
+            movenum++;
+            passed = false;
+        }
     }
 
     int bf = black.game.count(CBLACK);
@@ -68,6 +91,8 @@ void play(string position) {
         losses++;
     else
         draws++;
+    result1->final = (bf - wf + 64) / 2;
+    savedGames[2*saveIndex] = result1;
 
     // Run game on the other side
     Player black2(BLACK);
@@ -80,6 +105,7 @@ void play(string position) {
 
     m = NULL;
     passed = false;
+    movenum = 6;
     while(true) {
         m = black2.doMove(m, -1);
         // two passes in a row is end of game
@@ -88,14 +114,23 @@ void play(string position) {
                 break;
             passed = true;
         }
-        else passed = false;
+        else {
+            result2->moves[movenum] = m->getX() + 8*m->getY();
+            movenum++;
+            passed = false;
+        }
+
         m = white2.doMove(m, -1);
         if (m == NULL) {
             if (passed)
                 break;
             passed = true;
         }
-        else passed = false;
+        else {
+            result2->moves[movenum] = m->getX() + 8*m->getY();
+            movenum++;
+            passed = false;
+        }
     }
 
     bf = black2.game.count(CBLACK);
@@ -107,6 +142,8 @@ void play(string position) {
         wins++;
     else
         draws++;
+    result2->final = (bf - wf + 64) / 2;
+    savedGames[2*saveIndex+1] = result2;
     cout << "" << wins << "-" << losses << "-" << draws << endl;
 }
 
@@ -121,11 +158,12 @@ int main(int argc, char **argv) {
 
     for(int i = 0; i < PERFT6; i++) {
         string *pos = positions[i];
-        play(*pos);
+        play(*pos, i);
     }
 
     cout << "Final result: " << wins << "-" << losses << "-" << draws << endl;
 
+    writeFile();
     freemem();
 
     return 0;
@@ -146,10 +184,27 @@ bool readFile() {
     return true;
 }
 
+void writeFile() {
+    ofstream out;
+
+    out.open("tuneoutput.txt");
+    for(int i = 0; i < 2*PERFT6; i++) {
+        thor_game *a = savedGames[i];
+        out << a->final;
+        for(int j = 0; j < 60; j++)
+            out << " " << a->moves[j];
+
+        out << endl;
+    }
+}
+
 void freemem() {
     while(positions.size() > 0) {
         string *temp = positions[0];
         positions.erase(positions.begin());
         delete temp;
     }
+
+    for (int i = 0; i < 2*PERFT6; i++)
+        delete savedGames[i];
 }

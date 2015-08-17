@@ -6,6 +6,12 @@
 struct thor_game {
     int final;
     int moves[60];
+
+    thor_game() {
+        final = 0;
+        for (int i = 0; i < 60; i++)
+            moves[i] = MOVE_NULL;
+    }
 };
 
 struct pv {
@@ -19,6 +25,7 @@ struct pv {
 
 // Read a file of games from the Thor database
 void readThorGame(std::string file, unsigned int &totalSize, thor_game **games);
+void checkGames(unsigned int totalSize, thor_game **games);
 
 // Converts the packed bits for one side into an index for the pattern values
 // array.

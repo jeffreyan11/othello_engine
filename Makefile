@@ -15,7 +15,7 @@ testgame: testgame.o
 testsuites: $(OBJS) testsuites.o
 	$(CC) -o $@ $^
 
-tuneheuristic: $(OBJS) tuneheuristic.o
+tuneheuristic: $(OBJS) patternbuilder.o tuneheuristic.o
 	$(CC) -o $@ $^
 
 evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o evalbuilder.o
