@@ -98,7 +98,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // timing
     if(msLeft != -1) {
         int movesLeft = 64 - turn;
-        timeLimit = 2.5 * msLeft / movesLeft;
+        timeLimit = 4 * msLeft / movesLeft;
         #if PRINT_SEARCH_INFO
         cerr << "Time limit: " << timeLimit / 1000.0 << " s" << endl;
         #endif
