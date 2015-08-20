@@ -46,7 +46,7 @@ void replaceEnd() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 46; j++) {
+        for(int j = 0; j < 44; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;
@@ -122,7 +122,7 @@ void searchFeatures() {
 
 int main(int argc, char **argv) {
     totalSize = 0;
-    games = new thor_game*[159000];
+    games = new thor_game*[166000];
     for(int n = 0; n < DIVS; n++) {
         for(int i = 0; i < 6561; i++) {
             pvTable2x4[n][i] = new pv();
