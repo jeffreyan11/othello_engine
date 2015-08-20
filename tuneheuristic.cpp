@@ -14,7 +14,7 @@ const int PERFT6 = 8200;
 const int sortDepth = 2;
 const int minDepth = 4;
 const int maxDepth = 6;
-const int endgameDepth = 18;
+const int endgameDepth = 22;
 
 thor_game *savedGames[2*PERFT6];
 vector<string*> positions;

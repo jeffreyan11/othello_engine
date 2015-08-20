@@ -37,7 +37,7 @@ void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 void replaceEnd() {
-    for(unsigned int i = 0; i < totalSize; i++) {
+    for(unsigned int i = 0; i < totalSize - 16400; i++) {
         cerr << "Replacing end: " << i << endl;
 
         thor_game *game = games[i];
@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     readThorGame("WTH_7708/WTH_1986.wtb", totalSize, games);
     readThorGame("WTH_7708/WTH_1985.wtb", totalSize, games);
     readThorGame("WTH_7708/WTH_1984.wtb", totalSize, games);
-    //readGame("gamedb042714.txt", 8200);
+    readGame("WTH_7708/tuneoutput-8-19-15.txt", 16400);
 
     checkGames(totalSize, games);
 

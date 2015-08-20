@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <chrono>
 
-#define PRINT_SEARCH_INFO false
+#define PRINT_SEARCH_INFO true
 
 typedef uint64_t bitbrd;
 typedef std::chrono::high_resolution_clock OthelloClock;
