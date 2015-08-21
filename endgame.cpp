@@ -28,8 +28,8 @@ const int STAB_THRESHOLD[40] = {
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 2, 2, 2, 2, 4, 4,
-    4, 6, 6, 6, 8, 8, 8, 10, 10, 10,
-    10, 10, 12, 12, 12
+    4, 4, 6, 6, 6, 6, 8, 8, 8, 8,
+    10, 10, 10, 10, 12
 };
 
 const int END_SHALLOW = 12;
@@ -451,8 +451,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             if (m == hashMove)
                 p += 1 << 20;
 
-            priority.add(scores.get(i) - 2048*copy.numLegalMoves(s^1)
-                    - 64*copy.potentialMobility(s^1) + 32*p);
+            priority.add(scores.get(i) - 2048*copy.numLegalMoves(s^1) + 32*p);
         }
     }
 
