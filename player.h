@@ -17,8 +17,6 @@ private:
     int endgameDepth;
     // The depth currently being attempted. Helps with hash entry aging.
     int attemptingDepth;
-    // A hard limit on the depth, in case we broke on the previous turn
-    int depthLimit;
     uint64_t nodes;
 
     Endgame endgameSolver;

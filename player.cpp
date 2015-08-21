@@ -40,7 +40,6 @@ Player::Player(Side side) {
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 27;
-    depthLimit = maxDepth;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     turn = 4;
@@ -157,6 +156,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
         // Otherwise, we broke out of the endgame solver.
         endgameDepth -= 2;
+        timeLimit = 2 * timeLimit / 3;
     }
 
     // Reset node count. Nodes are counted in the most conservative way (only
@@ -208,15 +208,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
     } while((timeLimit > timeSpan * 1000.0 * legalMoves.size)
-          && attemptingDepth <= depthLimit);
-
-    if (newBest == MOVE_BROKEN) {
-        // If we broke at this depth, we only want to search 2 less next time,
-        // to prevent an infinite search and break loop.
-        depthLimit = attemptingDepth - 2;
-    }
-    else
-        depthLimit = maxDepth;
+          && attemptingDepth <= maxDepth);
 
     myMove = legalMoves.get(0);
     #if PRINT_SEARCH_INFO
@@ -288,6 +280,9 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     int hashed = MOVE_NULL;
     int toHash = MOVE_NULL;
 
+    // We want to do better move ordering at PV nodes where alpha != beta - 1
+    bool isPVNode = (alpha != beta - 1);
+
     // Probe transposition table for a score or move
     // Do this only at depth 3 and above for efficiency
     if (depth >= 3) {
@@ -304,7 +299,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
                     if (entry->nodeType == CUT_NODE && entry->score >= beta)
                         return beta;
                     // For PV-nodes, we have an exact score we can return
-                    else if (entry->nodeType == PV_NODE)
+                    else if (entry->nodeType == PV_NODE && !isPVNode)
                         return entry->score;
                 }
                 // Try the hash move first
@@ -340,8 +335,6 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     // Move ordering
     // Don't waste time sorting at depth 1.
     if (depth >= 2) {
-        // We want to do better move ordering at PV nodes where alpha != beta - 1
-        bool isPVNode = (alpha != beta - 1);
         sortMoves(b, legalMoves, s, depth, isPVNode);
     }
 
@@ -437,5 +430,4 @@ void Player::setDepths(int sort, int min, int max, int end) {
     minDepth = min;
     sortDepth = sort;
     endgameDepth = end;
-    depthLimit = maxDepth;
 }
