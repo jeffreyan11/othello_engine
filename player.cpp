@@ -19,8 +19,8 @@ const int PV_SORT_DEPTHS[21] = { 0,
 
 // Internal iterative deepening depths for non-PV nodes
 const int NON_PV_SORT_DEPTHS[21] = { 0,
-0, 0, 0, 0, 0, 0, 0, 2, 2, 2, // 1-10
-2, 4, 4, 4, 4, 6, 6, 6, 6, 8  // 11-20
+0, 0, 0, 0, 0, 0, 2, 2, 2, 2, // 1-10
+2, 4, 4, 4, 4, 4, 6, 6, 6, 6  // 11-20
 };
 
 const int TIMEOUT = (1 << 21);
@@ -390,15 +390,22 @@ void Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     bool isPVNode) {
     // internal iterative deepening
     MoveList scores;
-    if(depth >= 4 && isPVNode)
+    if (depth >= 4 && isPVNode)
         sortSearch(b, legalMoves, scores, s, PV_SORT_DEPTHS[depth]);
-    else if(depth >= 4) {
+    else if (depth >= 5) {
         sortSearch(b, legalMoves, scores, s, NON_PV_SORT_DEPTHS[depth]);
         // Fastest first
         for (unsigned int i = 0; i < legalMoves.size; i++) {
             Board copy = b.copy();
             copy.doMove(legalMoves.get(i), s);
             scores.set(i, scores.get(i) - 1024*copy.numLegalMoves(s^1));
+        }
+    }
+    else if (depth >= 3) {
+        for (unsigned int i = 0; i < legalMoves.size; i++) {
+            Board copy = b.copy();
+            copy.doMove(legalMoves.get(i), s);
+            scores.add(SQ_VAL[legalMoves.get(i)] - 16*copy.numLegalMoves(s^1));
         }
     }
     else {
