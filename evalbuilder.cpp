@@ -36,7 +36,7 @@ void boardTo33PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 void replaceEnd() {
-    for(unsigned int i = 0; i < totalSize - 16400; i++) {
+    for(unsigned int i = 0; i < totalSize - 2*16400; i++) {
         cerr << "Replacing end: " << i << endl;
 
         thor_game *game = games[i];
@@ -122,7 +122,7 @@ void searchFeatures() {
 
 int main(int argc, char **argv) {
     totalSize = 0;
-    games = new thor_game*[166000];
+    games = new thor_game*[183000];
     for(int n = 0; n < DIVS; n++) {
         for(int i = 0; i < 6561; i++) {
             pvTable2x4[n][i] = new pv();
@@ -170,6 +170,7 @@ int main(int argc, char **argv) {
     readThorGame("WTH_7708/WTH_1985.wtb", totalSize, games);
     readThorGame("WTH_7708/WTH_1984.wtb", totalSize, games);
     readGame("WTH_7708/tuneoutput-8-19-15.txt", 16400);
+    readGame("WTH_7708/tuneoutput-8-24-15.txt", 16400);
 
     checkGames(totalSize, games);
     replaceEnd();
