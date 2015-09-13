@@ -204,14 +204,14 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         if (bestIndex == MOVE_BROKEN)
             return MOVE_BROKEN;
         // If we failed low. This is really bad :(
-        if (bestIndex == MOVE_FAIL_LOW && score > alpha) {
+        if (bestIndex == MOVE_FAIL_LOW && aspAlpha > alpha) {
             // We were < than the lower bound, so this is the new upper bound
             aspBeta = score + 1;
             // Using 8 wide windows for now...
             aspAlpha = max(score - 7, alpha);
         }
         // If we failed high.
-        else if (score >= aspBeta && score < beta) {
+        else if (score >= aspBeta && aspBeta < beta) {
             // We were > than the upper bound, so this is the new lower bound
             aspAlpha = score - 1;
             // Using 8 wide windows for now...
@@ -239,9 +239,11 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
         (int) ((double) nodes / timeSpan) << endl;
     cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
+
     cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
     cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
     cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
+
     cerr << "Time spent: " << timeSpan << endl;
     cerr << "Best move: ";
     // If we failed low on the bounds we were given, that isn't our business
@@ -263,7 +265,7 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
     #if PRINT_SEARCH_INFO
     cerr << "Aspiration search: [" << alpha << ", " << beta << "]" << endl;
     #endif
-    int score;
+    int score, bestScore = -INFTY;
     // If this doesn't change, we failed low
     int bestIndex = MOVE_FAIL_LOW;
     for (unsigned int i = 0; i < moves.size; i++) {
@@ -294,20 +296,27 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
         }
 
         #if PRINT_SEARCH_INFO
-        cerr << "Searched move: ";
-        printMove(moves.get(i));
-        cerr << " | alpha: " << score << endl;
+        if (depth >= 22) {
+            cerr << "Searched move: ";
+            printMove(moves.get(i));
+            cerr << " | best score: " << score << endl;
+        }
         #endif
 
-        if (alpha < score) {
-            alpha = score;
-            bestIndex = i;
+        if (score >= beta) {
+            exactScore = score;
+            return i;
         }
-        if (alpha >= beta)
-            break;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score) {
+                alpha = score;
+                bestIndex = i;
+            }
+        }
     }
 
-    exactScore = alpha;
+    exactScore = bestScore;
     return bestIndex;
 }
 
@@ -341,7 +350,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     if(depth <= END_SHALLOW)
         return endgameShallow(b, s, depth, alpha, beta, passedLast);
 
-    int score;
+    int score, bestScore = -INFTY;
     int prevAlpha = alpha;
 
     // play best move, if recorded
@@ -364,7 +373,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     EndgameEntry *allEntry = allTable->get(b, s);
     if(allEntry != NULL) {
         if (allEntry->score <= alpha)
-            return alpha;
+            return allEntry->score;
         if (beta > allEntry->score)
             beta = allEntry->score;
     }
@@ -376,7 +385,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         egStats->hashHits++;
         if (killerEntry->score >= beta) {
             egStats->hashCuts++;
-            return beta;
+            return killerEntry->score;
         }
         // Fail high is lower bound on score so this is valid
         if (alpha < killerEntry->score)
@@ -396,10 +405,13 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
 
         if (score >= beta) {
             egStats->hashMoveCuts++;
-            return beta;
+            return score;
         }
-        if (alpha < score) {
-            alpha = score;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score) {
+                alpha = score;
+            }
         }
     }
 
@@ -414,9 +426,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
         if (score == SCORE_TIMEOUT)
             return -SCORE_TIMEOUT;
 
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+        return score;
     }
 
     MoveList priority;
@@ -485,12 +495,15 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             egStats->failHighs++;
             if (i == 0)
                 egStats->firstFailHighs++;
-            killerTable->add(b, beta, m, s, depth);
-            return beta;
+            killerTable->add(b, score, m, s, depth);
+            return score;
         }
-        if (alpha < score) {
-            alpha = score;
-            tempMove = m;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score) {
+                alpha = score;
+                tempMove = m;
+            }
         }
     }
 
@@ -498,9 +511,9 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgameTable->add(b, alpha, tempMove, s, depth);
     else if (alpha <= prevAlpha)
-        allTable->add(b, alpha, MOVE_NULL, s, depth);
+        allTable->add(b, bestScore, MOVE_NULL, s, depth);
 
-    return alpha;
+    return bestScore;
 }
 
 /**
@@ -522,7 +535,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         return exactEntry->score;
     }
 
-    int score;
+    int score, bestScore = -INFTY;
     int prevAlpha = alpha;
 
     #if USE_STABILITY
@@ -540,7 +553,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         EndgameEntry *allEntry = allTable->get(b, s);
         if(allEntry != NULL) {
             if (allEntry->score <= alpha)
-                return alpha;
+                return allEntry->score;
             if (beta > allEntry->score)
                 beta = allEntry->score;
         }
@@ -550,7 +563,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             egStats->hashHits++;
             if (killerEntry->score >= beta) {
                 egStats->hashCuts++;
-                return beta;
+                return killerEntry->score;
             }
             if (alpha < killerEntry->score)
                 alpha = killerEntry->score;
@@ -568,10 +581,13 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
                 egStats->hashMoveCuts++;
                 egStats->failHighs++;
                 egStats->firstFailHighs++;
-                return beta;
+                return score;
             }
-            if (alpha < score) {
-                alpha = score;
+            if (score > bestScore) {
+                bestScore = score;
+                if (alpha < score) {
+                    alpha = score;
+                }
             }
         }
     }
@@ -581,11 +597,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
         if(passedLast)
             return (2 * b.count(s) - 64 + depth);
 
-        score = -endgameShallow(b, s^1, depth, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+        return -endgameShallow(b, s^1, depth, -beta, -alpha, true);
     }
 
     if (hashMove != MOVE_NULL)
@@ -640,22 +652,25 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
             if (i == 0)
                 egStats->firstFailHighs++;
             if (depth >= MIN_TT_DEPTH)
-                killerTable->add(b, beta, move, s, depth);
-            return beta;
+                killerTable->add(b, score, move, s, depth);
+            return score;
         }
-        if (alpha < score) {
-            alpha = score;
-            tempMove = move;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score) {
+                alpha = score;
+                tempMove = move;
+            }
         }
     }
 
     // Best move with exact score if alpha < score < beta
     if (tempMove != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         endgameTable->add(b, alpha, tempMove, s, depth);
-    else if (depth >= MIN_TT_DEPTH && alpha <= prevAlpha)
-        allTable->add(b, alpha, MOVE_NULL, s, depth);
+    else if (depth >= MIN_TT_DEPTH && prevAlpha == alpha)
+        allTable->add(b, bestScore, MOVE_NULL, s, depth);
 
-    return alpha;
+    return bestScore;
 }
 
 /**
@@ -664,7 +679,7 @@ int Endgame::endgameShallow(Board &b, int s, int depth, int alpha, int beta,
  * hole parity is called.
  */
 int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
-    int score;
+    int score, bestScore = -INFTY;
     int legalMoves[4];
     int n = b.getLegalMoves4(s, legalMoves);
 
@@ -672,11 +687,7 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
         if (passedLast)
             return (2 * b.count(s) - 60);
 
-        score = -endgame4(b, s^1, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+        return -endgame4(b, s^1, -beta, -alpha, true);
     }
 
     for (int i = 0; i < n; i++) {
@@ -693,19 +704,22 @@ int Endgame::endgame4(Board &b, int s, int alpha, int beta, bool passedLast) {
             score = -endgame3(copy, s^1, -beta, -alpha, false);
 
         if (score >= beta)
-            return beta;
-        if (alpha < score)
-            alpha = score;
+            return score;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score)
+                alpha = score;
+        }
     }
 
-    return alpha;
+    return bestScore;
 }
 
 /**
  * @brief Endgame solver, to be used with exactly 3 empty squares.
  */
 int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
-    int score;
+    int score, bestScore = -INFTY;
     int legalMoves[3];
     int n = b.getLegalMoves3(s, legalMoves);
 
@@ -713,11 +727,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
         if (passedLast)
             return (2 * b.count(s) - 61);
 
-        score = -endgame3(b, s^1, -beta, -alpha, true);
-
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+        return -endgame3(b, s^1, -beta, -alpha, true);
     }
 
     for (int i = 0; i < n; i++) {
@@ -734,12 +744,15 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
             score = -endgame2(copy, s^1, -beta, -alpha);
 
         if (score >= beta)
-            return beta;
-        if (alpha < score)
-            alpha = score;
+            return score;
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score)
+                alpha = score;
+        }
     }
 
-    return alpha;
+    return bestScore;
 }
 
 /**
@@ -747,7 +760,7 @@ int Endgame::endgame3(Board &b, int s, int alpha, int beta, bool passedLast) {
  * Null window searches are no longer performed here.
  */
 int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
-    int score = -INFTY;
+    int score = -INFTY, bestScore = -INFTY;
     bitbrd empty = ~b.getTaken();
     bitbrd opp = b.getBits(s^1);
 
@@ -766,9 +779,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
         b.undoMove(lm1, changeMask, s);
 
         if (score >= beta)
-            return beta;
-        if (alpha < score)
-            alpha = score;
+            return score;
+        if (score > bestScore)
+            bestScore = score;
     }
 
     if ((opp & NEIGHBORS[lm2]) && (changeMask = b.getDoMove(lm2, s))) {
@@ -777,14 +790,17 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
         score = -endgame1(b, s^1, -beta, lm1);
         b.undoMove(lm2, changeMask, s);
 
-        if (alpha < score)
-            alpha = score;
+        if (score >= beta)
+            return score;
+        if (score > bestScore)
+            bestScore = score;
     }
 
+    // if no legal moves... try other player
     if (score == -INFTY) {
+        bestScore = INFTY;
         opp = b.getBits(s);
 
-        // if no legal moves... try other player
         if ((opp & NEIGHBORS[lm1]) && (changeMask = b.getDoMove(lm1, s^1))) {
             b.makeMove(lm1, changeMask, s^1);
             nodes++;
@@ -792,9 +808,9 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             b.undoMove(lm1, changeMask, s^1);
 
             if (alpha >= score)
-                return alpha;
-            if (beta > score)
-                beta = score;
+                return score;
+            if (score < bestScore)
+                bestScore = score;
         }
 
         if ((opp & NEIGHBORS[lm2]) && (changeMask = b.getDoMove(lm2, s^1))) {
@@ -803,18 +819,18 @@ int Endgame::endgame2(Board &b, int s, int alpha, int beta) {
             score = endgame1(b, s, alpha, lm1);
             b.undoMove(lm2, changeMask, s^1);
 
-            if (beta > score)
-                beta = score;
+            if (alpha >= score)
+                return score;
+            if (score < bestScore)
+                bestScore = score;
         }
 
         // if both players passed, game over
         if (score == -INFTY)
             return (2 * b.count(s) - 62);
-
-        return beta;
     }
 
-    return alpha;
+    return bestScore;
 }
 
 /**
