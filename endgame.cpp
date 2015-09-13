@@ -156,7 +156,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
 
     MoveList scores;
     // Initial sorting of moves
-    if (!isSorted && depth > 11) {
+    if (!isSorted && depth > 13) {
         if (depth > 23)
             sortSearch(b, moves, scores, s, 12);
         else if (depth > 21)
@@ -169,6 +169,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
             sortSearch(b, moves, scores, s, 4);
         else
             sortSearch(b, moves, scores, s, 2);
+
         sort(moves, scores, 0, moves.size-1);
 
         timeSpan = getTimeElapsed(startTime);
@@ -187,7 +188,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     int aspAlpha = alpha;
     int aspBeta = beta;
     int bestIndex = MOVE_FAIL_LOW;
-    if (!isSorted && depth > 11) {
+    if (!isSorted && depth > 13) {
         aspAlpha = max(scores.get(0) / 600 - 4, alpha);
         aspBeta = min(scores.get(0) / 600 + 4, beta);
         // To prevent errors if our sort search score was outside [alpha, beta]
@@ -296,7 +297,7 @@ int Endgame::endgameAspiration(Board &b, MoveList &moves, int s, int depth,
         }
 
         #if PRINT_SEARCH_INFO
-        if (depth >= 22) {
+        if (depth >= 20) {
             cerr << "Searched move: ";
             printMove(moves.get(i));
             cerr << " | best score: " << score << endl;
