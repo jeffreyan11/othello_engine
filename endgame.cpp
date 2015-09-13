@@ -58,9 +58,9 @@ struct EndgameStatistics {
 Endgame::Endgame() {
     // 16384 entries
     endgameTable = new EndHash(14);
-    // 2^23 entries * 28 bytes/entry = 235 MB
+    // 2^23 entries * 20 bytes/entry = 168 MB
     killerTable = new EndHash(23);
-    // 2^22 entries * 28 bytes/entry = 117 MB
+    // 2^22 entries * 20 bytes/entry = 84 MB
     allTable = new EndHash(22);
     // 2^20 array slots (2^21 entries) * 64 bytes/slot = 67 MB
     transpositionTable = new Hash(20);

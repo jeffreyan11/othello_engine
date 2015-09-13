@@ -12,8 +12,8 @@ struct EndgameEntry {
     uint8_t ptm;
     uint8_t depth;
 
-    EndgameEntry(bitbrd w, bitbrd b, int s, int m, int p, int d) {
-        setEntry(w, b, s, m, p, d);
+    EndgameEntry() {
+        setEntry(0, 0, 0, 0, 0, 0);
     }
 
     void setEntry(bitbrd w, bitbrd b, int s, int m, int p, int d) {
@@ -29,7 +29,7 @@ struct EndgameEntry {
 class EndHash {
 
 private:
-    EndgameEntry **table;
+    EndgameEntry *table;
     int size;
     uint32_t bitMask;
 
