@@ -34,7 +34,7 @@ private:
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
     void sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
-        bool isPVNode);
+        int alpha, bool isPVNode);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     Move *indexToMove(int index);
@@ -50,6 +50,7 @@ public:
 
     Move *doMove(Move *opponentsMove, int msLeft);
     void setDepths(int sort, int min, int max, int end);
+    uint64_t getNodes();
 };
 
 #endif

@@ -93,6 +93,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // empty squares
     int empties = game.countEmpty();
     turn = 64 - empties;
+    // Reset node count. Nodes are counted in the most conservative way (only
+    // when doMove() is called), so that pruning does not inflate node counts.
+    nodes = 0;
 
     // timing
     if(msLeft != -1) {
@@ -159,9 +162,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         timeLimit = 2 * timeLimit / 3;
     }
 
-    // Reset node count. Nodes are counted in the most conservative way (only
-    // when doMove() is called), so that pruning does not inflate node counts.
-    nodes = 0;
     // Start timers
     auto startTime = OthelloClock::now();
     timeElapsed = OthelloClock::now();
@@ -339,7 +339,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     // Move ordering
     // Don't waste time sorting at depth 1.
     if (depth >= 2) {
-        sortMoves(b, legalMoves, s, depth, isPVNode);
+        sortMoves(b, legalMoves, s, depth, alpha, isPVNode);
     }
 
     for (unsigned int i = 0; i < legalMoves.size; i++) {
@@ -394,7 +394,16 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
  * and get the cheapest possible cutoff).
  */
 void Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
-    bool isPVNode) {
+    int alpha, bool isPVNode) {
+    // Detect strongly expected all-nodes
+    if (!isPVNode && depth >= 5) {
+        int staticEval = otherHeuristic ? evaluater->heuristic2(b, turn+attemptingDepth, s)
+                                        : evaluater->heuristic(b, turn+attemptingDepth, s);
+
+        // Do sorting as if depth was 2 lower
+        if (staticEval < alpha - 2 * 2000)
+            depth -= 2;
+    }
     // internal iterative deepening
     MoveList scores;
     if (depth >= 4 && isPVNode)
@@ -444,4 +453,8 @@ void Player::setDepths(int sort, int min, int max, int end) {
     minDepth = min;
     sortDepth = sort;
     endgameDepth = end;
+}
+
+uint64_t Player::getNodes() {
+    return nodes;
 }

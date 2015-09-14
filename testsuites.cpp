@@ -19,10 +19,11 @@ int main(int argc, char **argv) {
     uint64_t totalNodes = 0;
 
     if (argc != 3) {
-        cerr << "Usage: testsuites  [test type] [option]" << endl;
-        cerr << "Test types: perft  [depth]" << endl;
-        cerr << "            perftu [depth]" << endl;
-        cerr << "            ffo    [n] tests the first n positions" << endl;
+        cerr << "Usage: testsuites    [test type] [option]" << endl;
+        cerr << "Test types: perft    [depth]" << endl;
+        cerr << "            perftu   [depth]" << endl;
+        cerr << "            ffo      [n] tests the first n positions" << endl;
+        cerr << "            selfplay [max depth]" << endl;
         return 1;
     }
 
@@ -50,22 +51,30 @@ int main(int argc, char **argv) {
             totalNodes += ffo(fileString);
         }
     }
+    else if (string(argv[1]) == "selfplay") {
+        Player p(BLACK);
+        Player p2(WHITE);
+        int maxDepth = stoi(argv[2]);
+        p.setDepths(4, 6, maxDepth, 27);
+        p2.setDepths(4, 6, maxDepth, 27);
+
+        Move *m = p.doMove(NULL, -1);
+        totalNodes += p.getNodes();
+        for(int i = 0; i < 15; i++) {
+            m = p2.doMove(m, -1);
+            totalNodes += p2.getNodes();
+            m = p.doMove(m, -1);
+            totalNodes += p.getNodes();
+        }
+    }
     else {
-        cerr << "Usage: testsuites [test type] [option]" << endl;
-        cerr << "Test types: perft [depth]" << endl;
-        cerr << "            perftu [depth]" << endl;
-        cerr << "            ffo [n] tests the first n positions" << endl;
+        cerr << "Usage: testsuites    [test type] [option]" << endl;
+        cerr << "Test types: perft    [depth]" << endl;
+        cerr << "            perftu   [depth]" << endl;
+        cerr << "            ffo      [n] tests the first n positions" << endl;
+        cerr << "            selfplay [max depth]" << endl;
         return 1;
     }
-
-    /*Player p(BLACK);
-    Player p2(WHITE);
-
-    Move *m = p.doMove(NULL, -1);
-    for(int i = 0; i < 15; i++) {
-        m = p2.doMove(m, -1);
-        m = p.doMove(m, -1);
-    }*/
 
     cerr << getTimeElapsed(startTime) << endl;
     cerr << totalNodes << endl;
