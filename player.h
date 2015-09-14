@@ -30,7 +30,7 @@ private:
     int timeLimit;
     OthelloTime timeElapsed;
 
-    int getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int side,
+    int getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
     void sortMoves(Board &b, MoveList &legalMoves, int s, int depth,

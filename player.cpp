@@ -175,17 +175,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     MoveList scores;
     sortSearch(game, legalMoves, scores, mySide, sortDepth);
     sort(legalMoves, scores, 0, legalMoves.size-1);
+    scores.clear();
 
     // Iterative deepening
     attemptingDepth = minDepth;
-    int chosenScore = 0;
     int newBest;
     do {
         #if PRINT_SEARCH_INFO
         cerr << "Depth " << attemptingDepth << ": ";
         #endif
 
-        newBest = getBestMoveIndex(game, legalMoves, chosenScore, mySide,
+        newBest = getBestMoveIndex(game, legalMoves, scores, mySide,
             attemptingDepth);
         if(newBest == MOVE_BROKEN) {
             #if PRINT_SEARCH_INFO
@@ -196,12 +196,13 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         }
         // Switch new PV to be searched first
         legalMoves.swap(0, newBest);
+        scores.swap(0, newBest);
         attemptingDepth += 2;
 
         #if PRINT_SEARCH_INFO
         cerr << "bestmove ";
         printMove(legalMoves.get(0));
-        cerr << " score " << ((double) (chosenScore)) / 2000.0 << endl;
+        cerr << " score " << scores.get(0) / 2000.0 << endl;
         #endif
 
         timeSpan = getTimeElapsed(startTime);
@@ -217,7 +218,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";
     printMove(legalMoves.get(0));
-    cerr << ". Score: " << ((double) (chosenScore)) / 2000.0 << endl;
+    cerr << ". Score: " << scores.get(0) / 2000.0 << endl;
     #endif
 
     game.doMove(myMove, mySide);
@@ -229,7 +230,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
  * @brief Performs a principal variation null-window search.
  * Returns the index of the best move.
  */
-int Player::getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int s,
+int Player::getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int s,
     int depth) {
     int score;
     int bestMove = MOVE_BROKEN;
@@ -251,12 +252,13 @@ int Player::getBestMoveIndex(Board &b, MoveList &moves, int &bestScore, int s,
         if (score == TIMEOUT)
             return MOVE_BROKEN;
 
+        scores.set(i, score);
         if (score > alpha) {
             alpha = score;
             bestMove = i;
         }
     }
-    bestScore = alpha;
+
     return bestMove;
 }
 
@@ -275,7 +277,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
             return evaluater->heuristic(b, turn+attemptingDepth, s);
     }
 
-    int score;
+    int score, bestScore = -INFTY;
     int prevAlpha = alpha;
     int hashed = MOVE_NULL;
     int toHash = MOVE_NULL;
@@ -291,13 +293,13 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
             // For all-nodes, we only have an upper bound score
             if (entry->nodeType == ALL_NODE) {
                 if (entry->depth >= depth && entry->score <= alpha)
-                    return alpha;
+                    return entry->score;
             }
             else {
                 if (entry->depth >= depth) {
                     // For cut-nodes, we have a lower bound score
                     if (entry->nodeType == CUT_NODE && entry->score >= beta)
-                        return beta;
+                        return entry->score;
                     // For PV-nodes, we have an exact score we can return
                     else if (entry->nodeType == PV_NODE && !isPVNode)
                         return entry->score;
@@ -312,10 +314,13 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
                 // If we received a timeout signal, propagate it upwards
                 if (score == TIMEOUT)
                     return -TIMEOUT;
-                if (alpha < score)
-                    alpha = score;
-                if (alpha >= beta)
-                    return beta;
+                if (score >= beta)
+                    return score;
+                if (score > bestScore) {
+                    bestScore = score;
+                    if (alpha < score)
+                        alpha = score;
+                }
             }
         }
     }
@@ -327,9 +332,8 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
             return -TIMEOUT;
-        if (alpha < score)
-            alpha = score;
-        return alpha;
+
+        return score;
     }
 
     // Move ordering
@@ -360,24 +364,27 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
             return -TIMEOUT;
-        if (alpha < score) {
-            alpha = score;
-            toHash = legalMoves.get(i);
-        }
-        if (alpha >= beta) {
+        if (score >= beta) {
             if(depth >= 4)
-                transpositionTable->add(b, beta, legalMoves.get(i), s,
+                transpositionTable->add(b, score, legalMoves.get(i), s,
                     turn, depth, CUT_NODE);
-            return beta;
+            return score;
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            if (alpha < score) {
+                alpha = score;
+                toHash = legalMoves.get(i);
+            }
         }
     }
 
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         transpositionTable->add(b, alpha, toHash, s, turn, depth, PV_NODE);
     else if (depth >= 4 && alpha <= prevAlpha)
-        transpositionTable->add(b, alpha, MOVE_NULL, s, turn, depth, ALL_NODE);
+        transpositionTable->add(b, bestScore, MOVE_NULL, s, turn, depth, ALL_NODE);
 
-    return alpha;
+    return bestScore;
 }
 
 /**
