@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include "player.h"
 
@@ -5,8 +6,8 @@
 // if left. Indexed by empties.
 const int endgameTime[31] = { 0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1-10
-10, 20, 40, 80, 150, // 11-15
-250, 400, 750, 1500, 3000, // 16-20
+0, 0, 0, 0, 250, // 11-15
+400, 700, 1200, 1800, 3000, // 16-20
 6000, 12000, 25000, 50000, 120000, // 21-25
 250000, 500000, 1000000, 2500000, 8000000
 };
@@ -36,7 +37,7 @@ using namespace std;
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 18;
+    maxDepth = 20;
     minDepth = 6;
     sortDepth = 4;
     endgameDepth = 27;
@@ -99,8 +100,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // timing
     if(msLeft != -1) {
-        int movesLeft = 64 - turn;
-        timeLimit = 4 * msLeft / movesLeft;
+        // Time odds, if desired
+        //msLeft -= 600000;
+
+        int movesLeft = max(1, empties / 2);
+        timeLimit = 2 * msLeft / movesLeft;
         #if PRINT_SEARCH_INFO
         cerr << "Time limit: " << timeLimit / 1000.0 << " s" << endl;
         #endif
