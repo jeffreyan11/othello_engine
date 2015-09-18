@@ -100,6 +100,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // when doMove() is called), so that pruning does not inflate node counts.
     nodes = 0;
 
+    // TODO reset MPC statistics
+    #if COLLECT_MPC_STATS
+    for (unsigned int i = 0; i < 21; i++) {
+        MPCdone[i] = 0;
+        MPCfail[i] = 0;
+    }
+    #endif
+
     // timing
     if(msLeft != -1) {
         // Time odds, if desired
@@ -227,6 +235,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << ". Score: " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl;
     #endif
 
+    #if COLLECT_MPC_STATS
+    for (unsigned int i = 7; i < 21; i++) {
+        cerr << "MPC depth " << i << ": " << MPCdone[i] << " done " << MPCfail[i] << " failed" << endl;
+    }
+    #endif
+
     game.doMove(myMove, mySide);
 
     return indexToMove(myMove);
@@ -350,7 +364,11 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         prunedSize = sortMoves(b, legalMoves, s, depth, alpha, isPVNode);
     }
 
+#if COLLECT_MPC_STATS
+    for (unsigned int i = 0; i < legalMoves.size; i++) {
+#else
     for (unsigned int i = 0; i < prunedSize; i++) {
+#endif
         // Check for a timeout
         if (getTimeElapsed(timeElapsed) * 1000 > timeLimit)
             return -TIMEOUT;
@@ -373,6 +391,10 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (score == TIMEOUT)
             return -TIMEOUT;
         if (score >= beta) {
+            #if COLLECT_MPC_STATS
+            if (i >= prunedSize)
+                MPCfail[depth]++;
+            #endif
             if(depth >= 4)
                 transpositionTable->add(b, score, legalMoves.get(i), s,
                     turn, depth, CUT_NODE);
@@ -381,6 +403,10 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (score > bestScore) {
             bestScore = score;
             if (alpha < score) {
+                #if COLLECT_MPC_STATS
+                if (i >= prunedSize)
+                    MPCfail[depth]++;
+                #endif
                 alpha = score;
                 toHash = legalMoves.get(i);
             }
@@ -425,8 +451,12 @@ unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
         sortSearch(b, legalMoves, scores, s, NON_PV_SORT_DEPTHS[depth]);
         // Detect very poor moves for MPC
         if (depth >= 7) {
+            #if COLLECT_MPC_STATS
+            MPCdone[depth]++;
+            #endif
             for (unsigned int i = 0; i < scores.size; i++) {
-                if (scores.get(i) < alpha - (6 + depth / 2 + turn / 8) * EVAL_SCALE_FACTOR)
+                int turnBonus = max((turn - 12) / 2, 0);
+                if (scores.get(i) < alpha - (depth / 2 - 1 + turnBonus) * EVAL_SCALE_FACTOR)
                     belowThreshold++;
             }
         }

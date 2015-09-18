@@ -8,6 +8,8 @@
 #include "hash.h"
 #include "eval.h"
 
+#define COLLECT_MPC_STATS false
+
 class Player {
 
 private:
@@ -18,6 +20,10 @@ private:
     // The depth currently being attempted. Helps with hash entry aging.
     int attemptingDepth;
     uint64_t nodes;
+    #if COLLECT_MPC_STATS
+    uint64_t MPCdone[21];
+    uint64_t MPCfail[21];
+    #endif
 
     Endgame endgameSolver;
 
