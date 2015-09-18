@@ -6,10 +6,10 @@
 // if left. Indexed by empties.
 const int endgameTime[31] = { 0,
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1-10
-0, 0, 0, 0, 250, // 11-15
+0, 0, 0, 150, 250, // 11-15
 400, 700, 1200, 1800, 3000, // 16-20
-6000, 12000, 25000, 50000, 120000, // 21-25
-250000, 500000, 1000000, 2500000, 8000000
+6000, 12000, 25000, 50000, 100000, // 21-25
+200000, 400000, 800000, 2000000, 5000000
 };
 
 // Internal iterative deepening depths for PV nodes
@@ -39,10 +39,11 @@ using namespace std;
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 20;
+    maxDepth = 22;
     minDepth = 6;
     sortDepth = 4;
-    endgameDepth = 27;
+    endgameDepth = 30;
+    lastMaxDepth = 0;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     turn = 4;
@@ -155,11 +156,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // Endgame solver: if we are within sight of the end and we have enough
     // time to do a perfect solve
-    if(empties <= endgameDepth &&
-            (msLeft >= endgameTime[empties] || msLeft == -1)) {
+    if(empties <= endgameDepth
+    && (msLeft >= endgameTime[empties] || msLeft == -1)
+    && lastMaxDepth + 10 >= empties) {
         // Timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
-                                          : msLeft / 3;
+                                          : msLeft / 4;
         #if PRINT_SEARCH_INFO
         cerr << "Endgame solver: depth " << empties << endl;
         #endif
@@ -208,6 +210,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             timeSpan = getTimeElapsed(startTime);
             break;
         }
+        lastMaxDepth = attemptingDepth;
+
         // Switch new PV to be searched first
         legalMoves.swap(0, newBest);
         scores.swap(0, newBest);
@@ -455,8 +459,9 @@ unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
             MPCdone[depth]++;
             #endif
             for (unsigned int i = 0; i < scores.size; i++) {
-                int turnBonus = max((turn - 12) / 2, 0);
-                if (scores.get(i) < alpha - (depth / 2 - 1 + turnBonus) * EVAL_SCALE_FACTOR)
+                if (scores.get(i) < alpha
+                            - (int) ((depth / 2.0 - 1) * EVAL_SCALE_FACTOR)
+                            - abs(alpha))
                     belowThreshold++;
             }
         }

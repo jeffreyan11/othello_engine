@@ -19,6 +19,9 @@ private:
     int endgameDepth;
     // The depth currently being attempted. Helps with hash entry aging.
     int attemptingDepth;
+    // The last max depth achieved, for entering endgame solver
+    int lastMaxDepth;
+
     uint64_t nodes;
     #if COLLECT_MPC_STATS
     uint64_t MPCdone[21];
