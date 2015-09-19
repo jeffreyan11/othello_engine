@@ -2,16 +2,6 @@
 #include <iostream>
 #include "player.h"
 
-// Only try an endgame solve if more than this amount of time (in milliseconds)
-// if left. Indexed by empties.
-const int endgameTime[31] = { 0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1-10
-0, 0, 0, 150, 250, // 11-15
-400, 700, 1200, 1800, 3000, // 16-20
-6000, 12000, 25000, 50000, 100000, // 21-25
-200000, 400000, 800000, 2000000, 5000000
-};
-
 // Internal iterative deepening depths for PV nodes
 const int PV_SORT_DEPTHS[21] = { 0,
 0, 0, 0, 0, 2, 2, 2, 2, 2, 4, // 1-10
@@ -40,8 +30,8 @@ using namespace std;
  */
 Player::Player(Side side) {
     maxDepth = 22;
-    minDepth = 6;
-    sortDepth = 4;
+    minDepth = 4;
+    sortDepth = 2;
     endgameDepth = 30;
     lastMaxDepth = 0;
 
@@ -109,13 +99,17 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     }
     #endif
 
-    // timing
+    // Timing
     if(msLeft != -1) {
         // Time odds, if desired
         //msLeft -= 600000;
+        // Buffer time: to prevent losses on time at short time controls
+        if (empties > 14)
+            msLeft -= 800;
 
+        // Use 2.5x "fair" time
         int movesLeft = max(1, empties / 2);
-        timeLimit = 2 * msLeft / movesLeft;
+        timeLimit = 5 * msLeft / (2 * movesLeft);
         #if PRINT_SEARCH_INFO
         cerr << "Time limit: " << timeLimit / 1000.0 << " s" << endl;
         #endif
@@ -155,10 +149,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     int myMove = MOVE_BROKEN;
 
     // Endgame solver: if we are within sight of the end and we have enough
-    // time to do a perfect solve
+    // time to do a perfect solve (estimated by lastMaxDepth) or have unlimited
+    // time. Always use endgame solver for the last 14 plies since it is faster
+    // and for more accurate results.
     if(empties <= endgameDepth
-    && (msLeft >= endgameTime[empties] || msLeft == -1)
-    && lastMaxDepth + 10 >= empties) {
+    && (lastMaxDepth + 10 >= empties || msLeft == -1 || empties <= 14)) {
         // Timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : msLeft / 4;
