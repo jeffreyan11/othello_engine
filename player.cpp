@@ -32,7 +32,7 @@ Player::Player(Side side) {
     maxDepth = 22;
     minDepth = 4;
     sortDepth = 2;
-    endgameDepth = 30;
+    endgameDepth = 34;
     lastMaxDepth = 0;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
@@ -107,7 +107,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         if (empties > 14)
             msLeft -= 800;
 
-        // Use 2.5x "fair" time
+        // Use up to 2.5x "fair" time
         int movesLeft = max(1, empties / 2);
         timeLimit = 5 * msLeft / (2 * movesLeft);
         #if PRINT_SEARCH_INFO
@@ -250,6 +250,10 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             }
         }
     }
+
+    // Heh. Heh. Heh.
+    if (scores.get(0) > 60 * EVAL_SCALE_FACTOR)
+        lastMaxDepth += 6;
 
     timeSpan = getTimeElapsed(startTime);
     #if PRINT_SEARCH_INFO
@@ -437,6 +441,12 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
                 toHash = legalMoves.get(i);
             }
         }
+    }
+
+    // If all moves were pruned as a fail-low
+    if (bestScore == -INFTY) {
+        bestScore = alpha - (int) ((depth / 2.0 - 1) * EVAL_SCALE_FACTOR)
+                          - abs(alpha);
     }
 
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
