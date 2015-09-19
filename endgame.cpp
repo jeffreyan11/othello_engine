@@ -222,7 +222,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         }
     }
     // Retrieve the best move
-    int bestMove = MOVE_BROKEN;
+    int bestMove = MOVE_FAIL_LOW;
     if (bestIndex != MOVE_FAIL_LOW)
         bestMove = moves.get(bestIndex);
 

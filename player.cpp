@@ -211,10 +211,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         legalMoves.swap(0, newBest);
         scores.swap(0, newBest);
         attemptingDepth += 2;
+        myMove = legalMoves.get(0);
 
         #if PRINT_SEARCH_INFO
         cerr << "bestmove ";
-        printMove(legalMoves.get(0));
+        printMove(myMove);
         cerr << " score " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl;
         #endif
 
@@ -224,13 +225,39 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     } while((timeLimit > timeSpan * 1000.0 * legalMoves.size)
           && attemptingDepth <= maxDepth);
 
-    myMove = legalMoves.get(0);
+    // WLD confirmation at high depths
+    if(empties <= endgameDepth + 2
+    && (lastMaxDepth + 12 >= empties || msLeft == -1)
+    && empties > 14
+    && timeSpan < timeLimit) {
+        // Timing: use 1/6 of remaining time for the WLD solve
+        int endgameLimit = (msLeft == -1) ? 100000000
+                                          : msLeft / 6;
+        #if PRINT_SEARCH_INFO
+        cerr << "WLD solver: depth " << empties << endl;
+        #endif
+
+        int WLDMove = endgameSolver.solveWLD(game, legalMoves, true, mySide,
+            empties, endgameLimit, evaluater);
+
+        if(WLDMove != MOVE_BROKEN) {
+            if (WLDMove != -1 && myMove != WLDMove) {
+                #if PRINT_SEARCH_INFO
+                cerr << "Move changed to " << endl;
+                printMove(WLDMove);
+                #endif
+                myMove = WLDMove;
+            }
+        }
+    }
+
+    timeSpan = getTimeElapsed(startTime);
     #if PRINT_SEARCH_INFO
     cerr << "Time spent: " << timeSpan << " s" << endl;
     cerr << "Nodes searched: " << nodes << " | NPS: " << (int) ((double) nodes / timeSpan) << endl;
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";
-    printMove(legalMoves.get(0));
+    printMove(myMove);
     cerr << ". Score: " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl;
     #endif
 
