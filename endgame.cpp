@@ -24,6 +24,13 @@ const int STAB_THRESHOLD[40] = {
     64, 64, 64, 64, 64
 };
 
+const int ROOT_SORT_DEPTHS[36] = { 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 2, 2, 4, 4, 6, 6, 8,
+    8, 10, 10, 12, 12, 12, 12, 12, 12, 12,
+    12, 12, 12, 12, 12
+};
+
 // Depths for sort searching. Indexed by depth.
 const int ENDGAME_SORT_DEPTHS[36] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -157,18 +164,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     MoveList scores;
     // Initial sorting of moves
     if (!isSorted && depth > 13) {
-        if (depth > 23)
-            sortSearch(b, moves, scores, s, 12);
-        else if (depth > 21)
-            sortSearch(b, moves, scores, s, 10);
-        else if (depth > 19)
-            sortSearch(b, moves, scores, s, 8);
-        else if (depth > 17)
-            sortSearch(b, moves, scores, s, 6);
-        else if (depth > 15)
-            sortSearch(b, moves, scores, s, 4);
-        else
-            sortSearch(b, moves, scores, s, 2);
+        sortSearch(b, moves, scores, s, ROOT_SORT_DEPTHS[depth]);
 
         sort(moves, scores, 0, moves.size-1);
 
