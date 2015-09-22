@@ -45,7 +45,7 @@ int Openings::binarySearch(bitbrd taken, bitbrd black) {
 
 bool Openings::readFile() {
     std::string line;
-    std::ifstream openingbk("openings.txt");
+    std::ifstream openingbk("Toad_Resources/openings.txt");
 
     if(openingbk.is_open()) {
         getline(openingbk, line);
