@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
 
     Player p(BLACK);
     Player p2(WHITE);
-    p.setDepths(4, 6, 12, 30);
-    p2.setDepths(4, 6, 12, 30);
+    p.setDepths(2, 4, 14, 30);
+    p2.setDepths(2, 4, 14, 30);
     Board b;
     // consider black
     next(p, b, CBLACK, 5);
