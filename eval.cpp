@@ -129,15 +129,15 @@ Eval::Eval() {
 
     s44Table = new int[65536];
 
-    readTable("patterns/edgetable.txt", 729, edgeTable);
-    readTable("patterns/p24table.txt", 729, p24Table);
-    readTable("patterns/pE2Xtable.txt", 6561, pE2XTable);
-    readTable("patterns/p33table.txt", 2187, p33Table);
+    readTable("Toad_Resources/edgetable.txt", 729, edgeTable);
+    readTable("Toad_Resources/p24table.txt", 729, p24Table);
+    readTable("Toad_Resources/pE2Xtable.txt", 6561, pE2XTable);
+    readTable("Toad_Resources/p33table.txt", 2187, p33Table);
     readStability44Table();
-    readEndTable("patterns/edgeend.txt", 729, edgeTable);
-    readEndTable("patterns/p24end.txt", 729, p24Table);
-    readEndTable("patterns/pE2Xend.txt", 6561, pE2XTable);
-    readEndTable("patterns/p33end.txt", 2187, p33Table);
+    readEndTable("Toad_Resources/edgeend.txt", 729, edgeTable);
+    readEndTable("Toad_Resources/p24end.txt", 729, p24Table);
+    readEndTable("Toad_Resources/pE2Xend.txt", 6561, pE2XTable);
+    readEndTable("Toad_Resources/p33end.txt", 2187, p33Table);
 }
 
 Eval::~Eval() {
@@ -425,7 +425,7 @@ void Eval::readTable(std::string fileName, int lines, int **tableArray) {
 void Eval::readStability44Table() {
     std::string line;
     std::string file;
-        file = "patterns/s44table.txt";
+        file = "Toad_Resources/s44table.txt";
     std::ifstream s44table(file);
 
     if(s44table.is_open()) {

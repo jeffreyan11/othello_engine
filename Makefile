@@ -1,7 +1,7 @@
 CC          = g++
 CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
-PLAYERNAME  = ShallowKwok
+PLAYERNAME  = Toad
 
 all: $(PLAYERNAME)$(EXT) testgame testsuites
 evaltools: evalbuilder endeval blur tuneheuristic crtbk
