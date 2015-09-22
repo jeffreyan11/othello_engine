@@ -24,19 +24,19 @@ const int STAB_THRESHOLD[40] = {
     64, 64, 64, 64, 64
 };
 
-const int ROOT_SORT_DEPTHS[36] = { 0,
+const int ROOT_SORT_DEPTHS[38] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 2, 2, 4, 4, 6, 6, 8,
     8, 10, 10, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12
+    12, 12, 12, 12, 12, 12, 12
 };
 
 // Depths for sort searching. Indexed by depth.
-const int ENDGAME_SORT_DEPTHS[36] = { 0,
+const int ENDGAME_SORT_DEPTHS[38] = { 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 2, 2, 2, 2, 4, 4,
     4, 4, 6, 6, 6, 6, 8, 8, 8, 8,
-    10, 10, 10, 10, 12
+    10, 10, 10, 10, 12, 12, 12
 };
 
 const int END_SHALLOW = 12;

@@ -32,7 +32,7 @@ Player::Player(Side side) {
     maxDepth = 22;
     minDepth = 4;
     sortDepth = 2;
-    endgameDepth = 34;
+    endgameDepth = 36;
     lastMaxDepth = 0;
 
     mySide = (side == BLACK) ? CBLACK : CWHITE;
@@ -248,6 +248,11 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
                 #endif
                 myMove = WLDMove;
             }
+        }
+        // If we broke out of WLD here next move's endgame solver isn't likely
+        // to be successful...
+        else {
+            lastMaxDepth -= 2;
         }
     }
 
