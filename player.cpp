@@ -243,8 +243,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         if(WLDMove != MOVE_BROKEN) {
             if (WLDMove != -1 && myMove != WLDMove) {
                 #if PRINT_SEARCH_INFO
-                cerr << "Move changed to " << endl;
+                cerr << "Move changed to ";
                 printMove(WLDMove);
+                cerr << endl;
                 #endif
                 myMove = WLDMove;
             }

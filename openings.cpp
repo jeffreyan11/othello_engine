@@ -4,7 +4,8 @@
 #include <string>
 
 Openings::Openings() {
-    readFile();
+    if (!readFile())
+        std::cerr << "Error: opening book not found." << std::endl;
 }
 
 Openings::~Openings() {

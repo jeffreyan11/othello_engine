@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include "eval.h"
 
 // Converts the packed bits for one side into an index for the pattern values
@@ -420,6 +421,9 @@ void Eval::readTable(std::string fileName, int lines, int **tableArray) {
         }
         table.close();
     }
+    else {
+        std::cerr << "Error: could not open " << fileName << std::endl;
+    }
 }
 
 void Eval::readStability44Table() {
@@ -439,6 +443,9 @@ void Eval::readStability44Table() {
         }
         s44table.close();
     }
+    else {
+        std::cerr << "Error: could not open Toad_Resources/s44table.txt" << std::endl;
+    }
 }
 
 void Eval::readEndTable(std::string fileName, int lines, int **tableArray) {
@@ -455,5 +462,8 @@ void Eval::readEndTable(std::string fileName, int lines, int **tableArray) {
             }
         }
         table.close();
+    }
+    else {
+        std::cerr << "Error: could not open " << fileName << std::endl;
     }
 }
