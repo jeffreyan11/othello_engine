@@ -116,7 +116,7 @@ int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
         if (gameResult == 0) {
             cerr << "Game is draw" << endl;
         }
-        else if (gameResult == -1) {
+        else if (gameResult <= -1) {
             cerr << "Game is loss" << endl;
         }
         else {

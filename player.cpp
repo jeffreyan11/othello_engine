@@ -135,6 +135,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             bookExhausted = true;
     }
 
+
     // find and test all legal moves
     MoveList legalMoves = game.getLegalMoves(mySide);
     if (legalMoves.size <= 0) {
@@ -145,6 +146,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         #endif
         return NULL;
     }
+
+    if (legalMoves.size == 1) {
+        #if PRINT_SEARCH_INFO
+        cerr << "One legal move. Playing ";
+        printMove(legalMoves.get(0));
+        cerr << endl;
+        #endif
+        return indexToMove(legalMoves.get(0));
+    }
+
 
     int myMove = MOVE_BROKEN;
 
