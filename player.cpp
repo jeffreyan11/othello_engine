@@ -153,6 +153,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         printMove(legalMoves.get(0));
         cerr << endl;
         #endif
+        game.doMove(legalMoves.get(0), mySide);
         return indexToMove(legalMoves.get(0));
     }
 
@@ -483,16 +484,6 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
  */
 unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     int alpha, bool isPVNode) {
-    // Detect strongly expected all-nodes
-    if (!isPVNode && depth >= 5) {
-        int staticEval = otherHeuristic ? evaluater->heuristic2(b, turn+attemptingDepth, s)
-                                        : evaluater->heuristic(b, turn+attemptingDepth, s);
-
-        // Do sorting as if depth was 2 lower
-        if (staticEval < alpha - 2 * EVAL_SCALE_FACTOR)
-            depth -= 2;
-    }
-
     // internal iterative deepening
     MoveList scores;
     // Number of values below the MPC threshold
@@ -509,7 +500,7 @@ unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
             #endif
             for (unsigned int i = 0; i < scores.size; i++) {
                 if (scores.get(i) < alpha
-                            - (int) ((depth / 2.0 - 1) * EVAL_SCALE_FACTOR)
+                            - (int) ((depth / 2.0 + 2) * EVAL_SCALE_FACTOR)
                             - abs(alpha))
                     belowThreshold++;
             }
