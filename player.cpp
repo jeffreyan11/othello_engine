@@ -115,8 +115,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         #endif
     }
     else {
-        // 1 min per move for "infinite" time
-        timeLimit = 60000;
+        // 10 min per move for "infinite" time
+        timeLimit = 600000;
     }
 
     // check opening book
@@ -236,6 +236,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // allotted time for this move. Based on a crude estimate of branch factor.
     } while((timeLimit > timeSpan * 1000.0 * legalMoves.size)
           && attemptingDepth <= maxDepth);
+
+    // The best move should be at the front of the list.
+    myMove = legalMoves.get(0);
 
     // WLD confirmation at high depths
     if(empties <= endgameDepth + 2

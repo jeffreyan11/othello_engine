@@ -107,11 +107,14 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, bool isSorted, int s,
  */
 int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
     int depth, int timeLimit, Eval *eval, int *exactScore) {
+    #if PRINT_SEARCH_INFO
     cerr << "Starting WLD search" << endl;
+    #endif
     int gameResult = -2;
     int bestMove = solveEndgameWithWindow(b, moves, isSorted, s, depth, -1, 1,
         timeLimit, eval, &gameResult);
 
+    #if PRINT_SEARCH_INFO
     if (bestMove != MOVE_BROKEN) {
         if (gameResult == 0) {
             cerr << "Game is draw" << endl;
@@ -123,6 +126,7 @@ int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
             cerr << "Game is win" << endl;
         }
     }
+    #endif
     if (exactScore != NULL)
         *exactScore = gameResult;
 

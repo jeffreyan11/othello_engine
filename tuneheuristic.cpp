@@ -47,7 +47,7 @@ void play(string position, int saveIndex) {
     // Run game on one side
     Player black(BLACK);
     Player white(WHITE);
-    black.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
+    black.setDepths(sortDepth, minDepth, 8, endgameDepth);
     white.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
     black.otherHeuristic = true;
     black.game = b;
@@ -98,7 +98,7 @@ void play(string position, int saveIndex) {
     Player black2(BLACK);
     Player white2(WHITE);
     black2.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
-    white2.setDepths(sortDepth, minDepth, maxDepth, endgameDepth);
+    white2.setDepths(sortDepth, minDepth, 8, endgameDepth);
     white2.otherHeuristic = true;
     black2.game = b;
     white2.game = b;
