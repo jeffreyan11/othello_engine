@@ -63,7 +63,7 @@ void blur() {
 
 void write() {
     ofstream out;
-    out.open("patterns/new/p24table.txt");
+    out.open("Toad_Resources/new/p24table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             out << (int) (p24Tableb[n][i] * 100.0) << " ";
@@ -73,7 +73,7 @@ void write() {
     }
     out.close();
 
-    out.open("patterns/new/edgetable.txt");
+    out.open("Toad_Resources/new/edgetable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             out << (int) (edgeTableb[n][i] * 100.0) << " ";
@@ -83,7 +83,7 @@ void write() {
     }
     out.close();
 
-    out.open("patterns/new/pE2Xtable.txt");
+    out.open("Toad_Resources/new/pE2Xtable.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 59049; i++) {
             out << (int) (pE2XTableb[n][i] * 100.0) << " ";
@@ -93,7 +93,7 @@ void write() {
     }
     out.close();
 
-    out.open("patterns/new/p33table.txt");
+    out.open("Toad_Resources/new/p33table.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 19683; i++) {
             out << (int) (p33Tableb[n][i] * 100.0) << " ";
@@ -165,7 +165,7 @@ void freemem() {
 void readEdgeTable() {
     std::string line;
     std::string file;
-        file = "patterns/new/edgetable.txt";
+        file = "Toad_Resources/new/edgetable.txt";
     std::ifstream edgetable(file);
 
     if(edgetable.is_open()) {
@@ -187,7 +187,7 @@ void readEdgeTable() {
 void readPattern24Table() {
     std::string line;
     std::string file;
-        file = "patterns/new/p24table.txt";
+        file = "Toad_Resources/new/p24table.txt";
     std::ifstream p24table(file);
 
     if(p24table.is_open()) {
@@ -205,7 +205,7 @@ void readPattern24Table() {
 void readPatternE2XTable() {
     std::string line;
     std::string file;
-        file = "patterns/new/pE2Xtable.txt";
+        file = "Toad_Resources/new/pE2Xtable.txt";
     std::ifstream pE2Xtable(file);
 
     if(pE2Xtable.is_open()) {
@@ -226,7 +226,7 @@ void readPatternE2XTable() {
 void readPattern33Table() {
     std::string line;
     std::string file;
-        file = "patterns/new/p33table.txt";
+        file = "Toad_Resources/new/p33table.txt";
     std::ifstream p33table(file);
 
     if(p33table.is_open()) {

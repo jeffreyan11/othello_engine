@@ -38,6 +38,9 @@ Player::Player(Side side) {
     mySide = (side == BLACK) ? CBLACK : CWHITE;
     turn = 4;
 
+    for (int i = 0; i < 64; i++)
+        indexToMove[i] = new Move(i % 8, i / 8);
+
     // initialize the evaluation functions
     evaluater = new Eval();
     otherHeuristic = false;
@@ -56,6 +59,9 @@ Player::Player(Side side) {
 Player::~Player() {
     delete evaluater;
     delete transpositionTable;
+
+    for (int i = 0; i < 64; i++)
+        delete indexToMove[i];
 }
 
 /**
@@ -129,7 +135,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             cerr << endl;
             #endif
             game.doMove(openMove, mySide);
-            return indexToMove(openMove);
+            return indexToMove[openMove];
         }
         else
             bookExhausted = true;
@@ -154,7 +160,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << endl;
         #endif
         game.doMove(legalMoves.get(0), mySide);
-        return indexToMove(legalMoves.get(0));
+        return indexToMove[legalMoves.get(0)];
     }
 
 
@@ -178,7 +184,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         if(myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
-            return indexToMove(myMove);
+            return indexToMove[myMove];
         }
         // Otherwise, we broke out of the endgame solver.
         endgameDepth -= 2;
@@ -294,7 +300,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     game.doMove(myMove, mySide);
 
-    return indexToMove(myMove);
+    return indexToMove[myMove];
 }
 
 /**
@@ -540,12 +546,6 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         nodes++;
         scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
     }
-}
-
-// Converts an integer index of move to a Move object understandable by the
-// Java wrapper
-Move *Player::indexToMove(int index) {
-    return new Move(index % 8, index / 8);
 }
 
 void Player::setDepths(int sort, int min, int max, int end) {
