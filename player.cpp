@@ -280,7 +280,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // Heh. Heh. Heh.
     if (scores.get(0) > 60 * EVAL_SCALE_FACTOR)
-        lastMaxDepth += 6;
+        lastMaxDepth += 4;
 
     timeSpan = getTimeElapsed(startTime);
     #if PRINT_SEARCH_INFO
