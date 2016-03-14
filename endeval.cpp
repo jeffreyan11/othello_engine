@@ -245,7 +245,7 @@ void readGame(string file, unsigned int n) {
 
 void writeFile() {
     ofstream out;
-    out.open("Toad_Resources/new/p24end.txt");
+    out.open("Flippy_Resources/new/p24end.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             pv *a = pvTable2x4[n][i];
@@ -263,7 +263,7 @@ void writeFile() {
     }
     out.close();
 
-    out.open("Toad_Resources/new/edgeend.txt");
+    out.open("Flippy_Resources/new/edgeend.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 6561; i++) {
             pv *a = edgeTable[n][i];
@@ -281,7 +281,7 @@ void writeFile() {
     }
     out.close();
 
-    out.open("Toad_Resources/new/pE2Xend.txt");
+    out.open("Flippy_Resources/new/pE2Xend.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 59049; i++) {
             pv *a = e2xTable[n][i];
@@ -299,7 +299,7 @@ void writeFile() {
     }
     out.close();
 
-    out.open("Toad_Resources/new/p33end.txt");
+    out.open("Flippy_Resources/new/p33end.txt");
     for(int n = 0; n < DIVS; n++) {
         for(unsigned int i = 0; i < 19683; i++) {
             pv *a = p33Table[n][i];
