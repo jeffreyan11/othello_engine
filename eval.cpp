@@ -158,7 +158,7 @@ Eval::~Eval() {
 
 int Eval::heuristic(Board &b, int turn, int s) {
     if(b.count(s) == 0)
-        return -INFTY;
+        return -INFTY + 1;
 
     int score = 0;
 
