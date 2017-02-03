@@ -28,8 +28,6 @@ private:
     uint64_t MPCfail[21];
     #endif
 
-    Move *indexToMove[64];
-
     Endgame endgameSolver;
 
     Openings openingBook;
@@ -48,6 +46,7 @@ private:
         int alpha, bool isPVNode);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
+    Move *indexToMove(int m);
 
 public:
     Board game;
