@@ -10,7 +10,7 @@ import time
 
 BLACK = 0
 WHITE = 1
-TOTAL_TIME = 10000
+TOTAL_TIME = 5000
 ENGINE_DIR = "C:\\Users\\Jeffrey\\Documents\\GitHub\\othello_engine\\"
 BOOK = "perft6.txt"
 
@@ -25,6 +25,7 @@ def put(engine, command):
 
 # Wait for ready signal
 def wait(engine):
+    engine.stdin.write("isready\n")
     while engine.stdout.readline().strip() != "ready":
         pass
 
@@ -39,7 +40,7 @@ def get_move(engine):
     ct = [0, 0]
     while True:
         text = engine.stdout.readline().strip().split()
-        if len(text) != 0:
+        if len(text) != 4:
             continue
         else:
             x = int(text[0])
@@ -55,9 +56,11 @@ def play_match(engine_names, opening):
     # Start engines
     engines = []
     color_input = "black"
+    bits = opening.split(' ')
     for name in engine_names:
         e = subprocess.Popen(
-            [ENGINE_DIR + name, color_input],
+            [ENGINE_DIR + name, color_input, bits[0], bits[1]],
+            # [ENGINE_DIR + name, color_input],
             bufsize = 0,
             universal_newlines = True,
             stdin = subprocess.PIPE,
@@ -66,10 +69,11 @@ def play_match(engine_names, opening):
         )
         engines.append(e)
         color_input = "white"
+        sys.stdout.flush()
 
     # Wait for both programs to initialize
-    # for e in engines:
-    #     wait(e)
+    for e in engines:
+        wait(e)
 
     # Play engine match
     movelist = "" # in 0-63 format, separated by spaces
@@ -89,6 +93,7 @@ def play_match(engine_names, opening):
         # Send last move and receive new move
         put(e, format_move(last_x, last_y, engine_times[color]))
         last_x, last_y, piece_cts[BLACK], piece_cts[WHITE] = get_move(e)
+        # sys.stdout.write(str(last_x + 8*last_y) + " " + str(sum(piece_cts)) + "\n")
 
         end_time = time.time() * 1000
         time_used = int(end_time - start_time)

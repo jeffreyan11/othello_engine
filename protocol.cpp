@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <sstream>
 #include "player.h"
 using namespace std;
 
@@ -15,9 +16,29 @@ int main(int argc, char *argv[]) {
     // Initialize player.
     Player *player = new Player(side);
 
+    // If an opening position is given:
+    if (argc == 4) {
+        bitbrd takenBits, blackBits;
+        std::stringstream ss;
+        ss << std::hex << argv[2];
+        ss >> takenBits;
+        ss.str("");
+        ss.clear();
+        ss << std::hex << argv[3];
+        ss >> blackBits;
+        player->setPosition(takenBits, blackBits);
+    }
+
     // Send ready signal
-    cout << "ready" << endl;
-    cout.flush();
+    std::string rstr;
+    while (true) {
+        cin >> rstr;
+        if (rstr.compare("isready") == 0) {
+            cout << "ready" << endl;
+            cout.flush();
+            break;
+        }
+    }
     
     int moveX, moveY, msLeft;
 

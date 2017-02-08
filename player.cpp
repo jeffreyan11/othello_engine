@@ -553,6 +553,12 @@ uint64_t Player::getNodes() {
     return nodes;
 }
 
+void Player::setPosition(bitbrd takenBits, bitbrd blackBits) {
+    game = Board(takenBits & ~blackBits, blackBits);
+    bookExhausted = true;
+    turn = 64 - game.countEmpty();
+}
+
 Move *Player::indexToMove(int m) {
     return new Move(m % 8, m / 8);
 }

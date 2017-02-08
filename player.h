@@ -60,6 +60,7 @@ public:
     Move *doMove(Move *opponentsMove, int msLeft);
     void setDepths(int sort, int min, int max, int end);
     uint64_t getNodes();
+    void setPosition(bitbrd takenBits, bitbrd blackBits);
 };
 
 #endif
