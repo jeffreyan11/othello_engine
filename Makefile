@@ -1,5 +1,6 @@
 CC          = g++
 CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3 -flto
+LDFLAGS     = -static -static-libgcc -static-libstdc++
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = Flippy
 
@@ -10,7 +11,7 @@ $(PLAYERNAME)$(EXT): $(OBJS) wrapper.o
 	$(CC) -O3 -flto -o $@ $^
 
 $(PLAYERNAME)$(EXT)T: $(OBJS) protocol.o
-	$(CC) -O3 -flto -o $@ $^
+	$(CC) -O3 -flto -o $@ $^ $(LDFLAGS)
 
 testgame: testgame.o
 	$(CC) -o $@ $^
