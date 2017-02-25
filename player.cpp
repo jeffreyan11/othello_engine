@@ -105,7 +105,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         //msLeft -= 600000;
         // Buffer time: to prevent losses on time at short time controls
         if (empties > 14)
-            msLeft -= 800;
+            msLeft -= 100;
 
         // Use up to 2.5x "fair" time
         int movesLeft = max(1, empties / 2);
