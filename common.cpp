@@ -122,7 +122,7 @@ double getTimeElapsed(OthelloTime startTime) {
     std::chrono::duration<double> timeSpan =
         std::chrono::duration_cast<std::chrono::duration<double>>(
         endTime-startTime);
-    return timeSpan.count();
+    return timeSpan.count() + 0.001;
 }
 
 // Pretty prints a move in (x, y) form indexed from 1.

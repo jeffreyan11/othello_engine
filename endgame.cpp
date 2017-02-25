@@ -108,7 +108,7 @@ int Endgame::solveEndgame(Board &b, MoveList &moves, bool isSorted, int s,
 int Endgame::solveWLD(Board &b, MoveList &moves, bool isSorted, int s,
     int depth, int timeLimit, Eval *eval, int *exactScore) {
     #if PRINT_SEARCH_INFO
-    cerr << "Starting WLD search" << endl;
+    cerr << "WLD solver: depth " << depth << endl;
     #endif
     int gameResult = -2;
     int bestMove = solveEndgameWithWindow(b, moves, isSorted, s, depth, -1, 1,
@@ -231,19 +231,19 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         bestMove = moves.get(bestIndex);
 
     #if PRINT_SEARCH_INFO
-    cerr << "Endgame table has: " << endgameTable->keys << " keys." << endl;
-    cerr << "Killer table has: " << killerTable->keys << " keys." << endl;
-    cerr << "All-nodes table has: " << allTable->keys << " keys." << endl;
-    cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
+    cerr << "Hashtable keys: PV=" << endgameTable->keys << " | A="
+                               << killerTable->keys << " | B="
+                               << allTable->keys << endl;
+    // cerr << "Sort search table has: " << transpositionTable->keys << " keys." << endl;
 
     timeSpan = getTimeElapsed(startTime);
     cerr << "Nodes searched: " << nodes << " | NPS: " <<
         (int) ((double) nodes / timeSpan) << endl;
-    cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
+    // cerr << "Sort search nodes: " << egStats->sortSearchNodes << endl;
 
-    cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
-    cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
-    cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
+    // cerr << "Hash score cut rate: " << egStats->hashCuts << " / " << egStats->hashHits << endl;
+    // cerr << "Hash move cut rate: " << egStats->hashMoveCuts << " / " << egStats->hashMoveAttempts << endl;
+    // cerr << "First fail high rate: " << egStats->firstFailHighs << " / " << egStats->failHighs << endl;
 
     cerr << "Time spent: " << timeSpan << endl;
     cerr << "Best move: ";
@@ -252,7 +252,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         cerr << "N/A";
     else
         printMove(bestMove);
-    cerr << " Score: " << score << endl;
+    cerr << " Score: " << score << endl << endl;
     #endif
 
     if (exactScore != NULL)

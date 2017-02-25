@@ -191,9 +191,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     double timeSpan = 0.0;
 
     // Root move ordering: sort search
-    #if PRINT_SEARCH_INFO
-    cerr << "Sort search: depth " << sortDepth << endl;
-    #endif
     attemptingDepth = sortDepth;
     MoveList scores;
     sortSearch(game, legalMoves, scores, mySide, sortDepth);
@@ -248,10 +245,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // Timing: use 1/6 of remaining time for the WLD solve
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : msLeft / 6;
-        #if PRINT_SEARCH_INFO
-        cerr << "WLD solver: depth " << empties << endl;
-        #endif
-
         int WLDMove = endgameSolver.solveWLD(game, legalMoves, true, mySide,
             empties, endgameLimit, evaluater);
 
@@ -283,7 +276,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << "Table contains " << transpositionTable->keys << " entries." << endl;
     cerr << "Playing ";
     printMove(myMove);
-    cerr << ". Score: " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl;
+    cerr << ". Score: " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl << endl;
     #endif
 
     #if COLLECT_MPC_STATS
