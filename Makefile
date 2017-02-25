@@ -3,13 +3,13 @@ CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3 -flto
 OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
 PLAYERNAME  = Flippy
 
-all: $(PLAYERNAME)$(EXT) $(PLAYERNAME)T testgame testsuites
+all: $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites
 evaltools: evalbuilder endeval blur tuneheuristic crtbk
 	
 $(PLAYERNAME)$(EXT): $(OBJS) wrapper.o
 	$(CC) -O3 -flto -o $@ $^
 
-$(PLAYERNAME)T: $(OBJS) protocol.o
+$(PLAYERNAME)$(EXT)T: $(OBJS) protocol.o
 	$(CC) -O3 -flto -o $@ $^
 
 testgame: testgame.o
@@ -43,6 +43,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o *.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)T testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
+	rm -f *.o *.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
 	
 .PHONY: java
