@@ -3,6 +3,7 @@ A tournament script for othello engines compiled with protocol.cpp.
 Functionality similar to cutechess-cli.
 '''
 
+import random
 import subprocess
 import sys
 import threading
@@ -132,11 +133,14 @@ def play_matches(engine_names, book, start, end):
     global score
     global mutex
 
-    for i in range(start, end):
+    opns = end - start + 1
+    perm = list(range(opns))
+    random.shuffle(perm)
+    for i in range(0, opns):
         mutex.acquire()
         sys.stderr.write("Starting game " + str(count+1) + "\n")
         mutex.release()
-        b, w = play_match(engine_names, book[i])
+        b, w = play_match(engine_names, book[start+perm[i]])
         mutex.acquire()
         count += 1
         # Determine who won based on piece counts
@@ -155,7 +159,7 @@ def play_matches(engine_names, book, start, end):
         mutex.acquire()
         sys.stderr.write("Starting game " + str(count+1) + "\n")
         mutex.release()
-        w, b = play_match(engine_names, book[i])
+        w, b = play_match(engine_names, book[start+perm[i]])
         mutex.acquire()
         count += 1
         # Determine who won based on piece counts
