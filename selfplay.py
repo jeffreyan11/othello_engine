@@ -10,7 +10,7 @@ import time
 
 BLACK = 0
 WHITE = 1
-TOTAL_TIME = 5000
+TOTAL_TIME = 4000
 ENGINE_DIR = "C:\\Users\\Jeffrey\\Documents\\GitHub\\othello_engine\\"
 BOOK = "perft6.txt"
 
@@ -131,7 +131,7 @@ def play_matches(engine_names, book, start, end):
     global count
     global score
     global mutex
-    # TODO play each opening from both sides
+
     for i in range(start, end):
         mutex.acquire()
         sys.stderr.write("Starting game " + str(count+1) + "\n")
@@ -149,6 +149,26 @@ def play_matches(engine_names, book, start, end):
         sys.stderr.write("Game " + str(count) + " finished: " + str(score[0]) \
             + "-" + str(score[1]) + "-" + str(score[2]) + "\n")
         mutex.release()
+        engine_names.reverse()
+
+        # Replay with opposite colors?
+        mutex.acquire()
+        sys.stderr.write("Starting game " + str(count+1) + "\n")
+        mutex.release()
+        w, b = play_match(engine_names, book[i])
+        mutex.acquire()
+        count += 1
+        # Determine who won based on piece counts
+        if b > w:
+            score[0] += 1
+        elif b < w:
+            score[1] += 1
+        else:
+            score[2] += 1
+        sys.stderr.write("Game " + str(count) + " finished: " + str(score[0]) \
+            + "-" + str(score[1]) + "-" + str(score[2]) + "\n")
+        mutex.release()
+        engine_names.reverse()
 
 # Read command line arguments
 # Argument 1: engine 1 name
