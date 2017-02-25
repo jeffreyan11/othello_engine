@@ -43,6 +43,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o *.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
+	rm -f *.o $(PLAYERNAME)$(EXT).exe $(PLAYERNAME)$(EXT)T.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
 	
 .PHONY: java
