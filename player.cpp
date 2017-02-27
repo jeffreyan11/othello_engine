@@ -438,12 +438,6 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
     }
 
-    // If all moves were pruned as a fail-low
-    if (bestScore == -INFTY) {
-        bestScore = alpha - (int) ((depth / 2.0 - 1) * EVAL_SCALE_FACTOR)
-                          - abs(alpha);
-    }
-
     if (depth >= 4 && toHash != MOVE_NULL && prevAlpha < alpha && alpha < beta)
         transpositionTable->add(b, alpha, toHash, s, turn, depth, PV_NODE);
     else if (depth >= 4 && alpha <= prevAlpha)
