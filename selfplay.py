@@ -11,7 +11,7 @@ import time
 
 BLACK = 0
 WHITE = 1
-TOTAL_TIME = 4000
+TOTAL_TIME = 20000
 ENGINE_DIR = "C:\\Users\\Jeffrey\\Documents\\GitHub\\othello_engine\\"
 BOOK = "perft6.txt"
 

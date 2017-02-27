@@ -91,14 +91,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // when doMove() is called), so that pruning does not inflate node counts.
     nodes = 0;
 
-    // TODO reset MPC statistics
-    #if COLLECT_MPC_STATS
-    for (unsigned int i = 0; i < 21; i++) {
-        MPCdone[i] = 0;
-        MPCfail[i] = 0;
-    }
-    #endif
-
     // Timing
     if(msLeft != -1) {
         // Time odds, if desired
@@ -279,12 +271,6 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << ". Score: " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl << endl;
     #endif
 
-    #if COLLECT_MPC_STATS
-    for (unsigned int i = 7; i < 21; i++) {
-        cerr << "MPC depth " << i << ": " << MPCdone[i] << " done " << MPCfail[i] << " failed" << endl;
-    }
-    #endif
-
     game.doMove(myMove, mySide);
 
     return indexToMove(myMove);
@@ -389,6 +375,15 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
     }
 
+    // Prob-cut
+    if (!isPVNode
+     && depth >= 6) {
+        int mpcAlpha = alpha - 2*EVAL_SCALE_FACTOR - abs(alpha)/4;
+        int mpcScore = pvs(b, s, depth-4, mpcAlpha, mpcAlpha+1);
+        if (mpcScore <= mpcAlpha)
+            return alpha;
+    }
+
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
         score = -pvs(b, s^1, depth-1, -beta, -alpha);
@@ -400,19 +395,13 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         return score;
     }
 
-    // The new list size after chopping off the end of the list for MPC.
-    unsigned int prunedSize = legalMoves.size;
     // Move ordering
     // Don't waste time sorting at depth 1.
     if (depth >= 2) {
-        prunedSize = sortMoves(b, legalMoves, s, depth, alpha, isPVNode);
+        sortMoves(b, legalMoves, s, depth, alpha, isPVNode);
     }
 
-#if COLLECT_MPC_STATS
     for (unsigned int i = 0; i < legalMoves.size; i++) {
-#else
-    for (unsigned int i = 0; i < prunedSize; i++) {
-#endif
         // Check for a timeout
         if (getTimeElapsed(timeElapsed) * 1000 > timeLimit)
             return -TIMEOUT;
@@ -435,10 +424,6 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (score == TIMEOUT)
             return -TIMEOUT;
         if (score >= beta) {
-            #if COLLECT_MPC_STATS
-            if (i >= prunedSize)
-                MPCfail[depth]++;
-            #endif
             if(depth >= 4)
                 transpositionTable->add(b, score, legalMoves.get(i), s,
                     turn, depth, CUT_NODE);
@@ -447,10 +432,6 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         if (score > bestScore) {
             bestScore = score;
             if (alpha < score) {
-                #if COLLECT_MPC_STATS
-                if (i >= prunedSize)
-                    MPCfail[depth]++;
-                #endif
                 alpha = score;
                 toHash = legalMoves.get(i);
             }
@@ -476,31 +457,16 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
  * A shallow sort search (a form of internal iterative deepening) is used along
  * with fastest first (restricting opponent's mobility to reduce branch factor
  * and get the cheapest possible cutoff).
- * This function also uses the shallow sort search to perform Multi-ProbCut.
  */
-unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
+void Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     int alpha, bool isPVNode) {
     // internal iterative deepening
     MoveList scores;
-    // Number of values below the MPC threshold
-    unsigned int belowThreshold = 0;
 
     if (depth >= 4 && isPVNode)
         sortSearch(b, legalMoves, scores, s, PV_SORT_DEPTHS[depth]);
     else if (depth >= 5) {
         sortSearch(b, legalMoves, scores, s, NON_PV_SORT_DEPTHS[depth]);
-        // Detect very poor moves for MPC
-        if (depth >= 7) {
-            #if COLLECT_MPC_STATS
-            MPCdone[depth]++;
-            #endif
-            for (unsigned int i = 0; i < scores.size; i++) {
-                if (scores.get(i) < alpha
-                            - (int) ((depth / 2.0 + 2) * EVAL_SCALE_FACTOR)
-                            - abs(alpha))
-                    belowThreshold++;
-            }
-        }
         // Fastest first
         for (unsigned int i = 0; i < legalMoves.size; i++) {
             Board copy = b.copy();
@@ -521,7 +487,6 @@ unsigned int Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     }
 
     sort(legalMoves, scores, 0, legalMoves.size-1);
-    return legalMoves.size - belowThreshold;
 }
 
 void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,

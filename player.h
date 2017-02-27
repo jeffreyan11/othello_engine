@@ -8,8 +8,6 @@
 #include "hash.h"
 #include "eval.h"
 
-#define COLLECT_MPC_STATS false
-
 class Player {
 
 private:
@@ -23,10 +21,6 @@ private:
     int lastMaxDepth;
 
     uint64_t nodes;
-    #if COLLECT_MPC_STATS
-    uint64_t MPCdone[21];
-    uint64_t MPCfail[21];
-    #endif
 
     Endgame endgameSolver;
 
@@ -42,7 +36,7 @@ private:
     int getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
     int pvs(Board &b, int side, int depth, int alpha, int beta);
-    unsigned int sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
+    void sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
         int alpha, bool isPVNode);
     void sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         int depth);
