@@ -2,20 +2,7 @@
 #include <iostream>
 #include "player.h"
 
-// Internal iterative deepening depths for PV nodes
-const int PV_SORT_DEPTHS[21] = { 0,
-0, 0, 0, 0, 2, 2, 2, 2, 2, 4, // 1-10
-4, 4, 4, 4, 6, 6, 6, 6, 8, 8  // 11-20
-};
-
-// Internal iterative deepening depths for non-PV nodes
-const int NON_PV_SORT_DEPTHS[21] = { 0,
-0, 0, 0, 0, 0, 0, 2, 2, 2, 2, // 1-10
-2, 4, 4, 4, 4, 4, 6, 6, 6, 6  // 11-20
-};
-
 const int TIMEOUT = (1 << 21);
-
 const int EVAL_SCALE_FACTOR = 2000;
 
 using namespace std;
@@ -29,7 +16,7 @@ using namespace std;
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 22;
+    maxDepth = 24;
     minDepth = 4;
     sortDepth = 2;
     endgameDepth = 36;
@@ -458,9 +445,9 @@ void Player::sortMoves(Board &b, MoveList &legalMoves, int s, int depth,
     MoveList scores;
 
     if (depth >= 4 && isPVNode)
-        sortSearch(b, legalMoves, scores, s, PV_SORT_DEPTHS[depth]);
+        sortSearch(b, legalMoves, scores, s, (depth-1)/2);
     else if (depth >= 5) {
-        sortSearch(b, legalMoves, scores, s, NON_PV_SORT_DEPTHS[depth]);
+        sortSearch(b, legalMoves, scores, s, (depth-1)/3);
         // Fastest first
         for (unsigned int i = 0; i < legalMoves.size; i++) {
             Board copy = b.copy();
