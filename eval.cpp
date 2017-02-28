@@ -240,6 +240,8 @@ int Eval::stability(Board &b, int s) {
 
 int Eval::boardToEPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
     int r2 = bitsToPI( (int)((black >> 8) & 0xFF), (int)((white >> 8) & 0xFF) );
@@ -250,13 +252,17 @@ int Eval::boardToEPV(Board &b, int turn) {
     int c7 = bitsToPI(
       (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
       (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
-    int result = edgeTable[index][r2] + edgeTable[index][r7] +
-            edgeTable[index][c2] + edgeTable[index][c7];
-    return result;
+    int result = shift * (edgeTable[index][r2] + edgeTable[index][r7] +
+                          edgeTable[index][c2] + edgeTable[index][c7])
+        + (TURNSPERDIV-shift) * (edgeTable[index2][r2] + edgeTable[index2][r7] +
+                                 edgeTable[index2][c2] + edgeTable[index2][c7]);
+    return result / TURNSPERDIV;
 }
 
 int Eval::boardTo24PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
     int ulb = (int) ((black&0xF) + ((black>>4)&0xF0));
@@ -305,13 +311,19 @@ int Eval::boardTo24PV(Board &b, int turn) {
     int rlrw = (int) ((rotbw&0xF) + ((rotbw>>4)&0xF0));
     int rlr = bitsToPI(rlrb, rlrw);
 
-    return p24Table[index][ul] + p24Table[index][ll] + p24Table[index][ur] +
+    int result = shift * (p24Table[index][ul] + p24Table[index][ll] + p24Table[index][ur] +
         p24Table[index][lr] + p24Table[index][rul] + p24Table[index][rll] +
-        p24Table[index][rur] + p24Table[index][rlr];
+        p24Table[index][rur] + p24Table[index][rlr])
+        + (TURNSPERDIV-shift) * (p24Table[index2][ul] + p24Table[index2][ll] + p24Table[index2][ur] +
+        p24Table[index2][lr] + p24Table[index2][rul] + p24Table[index2][rll] +
+        p24Table[index2][rur] + p24Table[index2][rlr]);
+    return result / TURNSPERDIV;
 }
 
 int Eval::boardToE2XPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
     int r1b = (int) ( (black & 0xFF) +
@@ -342,13 +354,17 @@ int Eval::boardToE2XPV(Board &b, int turn) {
         ((white & 0x4000) >> 6) + ((white & 0x40000000000000) >> 45) );
     int c8 = bitsToPI(c8b, c8w);
 
-    int result = pE2XTable[index][r1] + pE2XTable[index][r8] +
-            pE2XTable[index][c1] + pE2XTable[index][c8];
-    return result;
+    int result = shift * (pE2XTable[index][r1] + pE2XTable[index][r8] +
+            pE2XTable[index][c1] + pE2XTable[index][c8])
+        + (TURNSPERDIV-shift) * (pE2XTable[index2][r1] + pE2XTable[index2][r8] +
+            pE2XTable[index2][c1] + pE2XTable[index2][c8]);
+    return result / TURNSPERDIV;
 }
 
 int Eval::boardTo33PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
     int ulb = (int) ((black&7) + ((black>>5)&0x38) + ((black>>10)&0x1C0));
@@ -373,9 +389,11 @@ int Eval::boardTo33PV(Board &b, int turn) {
     int lrw = (int) ((rbw&7) + ((rbw>>5)&0x38) + ((rbw>>10)&0x1C0));
     int lr = bitsToPI(lrb, lrw);
 
-    int result = p33Table[index][ul] + p33Table[index][ll] +
-            p33Table[index][ur] + p33Table[index][lr];
-    return result;
+    int result = shift * (p33Table[index][ul] + p33Table[index][ll] +
+            p33Table[index][ur] + p33Table[index][lr])
+        + (TURNSPERDIV-shift) * (p33Table[index2][ul] + p33Table[index2][ll] +
+            p33Table[index2][ur] + p33Table[index2][lr]);
+    return result / TURNSPERDIV;
 }
 
 int Eval::boardTo44SV(Board &b, int s) {
