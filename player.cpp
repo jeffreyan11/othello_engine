@@ -399,8 +399,15 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         copy.doMove(legalMoves.get(i), s);
         nodes++;
 
+        int reduction = 0;
+        if (!isPVNode && depth >= 5 && i > 2) {
+            reduction = 1 + (depth-5) / 5 + (i-3) / 6;
+        }
+
         if (depth > 2 && i != 0) {
-            score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
+            score = -pvs(copy, s^1, depth-1-reduction, -alpha-1, -alpha);
+            if (reduction > 0 && score > alpha)
+                score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
             if (alpha < score && score < beta)
                 score = -pvs(copy, s^1, depth-1, -beta, -alpha);
         }
