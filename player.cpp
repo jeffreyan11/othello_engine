@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include "player.h"
 
@@ -62,7 +63,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     cerr << endl;
     #endif
     // register opponent's move
-    if(opponentsMove != NULL)
+    if (opponentsMove != NULL)
         game.doMove(opponentsMove->getX() + 8*opponentsMove->getY(), mySide^1);
     // If opponent is passing and it isn't the start of the game
     else if (turn != 4) {
@@ -79,16 +80,19 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     nodes = 0;
 
     // Timing
-    if(msLeft != -1) {
+    if (msLeft != -1) {
         // Time odds, if desired
         //msLeft -= 600000;
         // Buffer time: to prevent losses on time at short time controls
-        if (empties > 14)
-            msLeft -= 100;
+        if (empties > 14) {
+            msLeft -= 200 + 100*empties;
+            msLeft = std::max(1, msLeft);
+        }
 
-        // Use up to 2.5x "fair" time
-        int movesLeft = max(1, empties / 2);
-        timeLimit = 5 * msLeft / (2 * movesLeft);
+        // Base fair time usage off of number of moves left
+        int movesLeft = min(max(1, empties / 2), 20);
+        // Use up to 3x "fair" time
+        timeLimit = 6 * msLeft / (2 * movesLeft);
         #if PRINT_SEARCH_INFO
         cerr << "Time limit: " << timeLimit / 1000.0 << " s" << endl;
         #endif
@@ -101,7 +105,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // check opening book
     if (!bookExhausted) {
         int openMove = openingBook.get(game.getTaken(), game.getBits(CBLACK));
-        if(openMove != OPENING_NOT_FOUND) {
+        if (openMove != OPENING_NOT_FOUND) {
             #if PRINT_SEARCH_INFO
             cerr << "Opening book used! Played ";
             printMove(openMove);
@@ -143,8 +147,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // time to do a perfect solve (estimated by lastMaxDepth) or have unlimited
     // time. Always use endgame solver for the last 14 plies since it is faster
     // and for more accurate results.
-    if(empties <= endgameDepth
-    && (lastMaxDepth + 10 >= empties || msLeft == -1 || empties <= 14)) {
+    if (empties <= endgameDepth
+     && (lastMaxDepth + 6 >= empties || msLeft == -1 || empties <= 14)) {
         // Timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : msLeft / 4;
@@ -155,7 +159,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         myMove = endgameSolver.solveEndgame(game, legalMoves, false, mySide,
             empties, endgameLimit, evaluater);
 
-        if(myMove != MOVE_BROKEN) {
+        if (myMove != MOVE_BROKEN) {
             game.doMove(myMove, mySide);
             return indexToMove(myMove);
         }
@@ -179,6 +183,8 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // Iterative deepening
     attemptingDepth = minDepth;
     int newBest;
+    // Estimate of next branch factor
+    int nextBF;
     do {
         #if PRINT_SEARCH_INFO
         cerr << "Depth " << attemptingDepth << ": ";
@@ -186,7 +192,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
         newBest = getBestMoveIndex(game, legalMoves, scores, mySide,
             attemptingDepth);
-        if(newBest == MOVE_BROKEN) {
+        if (newBest == MOVE_BROKEN) {
             #if PRINT_SEARCH_INFO
             cerr << " Broken out of search!" << endl;
             #endif
@@ -207,18 +213,23 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         cerr << " score " << ((double) scores.get(0)) / EVAL_SCALE_FACTOR << endl;
         #endif
 
+        // Estimate next move's branch factor
+        Board copy = game.copy();
+        copy.doMove(legalMoves.get(0), mySide);
+        nextBF = copy.numLegalMoves(mySide^1);
+
         timeSpan = getTimeElapsed(startTime);
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
-    } while((timeLimit > timeSpan * 1000.0 * legalMoves.size)
+    } while ((timeLimit > timeSpan * 1000.0 * sqrt(legalMoves.size * nextBF) * 3 / 4)
           && attemptingDepth <= maxDepth);
 
     // The best move should be at the front of the list.
     myMove = legalMoves.get(0);
 
     // WLD confirmation at high depths
-    if(empties <= endgameDepth + 2
-    && (lastMaxDepth + 12 >= empties || msLeft == -1)
+    if (empties <= endgameDepth + 2
+    && (lastMaxDepth + 8 >= empties || msLeft == -1)
     && empties > 14
     && timeSpan < timeLimit) {
         // Timing: use 1/6 of remaining time for the WLD solve
@@ -227,7 +238,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         int WLDMove = endgameSolver.solveWLD(game, legalMoves, true, mySide,
             empties, endgameLimit, evaluater);
 
-        if(WLDMove != MOVE_BROKEN) {
+        if (WLDMove != MOVE_BROKEN) {
             if (WLDMove != -1 && myMove != WLDMove) {
                 #if PRINT_SEARCH_INFO
                 cerr << "Move changed to ";
