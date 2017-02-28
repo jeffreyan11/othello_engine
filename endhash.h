@@ -31,7 +31,6 @@ class EndHash {
 private:
     EndgameEntry *table;
     int size;
-    uint32_t bitMask;
 
     EndHash(const EndHash &other);
     EndHash& operator=(const EndHash &other);

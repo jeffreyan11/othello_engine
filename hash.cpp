@@ -4,23 +4,11 @@
 // The table will have 2^bits entries
 Hash::Hash(int bits) {
     size = 1 << bits;
-    bitMask = 1;
-    for (int i = 0; i < bits - 1; i++)
-        bitMask |= bitMask << 1;
-
-    table = new HashLL* [size];
-    for(int i = 0; i < size; i++) {
-        table[i] = NULL;
-    }
+    table = new HashLL[size];
     keys = 0;
 }
 
 Hash::~Hash() {
-    for(int i = 0; i < size; i++) {
-        HashLL* temp = table[i];
-        if (temp != NULL)
-            delete temp;
-    }
     delete[] table;
 }
 
@@ -30,11 +18,11 @@ Hash::~Hash() {
 */
 void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
         int depth, uint8_t nodeType) {
-    uint32_t index = b.getHashCode() & bitMask;
-    HashLL *node = table[index];
-    if (node == NULL) {
+    uint32_t index = b.getHashCode() & (size-1);
+    HashLL *node = &(table[index]);
+    if (node->entry1.taken == 0) {
         keys++;
-        table[index] = new HashLL(b.getTaken(), b.getBits(CBLACK), score, move,
+        node->entry1.setData(b.getTaken(), b.getBits(CBLACK), score, move,
             ptm, turn, depth, nodeType);
         return;
     }
@@ -42,6 +30,7 @@ void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
         keys++;
         node->entry2.setData(b.getTaken(), b.getBits(CBLACK), score, move,
             ptm, turn, depth, nodeType);
+        return;
     }
     // Always update the same position with newer information
     if (node->entry1.taken == b.getTaken()
@@ -57,7 +46,7 @@ void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
             ptm, turn, depth, nodeType);
     }
     else {
-        BoardData *toReplace = NULL;
+        BoardData *toReplace = nullptr;
         // Prioritize entries with a higher depth, but also from a more
         // recent search space
         int score1 = 4*(turn - node->entry1.turn) + depth - node->entry1.depth;
@@ -67,13 +56,12 @@ void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
         else
             toReplace = &(node->entry2);
         if (score1 <= 0 && score2 <= 0)
-            toReplace = NULL;
+            toReplace = nullptr;
 
-        if (toReplace != NULL) {
+        if (toReplace != nullptr) {
             toReplace->setData(b.getTaken(), b.getBits(CBLACK), score, move,
                 ptm, turn, depth, nodeType);
         }
-        else return;
     }
 }
 
@@ -81,11 +69,8 @@ void Hash::add(Board &b, int score, int move, int ptm, uint8_t turn,
  * @brief Get the move, if any, associated with a board b and player to move.
 */
 BoardData *Hash::get(Board &b, int ptm) {
-    uint32_t index = b.getHashCode() & bitMask;
-    HashLL *node = table[index];
-
-    if (node == NULL)
-        return NULL;
+    uint32_t index = b.getHashCode() & (size-1);
+    HashLL *node = &(table[index]);
 
     if (node->entry1.taken == b.getTaken()
      && node->entry1.black == b.getBits(CBLACK)
@@ -97,5 +82,5 @@ BoardData *Hash::get(Board &b, int ptm) {
      && node->entry2.ptm == (uint8_t) ptm)
         return &(node->entry2);
 
-    return NULL;
+    return nullptr;
 }

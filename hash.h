@@ -55,9 +55,8 @@ public:
 class Hash {
 
 private:
-    HashLL **table;
+    HashLL *table;
     int size;
-    uint32_t bitMask;
 
     Hash(const Hash &other);
     Hash& operator=(const Hash &other);
