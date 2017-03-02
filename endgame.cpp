@@ -919,6 +919,9 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
     }
 
+    // We want to do better move ordering at PV nodes where alpha != beta - 1
+    bool isPVNode = (alpha != beta - 1);
+
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
         score = -pvs(b, s^1, depth-1, -beta, -alpha);
@@ -929,31 +932,25 @@ int Endgame::pvs(Board &b, int s, int depth, int alpha, int beta) {
         return alpha;
     }
 
-    // We want to do better move ordering at PV nodes where alpha != beta - 1
-    bool isPVNode = (alpha != beta - 1);
     // Do internal iterative deepening
-    // TODO make this shorter and less repetitive :(
     if (depth >= 2) {
         MoveList scores;
-        if (depth >= 5 && isPVNode)
-            sortSearch(b, legalMoves, scores, s, (depth >= 9) ? 4 : 2);
-        else if (depth >= 4 && isPVNode)
-            sortSearch(b, legalMoves, scores, s, 0);
-        else if (depth >= 6) {
-            sortSearch(b, legalMoves, scores, s, (depth >= 8) ? 2 : 0);
+        if (depth >= 4 && isPVNode)
+            sortSearch(b, legalMoves, scores, s, (depth-1)/2);
+        else if (depth >= 5) {
+            sortSearch(b, legalMoves, scores, s, (depth-1)/3);
             // Apparently fastest first works in sort searches too...
             for (unsigned int i = 0; i < legalMoves.size; i++) {
                 Board copy = b.copy();
                 copy.doMove(legalMoves.get(i), s);
-                scores.set(i, scores.get(i) - 2048*copy.numLegalMoves(s^1));
+                scores.set(i, scores.get(i) - 1024*copy.numLegalMoves(s^1));
             }
         }
-        else if (depth >= 4) {
+        else if (depth >= 3) {
             for (unsigned int i = 0; i < legalMoves.size; i++) {
                 Board copy = b.copy();
                 copy.doMove(legalMoves.get(i), s);
-                scores.add(SQ_VAL[legalMoves.get(i)]
-                    - 16*copy.numLegalMoves(s^1));
+                scores.add(SQ_VAL[legalMoves.get(i)] - 16*copy.numLegalMoves(s^1));
             }
         }
         else {
