@@ -445,7 +445,7 @@ int Endgame::endgameDeep(Board &b, int s, int depth, int alpha, int beta,
             if (m == hashMove)
                 p += 1 << 20;
 
-            priority.add(scores.get(i) + 8*p);
+            priority.add(scores.get(i) - 128*copy.numLegalMoves(s^1) + 8*p);
         }
     }
     // Otherwise, we focus more on fastest first for a cheaper fail-high
