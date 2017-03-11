@@ -334,8 +334,8 @@ uint32_t **Board::initZobristTable() {
 uint32_t **Board::zobristTable = Board::initZobristTable();
 
 uint32_t Board::getHashCode() {
-    // A clever hack borrowed from Richard Delorme, to avoid shifting and
-    // bitwise and-ing everything
+	// On-the-fly Zobrist hash calculation, using bytes as
+	// the base unit. Idea from Richard Delorme's edax-reversi.
     const uint8_t *hashStrings = (const uint8_t *) (this);
     uint32_t hash = 0;
     for (int i = 0; i < 16; i++) {
