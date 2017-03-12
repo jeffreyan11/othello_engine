@@ -152,10 +152,11 @@ Eval::~Eval() {
     delete[] s44Table;
 }
 
-int Eval::heuristic(Board &b, int turn, int s) {
+int Eval::heuristic(Board &b, int s) {
     if(b.count(s) == 0)
         return -WIPEOUT;
 
+    int turn = 64 - b.countEmpty();
     int score = 0;
 
     int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
@@ -182,10 +183,11 @@ int Eval::heuristic(Board &b, int turn, int s) {
     return score;
 }
 
-int Eval::heuristic2(Board &b, int turn, int s) {
+int Eval::heuristic2(Board &b, int s) {
     if(b.count(s) == 0)
         return -INFTY;
 
+    int turn = 64 - b.countEmpty();
     int score = 0;
 
     /*int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)

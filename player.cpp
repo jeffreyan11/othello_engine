@@ -174,24 +174,23 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     double timeSpan = 0.0;
 
     // Root move ordering: sort search
-    attemptingDepth = sortDepth;
     MoveList scores;
     sortSearch(game, legalMoves, scores, mySide, sortDepth);
     sort(legalMoves, scores, 0, legalMoves.size-1);
     scores.clear();
 
     // Iterative deepening
-    attemptingDepth = minDepth;
+    int rootDepth = minDepth;
     int newBest;
     // Estimate of next branch factor
     int nextBF;
     do {
         #if PRINT_SEARCH_INFO
-        cerr << "Depth " << attemptingDepth << ": ";
+        cerr << "Depth " << rootDepth << ": ";
         #endif
 
         newBest = getBestMoveIndex(game, legalMoves, scores, mySide,
-            attemptingDepth);
+            rootDepth);
         if (newBest == MOVE_BROKEN) {
             #if PRINT_SEARCH_INFO
             cerr << " Broken out of search!" << endl;
@@ -199,12 +198,12 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
             timeSpan = getTimeElapsed(startTime);
             break;
         }
-        lastMaxDepth = attemptingDepth;
+        lastMaxDepth = rootDepth;
 
         // Switch new PV to be searched first
         legalMoves.swap(0, newBest);
         scores.swap(0, newBest);
-        attemptingDepth += 2;
+        rootDepth += 2;
         myMove = legalMoves.get(0);
 
         #if PRINT_SEARCH_INFO
@@ -222,7 +221,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // Continue while we think we can finish the next depth within our
     // allotted time for this move. Based on a crude estimate of branch factor.
     } while ((timeLimit > timeSpan * 1000.0 * sqrt(legalMoves.size * nextBF) * 3 / 4)
-          && attemptingDepth <= maxDepth);
+          && rootDepth <= maxDepth);
 
     // The best move should be at the front of the list.
     myMove = legalMoves.get(0);
@@ -320,9 +319,9 @@ int Player::getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int s,
 int Player::pvs(Board &b, int s, int depth, int alpha, int beta, bool passedLast) {
     if (depth <= 0) {
         if (otherHeuristic)
-            return evaluater->heuristic2(b, turn+attemptingDepth, s);
+            return evaluater->heuristic2(b, s);
         else
-            return evaluater->heuristic(b, turn+attemptingDepth, s);
+            return evaluater->heuristic(b, s);
     }
 
     int score, bestScore = -INFTY;

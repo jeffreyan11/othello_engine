@@ -15,8 +15,6 @@ private:
     int minDepth;
     int sortDepth;
     int endgameDepth;
-    // The depth currently being attempted. Helps with hash entry aging.
-    int attemptingDepth;
     // The last max depth achieved, for entering endgame solver
     int lastMaxDepth;
 

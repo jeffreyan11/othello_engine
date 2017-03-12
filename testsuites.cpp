@@ -55,12 +55,12 @@ int main(int argc, char **argv) {
         Player p(BLACK);
         Player p2(WHITE);
         int maxDepth = stoi(argv[2]);
-        p.setDepths(4, 6, maxDepth, 27);
-        p2.setDepths(4, 6, maxDepth, 27);
+        p.setDepths(4, 6, maxDepth, 14);
+        p2.setDepths(4, 6, maxDepth, 14);
 
         Move *m = p.doMove(NULL, -1);
         totalNodes += p.getNodes();
-        for(int i = 0; i < 15; i++) {
+        for(int i = 0; i < 23; i++) {
             m = p2.doMove(m, -1);
             totalNodes += p2.getNodes();
             m = p.doMove(m, -1);
