@@ -384,10 +384,13 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta, bool passedLast
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
         if (passedLast) {
-            if (b.count(s) > b.count(s^1))
-                return WIPEOUT;
-            else
-                return -WIPEOUT;
+            int ourCt = b.count(s);
+            int theirCt = b.count(s^1);
+            if (ourCt > theirCt)
+                return WIPEOUT + ourCt - theirCt;
+            else if (ourCt < theirCt)
+                return -WIPEOUT + ourCt - theirCt;
+            else return 0;
         }
 
         score = -pvs(b, s^1, depth, -beta, -alpha, true);
