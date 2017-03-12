@@ -290,12 +290,12 @@ int Player::getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int s,
         copy.doMove(moves.get(i), s);
         nodes++;
         if (i != 0) {
-            score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
+            score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha, false);
             if (alpha < score && score < beta)
-                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha, false);
         }
         else
-            score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+            score = -pvs(copy, s^1, depth-1, -beta, -alpha, false);
         // Handle timeouts
         if (score == TIMEOUT)
             return MOVE_BROKEN;
@@ -317,7 +317,7 @@ int Player::getBestMoveIndex(Board &b, MoveList &moves, MoveList &scores, int s,
  * stores moves from at least depth 4, and internal iterative deepening,
  * fastest first, and a piece-square table for move ordering.
  */
-int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
+int Player::pvs(Board &b, int s, int depth, int alpha, int beta, bool passedLast) {
     if (depth <= 0) {
         if (otherHeuristic)
             return evaluater->heuristic2(b, turn+attemptingDepth, s);
@@ -357,7 +357,7 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
                 Board copy = b.copy();
                 copy.doMove(hashed, s);
                 nodes++;
-                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha, false);
 
                 // If we received a timeout signal, propagate it upwards
                 if (score == TIMEOUT)
@@ -377,14 +377,21 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
     if (!isPVNode
      && depth >= 6) {
         int mpcAlpha = alpha - 2*EVAL_SCALE_FACTOR - abs(alpha)/4;
-        int mpcScore = pvs(b, s, depth-4, mpcAlpha, mpcAlpha+1);
+        int mpcScore = pvs(b, s, depth-4, mpcAlpha, mpcAlpha+1, passedLast);
         if (mpcScore <= mpcAlpha)
             return alpha;
     }
 
     MoveList legalMoves = b.getLegalMoves(s);
     if (legalMoves.size <= 0) {
-        score = -pvs(b, s^1, depth-1, -beta, -alpha);
+        if (passedLast) {
+            if (b.count(s) > b.count(s^1))
+                return WIPEOUT;
+            else
+                return -WIPEOUT;
+        }
+
+        score = -pvs(b, s^1, depth, -beta, -alpha, true);
 
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
@@ -416,14 +423,14 @@ int Player::pvs(Board &b, int s, int depth, int alpha, int beta) {
         }
 
         if (depth > 2 && i != 0) {
-            score = -pvs(copy, s^1, depth-1-reduction, -alpha-1, -alpha);
+            score = -pvs(copy, s^1, depth-1-reduction, -alpha-1, -alpha, false);
             if (reduction > 0 && score > alpha)
-                score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha);
+                score = -pvs(copy, s^1, depth-1, -alpha-1, -alpha, false);
             if (alpha < score && score < beta)
-                score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+                score = -pvs(copy, s^1, depth-1, -beta, -alpha, false);
         }
         else
-            score = -pvs(copy, s^1, depth-1, -beta, -alpha);
+            score = -pvs(copy, s^1, depth-1, -beta, -alpha, false);
 
         // If we received a timeout signal, propagate it upwards
         if (score == TIMEOUT)
@@ -495,7 +502,7 @@ void Player::sortSearch(Board &b, MoveList &moves, MoveList &scores, int side,
         Board copy = b.copy();
         copy.doMove(moves.get(i), side);
         nodes++;
-        scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY));
+        scores.add(-pvs(copy, side^1, depth-1, -INFTY, INFTY, false));
     }
 }
 

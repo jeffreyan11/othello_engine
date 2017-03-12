@@ -11,7 +11,8 @@ typedef uint64_t bitbrd;
 typedef std::chrono::high_resolution_clock OthelloClock;
 typedef std::chrono::high_resolution_clock::time_point OthelloTime;
 
-const int INFTY = (1 << 20);
+const int INFTY = (1 << 30);
+const int WIPEOUT = (1 << 28);
 const int MOVE_NULL = 64;
 const int MOVE_BROKEN = -2;
 const int OPENING_NOT_FOUND = -3;
