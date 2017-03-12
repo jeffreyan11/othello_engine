@@ -5,8 +5,8 @@
 #include "board.h"
 
 const int TSPLITS = 4;
-const int IOFFSET = 6;
-const int TURNSPERDIV = 13;
+const int IOFFSET = 5;
+const int TURNSPERDIV = 15;
 
 class Eval {
 private:
@@ -25,7 +25,6 @@ private:
 
     void readTable(std::string fileName, int lines, int **tableArray);
     void readStability44Table();
-    void readEndTable(std::string fileName, int lines, int **tableArray);
 
 public:
     Eval();

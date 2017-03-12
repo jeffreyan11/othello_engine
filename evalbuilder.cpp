@@ -8,8 +8,8 @@
 using namespace std;
 
 #define DIVS 4
-#define IOFFSET 10
-#define TURNSPERDIV 9
+#define IOFFSET 6
+#define TURNSPERDIV 13
 
 thor_game **games;
 unsigned int totalSize;
@@ -46,7 +46,7 @@ void replaceEnd() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 44; j++) {
+        for(int j = 0; j < 42; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;
@@ -56,7 +56,7 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 20) {
+        if(tracker.countEmpty() > 22) {
             games[i] = NULL;
             continue;
         }
@@ -114,7 +114,7 @@ void searchFeatures() {
         }
 
         // starting recording statistics
-        for(int j = 10; j < 46; j++) {
+        for(int j = 10; j < 55; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;

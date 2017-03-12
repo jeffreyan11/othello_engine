@@ -116,12 +116,12 @@ const bitbrd ADJ_CORNERS = 0x4281000000008142;
 const bitbrd X_CORNERS = 0x0042000000004200;
 
 Eval::Eval() {
-    edgeTable = new int *[TSPLITS+1];
-    p24Table = new int *[TSPLITS+1];
-    pE2XTable = new int *[TSPLITS+1];
-    p33Table = new int *[TSPLITS+1];
+    edgeTable = new int *[TSPLITS];
+    p24Table = new int *[TSPLITS];
+    pE2XTable = new int *[TSPLITS];
+    p33Table = new int *[TSPLITS];
 
-    for(int i = 0; i < TSPLITS+1; i++) {
+    for(int i = 0; i < TSPLITS; i++) {
         edgeTable[i] = new int[6561];
         p24Table[i] = new int[6561];
         pE2XTable[i] = new int[59049];
@@ -135,14 +135,10 @@ Eval::Eval() {
     readTable("Flippy_Resources/pE2Xtable.txt", 6561, pE2XTable);
     readTable("Flippy_Resources/p33table.txt", 2187, p33Table);
     readStability44Table();
-    readEndTable("Flippy_Resources/edgeend.txt", 729, edgeTable);
-    readEndTable("Flippy_Resources/p24end.txt", 729, p24Table);
-    readEndTable("Flippy_Resources/pE2Xend.txt", 6561, pE2XTable);
-    readEndTable("Flippy_Resources/p33end.txt", 2187, p33Table);
 }
 
 Eval::~Eval() {
-    for(int i = 0; i < TSPLITS+1; i++) {
+    for(int i = 0; i < TSPLITS; i++) {
         delete[] edgeTable[i];
         delete[] p24Table[i];
         delete[] pE2XTable[i];
@@ -240,7 +236,7 @@ int Eval::stability(Board &b, int s) {
 
 int Eval::boardToEPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    int index2 = (index >= TSPLITS) ? index : index+1;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
     int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
@@ -261,7 +257,7 @@ int Eval::boardToEPV(Board &b, int turn) {
 
 int Eval::boardTo24PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    int index2 = (index >= TSPLITS) ? index : index+1;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
     int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
@@ -322,7 +318,7 @@ int Eval::boardTo24PV(Board &b, int turn) {
 
 int Eval::boardToE2XPV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    int index2 = (index >= TSPLITS) ? index : index+1;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
     int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
@@ -363,7 +359,7 @@ int Eval::boardToE2XPV(Board &b, int turn) {
 
 int Eval::boardTo33PV(Board &b, int turn) {
     int index = (turn - IOFFSET) / TURNSPERDIV;
-    int index2 = (index >= TSPLITS) ? index : index+1;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
     int shift = (turn - IOFFSET) - index * TURNSPERDIV;
     bitbrd black = b.getBits(CBLACK);
     bitbrd white = b.getBits(CWHITE);
@@ -463,25 +459,5 @@ void Eval::readStability44Table() {
     }
     else {
         std::cerr << "Error: could not open Flippy_Resources/s44table.txt" << std::endl;
-    }
-}
-
-void Eval::readEndTable(std::string fileName, int lines, int **tableArray) {
-    std::string line;
-    std::ifstream table(fileName);
-
-    if(table.is_open()) {
-        for(int i = 0; i < lines; i++) {
-            getline(table, line);
-            for(int j = 0; j < 9; j++) {
-                std::string::size_type sz = 0;
-                tableArray[TSPLITS][9*i+j] = std::stoi(line, &sz, 0);
-                line = line.substr(sz);
-            }
-        }
-        table.close();
-    }
-    else {
-        std::cerr << "Error: could not open " << fileName << std::endl;
     }
 }

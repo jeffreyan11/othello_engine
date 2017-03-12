@@ -5,7 +5,7 @@ OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endha
 PLAYERNAME  = Flippy
 
 all: $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites
-evaltools: evalbuilder endeval blur tuneheuristic crtbk
+evaltools: evalbuilder blur tuneheuristic crtbk
 	
 $(PLAYERNAME)$(EXT): $(OBJS) wrapper.o
 	$(CC) -O3 -flto -o $@ $^
@@ -25,9 +25,6 @@ tuneheuristic: $(OBJS) patternbuilder.o tuneheuristic.o
 evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o evalbuilder.o
 	$(CC) -o $@ $^
 
-endeval: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o endeval.o
-	$(CC) -o $@ $^
-
 blur:
 	$(CC) $(CFLAGS) -o blur blur.cpp
 
@@ -44,6 +41,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o $(PLAYERNAME)$(EXT).exe $(PLAYERNAME)$(EXT)T.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder endeval blur crtbk
+	rm -f *.o $(PLAYERNAME)$(EXT).exe $(PLAYERNAME)$(EXT)T.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder blur crtbk tuneheuristic.exe evalbuilder.exe blur.exe crtbk.exe
 	
 .PHONY: java
