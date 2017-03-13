@@ -107,9 +107,9 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         int openMove = openingBook.get(game.getTaken(), game.getBits(CBLACK));
         if (openMove != OPENING_NOT_FOUND) {
             #if PRINT_SEARCH_INFO
-            cerr << "Opening book used! Played ";
+            cerr << "Opening book: bestmove ";
             printMove(openMove);
-            cerr << endl;
+            cerr << endl << endl;
             #endif
             game.doMove(openMove, mySide);
             return indexToMove(openMove);
@@ -125,16 +125,16 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // TODO a temporary hack to prevent opening book from crashing
         bookExhausted = true;
         #if PRINT_SEARCH_INFO
-        cerr << "No legal moves. Passing." << endl;
+        cerr << "No legal moves. Passing." << endl << endl;
         #endif
         return NULL;
     }
 
     if (legalMoves.size == 1) {
         #if PRINT_SEARCH_INFO
-        cerr << "One legal move. Playing ";
+        cerr << "One legal move: ";
         printMove(legalMoves.get(0));
-        cerr << endl;
+        cerr << endl << endl;
         #endif
         game.doMove(legalMoves.get(0), mySide);
         return indexToMove(legalMoves.get(0));
