@@ -127,7 +127,7 @@ double getTimeElapsed(OthelloTime startTime) {
 
 // Pretty prints a move in (x, y) form indexed from 1.
 void printMove(int move) {
-    std::cerr << "(" << (move & 7) + 1 << ", " << (move >> 3) + 1 << ")";
+    std::cerr << (char) ('a' + (move & 7)) << (move >> 3) + 1;
 }
 
 // Retrieves the next move with the highest score, starting from index using a
