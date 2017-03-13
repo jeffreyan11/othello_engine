@@ -44,6 +44,7 @@ const int MIN_TT_DEPTH = 9;
 
 const int SCORE_TIMEOUT = 65;
 const int MOVE_FAIL_LOW = -1;
+const int EG_SCALE_FACTOR = 600;
 
 struct EndgameStatistics {
     uint64_t hashHits, hashCuts;
@@ -177,7 +178,7 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
         cerr << "Sort search took: " << timeSpan << " sec" << endl;
         cerr << "PV: ";
         printMove(moves.get(0));
-        cerr << " Score: " << scores.get(0) / 600 << endl;
+        cerr << " Score: " << scores.get(0) / EG_SCALE_FACTOR << endl;
         #endif
     }
 
@@ -189,8 +190,8 @@ int Endgame::solveEndgameWithWindow(Board &b, MoveList &moves, bool isSorted,
     int aspBeta = beta;
     int bestIndex = MOVE_FAIL_LOW;
     if (!isSorted && depth > 13) {
-        aspAlpha = max(scores.get(0) / 600 - 4, alpha);
-        aspBeta = min(scores.get(0) / 600 + 4, beta);
+        aspAlpha = max(scores.get(0) / EG_SCALE_FACTOR - 4, alpha);
+        aspBeta = min(scores.get(0) / EG_SCALE_FACTOR + 4, beta);
         // To prevent errors if our sort search score was outside [alpha, beta]
         if (aspAlpha >= beta)
             aspAlpha = beta - 2;
