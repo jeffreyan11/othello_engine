@@ -8,8 +8,8 @@
 using namespace std;
 
 #define DIVS 4
-#define IOFFSET 6
-#define TURNSPERDIV 13
+#define IOFFSET 5
+#define TURNSPERDIV 15
 
 thor_game **games;
 unsigned int totalSize;
