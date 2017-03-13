@@ -17,7 +17,7 @@ using namespace std;
  * @param side The side the AI is playing as.
  */
 Player::Player(Side side) {
-    maxDepth = 24;
+    maxDepth = 28;
     minDepth = 4;
     sortDepth = 2;
     endgameDepth = 36;
@@ -148,7 +148,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
     // time. Always use endgame solver for the last 14 plies since it is faster
     // and for more accurate results.
     if (empties <= endgameDepth
-     && (lastMaxDepth + 6 >= empties || msLeft == -1 || empties <= 14)) {
+     && (lastMaxDepth + 4 >= empties || msLeft == -1 || empties <= 14)) {
         // Timing: use a quarter of remaining time for the endgame solve attempt
         int endgameLimit = (msLeft == -1) ? 100000000
                                           : msLeft / 4;
@@ -228,7 +228,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // WLD confirmation at high depths
     if (empties <= endgameDepth + 2
-    && (lastMaxDepth + 8 >= empties || msLeft == -1)
+    && (lastMaxDepth + 6 >= empties || msLeft == -1)
     && empties > 14
     && timeSpan < timeLimit) {
         // Timing: use 1/6 of remaining time for the WLD solve
@@ -250,13 +250,13 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         // If we broke out of WLD here next move's endgame solver isn't likely
         // to be successful...
         else {
-            lastMaxDepth -= 2;
+            lastMaxDepth -= 4;
         }
     }
 
     // Heh. Heh. Heh.
     if (scores.get(0) > 60 * EVAL_SCALE_FACTOR)
-        lastMaxDepth += 4;
+        lastMaxDepth += 6;
 
     timeSpan = getTimeElapsed(startTime);
     #if PRINT_SEARCH_INFO
