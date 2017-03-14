@@ -85,7 +85,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
         //msLeft -= 600000;
         // Buffer time: to prevent losses on time at short time controls
         if (empties > 14) {
-            msLeft -= 200 + 100*empties;
+            msLeft -= 500 + 120*empties;
             msLeft = std::max(1, msLeft);
         }
 
@@ -181,6 +181,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 
     // Iterative deepening
     int rootDepth = minDepth;
+    lastMaxDepth = minDepth;
     int newBest;
     // Estimate of next branch factor
     int nextBF;
