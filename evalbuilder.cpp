@@ -18,10 +18,16 @@ pv* pvTable2x4[DIVS][6561];
 pv* edgeTable[DIVS][6561];
 pv* e2xTable[DIVS][59049];
 pv* p33Table[DIVS][19683];
+pv* line3Table[DIVS][6561];
+pv* line4Table[DIVS][6561];
+pv* diag8Table[DIVS][6561];
 int used[DIVS][6561];
 int eused[DIVS][6561];
 int exused[DIVS][59049];
 int p33used[DIVS][19683];
+int line3used[DIVS][6561];
+int line4used[DIVS][6561];
+int diag8used[DIVS][6561];
 
 Eval evaluater;
 
@@ -33,6 +39,9 @@ void boardToEPV(Board *b, int score, int turn);
 void boardTo24PV(Board *b, int score, int turn);
 void boardToE2XPV(Board *b, int score, int turn);
 void boardTo33PV(Board *b, int score, int turn);
+void boardToLine3PV(Board *b, int score, int turn);
+void boardToLine4PV(Board *b, int score, int turn);
+void boardToDiag8PV(Board *b, int score, int turn);
 int bitsToPI(int b, int w);
 
 void replaceEnd() {
@@ -46,7 +55,7 @@ void replaceEnd() {
         Board tracker;
         int side = CBLACK;
         // play opening moves
-        for(int j = 0; j < 42; j++) {
+        for(int j = 0; j < 44; j++) {
             // If one side must pass it is not indicated in the database?
             if(!tracker.checkMove(game->moves[j], side)) {
                 side = side^1;
@@ -56,7 +65,7 @@ void replaceEnd() {
         }
 
         Endgame e;
-        if(tracker.countEmpty() > 22) {
+        if(tracker.countEmpty() > 21) {
             games[i] = NULL;
             continue;
         }
@@ -88,6 +97,9 @@ void searchFeatures() {
             for(int j = 0; j < 6561; j++) {
                 used[n][j] = 0;
                 eused[n][j] = 0;
+                line3used[n][j] = 0;
+                line4used[n][j] = 0;
+                diag8used[n][j] = 0;
             }
             for(int j = 0; j < 59049; j++) {
                 exused[n][j] = 0;
@@ -124,6 +136,9 @@ void searchFeatures() {
             boardToEPV(&tracker, score, j+4);
             boardToE2XPV(&tracker, score, j+4);
             boardTo33PV(&tracker, score, j+4);
+            boardToLine3PV(&tracker, score, j+4);
+            boardToLine4PV(&tracker, score, j+4);
+            boardToDiag8PV(&tracker, score, j+4);
             side = side^1;
         }
     }
@@ -144,6 +159,15 @@ int main(int argc, char **argv) {
         }
         for(int i = 0; i < 19683; i++) {
             p33Table[n][i] = new pv();
+        }
+        for(int i = 0; i < 6561; i++) {
+            line3Table[n][i] = new pv();
+        }
+        for(int i = 0; i < 6561; i++) {
+            line4Table[n][i] = new pv();
+        }
+        for(int i = 0; i < 6561; i++) {
+            diag8Table[n][i] = new pv();
         }
     }
 
@@ -291,6 +315,60 @@ void writeFile() {
         }
     }
     out.close();
+
+    out.open("Flippy_Resources/new/line3table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            pv *a = line3Table[n][i];
+            if(a->instances != 0) {
+                double to = ((double)(a->sum))/((double)(a->instances));
+                if(a->instances < 2) to /= 6;
+                else if(a->instances < 3) to /= 3;
+                else if(a->instances < 6) to /= 2;
+                out << to << " ";
+            }
+            else out << 0 << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("Flippy_Resources/new/line4table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            pv *a = line4Table[n][i];
+            if(a->instances != 0) {
+                double to = ((double)(a->sum))/((double)(a->instances));
+                if(a->instances < 2) to /= 6;
+                else if(a->instances < 3) to /= 3;
+                else if(a->instances < 6) to /= 2;
+                out << to << " ";
+            }
+            else out << 0 << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("Flippy_Resources/new/diag8table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            pv *a = diag8Table[n][i];
+            if(a->instances != 0) {
+                double to = ((double)(a->sum))/((double)(a->instances));
+                if(a->instances < 2) to /= 6;
+                else if(a->instances < 3) to /= 3;
+                else if(a->instances < 6) to /= 2;
+                out << to << " ";
+            }
+            else out << 0 << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
 }
 
 void boardToEPV(Board *b, int score, int turn) {
@@ -303,8 +381,8 @@ void boardToEPV(Board *b, int score, int turn) {
       (int)((((black>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
       (int)((((white>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
     int c7 = bitsToPI(
-      (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
-      (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
+      (int)((((black<<1) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<1) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
 
     if(!eused[index][r2]) {
         edgeTable[index][r2]->sum += score;
@@ -528,6 +606,100 @@ void boardTo33PV(Board *b, int score, int turn) {
     p33used[index][lr] = 1;
 }
 
+void boardToLine3PV(Board *b, int score, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
+    int r2 = bitsToPI( (int)((black >> 16) & 0xFF), (int)((white >> 16) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 40) & 0xFF), (int)((white >> 40) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>2) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>2) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<2) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<2) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
+
+    if(!line3used[index][r2]) {
+        line3Table[index][r2]->sum += score;
+        line3Table[index][r2]->instances++;
+    }
+    if(!line3used[index][r7]) {
+        line3Table[index][r7]->sum += score;
+        line3Table[index][r7]->instances++;
+    }
+    if(!line3used[index][c2]) {
+        line3Table[index][c2]->sum += score;
+        line3Table[index][c2]->instances++;
+    }
+    if(!line3used[index][c7]) {
+        line3Table[index][c7]->sum += score;
+        line3Table[index][c7]->instances++;
+    }
+
+    line3used[index][r2] = 1;
+    line3used[index][r7] = 1;
+    line3used[index][c2] = 1;
+    line3used[index][c7] = 1;
+}
+
+void boardToLine4PV(Board *b, int score, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
+    int r2 = bitsToPI( (int)((black >> 24) & 0xFF), (int)((white >> 24) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 32) & 0xFF), (int)((white >> 32) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>3) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>3) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<3) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<3) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
+
+    if(!line4used[index][r2]) {
+        line4Table[index][r2]->sum += score;
+        line4Table[index][r2]->instances++;
+    }
+    if(!line4used[index][r7]) {
+        line4Table[index][r7]->sum += score;
+        line4Table[index][r7]->instances++;
+    }
+    if(!line4used[index][c2]) {
+        line4Table[index][c2]->sum += score;
+        line4Table[index][c2]->instances++;
+    }
+    if(!line4used[index][c7]) {
+        line4Table[index][c7]->sum += score;
+        line4Table[index][c7]->instances++;
+    }
+
+    line4used[index][r2] = 1;
+    line4used[index][r7] = 1;
+    line4used[index][c2] = 1;
+    line4used[index][c7] = 1;
+}
+
+void boardToDiag8PV(Board *b, int score, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    bitbrd black = b->getBits(CBLACK);
+    bitbrd white = b->getBits(CWHITE);
+    int d8 = bitsToPI( (int)(((black & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56),
+                       (int)(((white & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56) );
+    int ad8 = bitsToPI( (int)(((black & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56),
+                        (int)(((white & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56) );
+
+    if(!diag8used[index][d8]) {
+        diag8Table[index][d8]->sum += score;
+        diag8Table[index][d8]->instances++;
+    }
+    if(!diag8used[index][ad8]) {
+        diag8Table[index][ad8]->sum += score;
+        diag8Table[index][ad8]->instances++;
+    }
+
+    diag8used[index][d8] = 1;
+    diag8used[index][ad8] = 1;
+}
+
 int bitsToPI(int b, int w) {
     return PIECES_TO_INDEX[b] + 2*PIECES_TO_INDEX[w];
 }
@@ -548,6 +720,9 @@ void freemem() {
         for(int i = 0; i < 6561; i++) {
             delete pvTable2x4[n][i];
             delete edgeTable[n][i];
+            delete line3Table[n][i];
+            delete line4Table[n][i];
+            delete diag8Table[n][i];
         }
         for(int i = 0; i < 59049; i++) {
             delete e2xTable[n][i];

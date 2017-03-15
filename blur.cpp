@@ -9,15 +9,24 @@ double **edgeTable;
 double **p24Table;
 double **pE2XTable;
 double **p33Table;
+double **line3Table;
+double **line4Table;
+double **diag8Table;
 double **edgeTableb;
 double **p24Tableb;
 double **pE2XTableb;
 double **p33Tableb;
+double **line3Tableb;
+double **line4Tableb;
+double **diag8Tableb;
 
 void readEdgeTable();
 void readPattern24Table();
 void readPatternE2XTable();
 void readPattern33Table();
+void readPatternLine3Table();
+void readPatternLine4Table();
+void readPatternDiag8Table();
 void freemem();
 
 void blur() {
@@ -26,6 +35,9 @@ void blur() {
             for(int i = 0; i < 6561; i++) {
                 edgeTableb[n][i] = (2*edgeTable[n][i] + edgeTable[n+1][i])/3;
                 p24Tableb[n][i] = (2*p24Table[n][i] + p24Table[n+1][i])/3;
+                line3Tableb[n][i] = (2*line3Table[n][i] + line3Table[n+1][i])/3;
+                line4Tableb[n][i] = (2*line4Table[n][i] + line4Table[n+1][i])/3;
+                diag8Tableb[n][i] = (2*diag8Table[n][i] + diag8Table[n+1][i])/3;
             }
             for(int i = 0; i < 59049; i++) {
                 pE2XTableb[n][i] = (2*pE2XTable[n][i] + pE2XTable[n+1][i])/3;
@@ -38,6 +50,9 @@ void blur() {
             for(int i = 0; i < 6561; i++) {
                 edgeTableb[n][i] = (2*edgeTable[n][i] + edgeTable[n-1][i])/3;
                 p24Tableb[n][i] = (2*p24Table[n][i] + p24Table[n-1][i])/3;
+                line3Tableb[n][i] = (2*line3Table[n][i] + line3Table[n-1][i])/3;
+                line4Tableb[n][i] = (2*line4Table[n][i] + line4Table[n-1][i])/3;
+                diag8Tableb[n][i] = (2*diag8Table[n][i] + diag8Table[n-1][i])/3;
             }
             for(int i = 0; i < 59049; i++) {
                 pE2XTableb[n][i] = (2*pE2XTable[n][i] + pE2XTable[n-1][i])/3;
@@ -50,6 +65,9 @@ void blur() {
             for(int i = 0; i < 6561; i++) {
                 edgeTableb[n][i] = (edgeTable[n-1][i] + 2*edgeTable[n][i] + edgeTable[n+1][i])/4;
                 p24Tableb[n][i] = (p24Table[n-1][i] + 2*p24Table[n][i] + p24Table[n+1][i])/4;
+                line3Tableb[n][i] = (line3Table[n-1][i] + 2*line3Table[n][i] + line3Table[n+1][i])/4;
+                line4Tableb[n][i] = (line4Table[n-1][i] + 2*line4Table[n][i] + line4Table[n+1][i])/4;
+                diag8Tableb[n][i] = (line4Table[n-1][i] + 2*diag8Table[n][i] + diag8Table[n+1][i])/3;
             }
             for(int i = 0; i < 59049; i++) {
                 pE2XTableb[n][i] = (pE2XTable[n-1][i] + 2*pE2XTable[n][i] + pE2XTable[n+1][i])/4;
@@ -102,6 +120,36 @@ void write() {
         }
     }
     out.close();
+
+    out.open("Flippy_Resources/new/line3table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            out << (int) (line3Tableb[n][i] * 100.0) << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("Flippy_Resources/new/line4table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            out << (int) (line4Tableb[n][i] * 100.0) << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
+
+    out.open("Flippy_Resources/new/diag8table.txt");
+    for(int n = 0; n < DIVS; n++) {
+        for(unsigned int i = 0; i < 6561; i++) {
+            out << (int) (diag8Tableb[n][i] * 100.0) << " ";
+
+            if(i%9 == 8) out << endl;
+        }
+    }
+    out.close();
 }
 
 int main(int argc, char **argv) {
@@ -109,30 +157,45 @@ int main(int argc, char **argv) {
     p24Table = new double *[DIVS];
     pE2XTable = new double *[DIVS];
     p33Table = new double *[DIVS];
+    line3Table = new double *[DIVS];
+    line4Table = new double *[DIVS];
+    diag8Table = new double *[DIVS];
 
     for(int i = 0; i < DIVS; i++) {
         edgeTable[i] = new double[6561];
         p24Table[i] = new double[6561];
         pE2XTable[i] = new double[59049];
         p33Table[i] = new double[19683];
+        line3Table[i] = new double[6561];
+        line4Table[i] = new double[6561];
+        diag8Table[i] = new double[6561];
     }
 
     edgeTableb = new double *[DIVS];
     p24Tableb = new double *[DIVS];
     pE2XTableb = new double *[DIVS];
     p33Tableb = new double *[DIVS];
+    line3Tableb = new double *[DIVS];
+    line4Tableb = new double *[DIVS];
+    diag8Tableb = new double *[DIVS];
 
     for(int i = 0; i < DIVS; i++) {
         edgeTableb[i] = new double[6561];
         p24Tableb[i] = new double[6561];
         pE2XTableb[i] = new double[59049];
         p33Tableb[i] = new double[19683];
+        line3Tableb[i] = new double[6561];
+        line4Tableb[i] = new double[6561];
+        diag8Tableb[i] = new double[6561];
     }
 
     readEdgeTable();
     readPattern24Table();
     readPatternE2XTable();
     readPattern33Table();
+    readPatternLine3Table();
+    readPatternLine4Table();
+    readPatternDiag8Table();
 
     blur();
     write();
@@ -241,5 +304,71 @@ void readPattern33Table() {
             }
         }
         p33table.close();
+    }
+}
+
+void readPatternLine3Table() {
+    std::string line;
+    std::string file;
+        file = "Flippy_Resources/new/line3table.txt";
+    std::ifstream line3table(file);
+
+    if(line3table.is_open()) {
+        for(int n = 0; n < DIVS; n++) {
+            for(int i = 0; i < 729; i++) {
+                getline(line3table, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    line3Table[n][9*i+j] = std::stod(line, &sz);
+                    line = line.substr(sz);
+                }
+            }
+        }
+
+        line3table.close();
+    }
+}
+
+void readPatternLine4Table() {
+    std::string line;
+    std::string file;
+        file = "Flippy_Resources/new/line4table.txt";
+    std::ifstream line4table(file);
+
+    if(line4table.is_open()) {
+        for(int n = 0; n < DIVS; n++) {
+            for(int i = 0; i < 729; i++) {
+                getline(line4table, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    line4Table[n][9*i+j] = std::stod(line, &sz);
+                    line = line.substr(sz);
+                }
+            }
+        }
+
+        line4table.close();
+    }
+}
+
+void readPatternDiag8Table() {
+    std::string line;
+    std::string file;
+        file = "Flippy_Resources/new/diag8table.txt";
+    std::ifstream diag8table(file);
+
+    if(diag8table.is_open()) {
+        for(int n = 0; n < DIVS; n++) {
+            for(int i = 0; i < 729; i++) {
+                getline(diag8table, line);
+                for(int j = 0; j < 9; j++) {
+                    std::string::size_type sz = 0;
+                    diag8Table[n][9*i+j] = std::stod(line, &sz);
+                    line = line.substr(sz);
+                }
+            }
+        }
+
+        diag8table.close();
     }
 }
