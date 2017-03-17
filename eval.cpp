@@ -120,12 +120,18 @@ Eval::Eval() {
     p24Table = new int *[TSPLITS];
     pE2XTable = new int *[TSPLITS];
     p33Table = new int *[TSPLITS];
+    line3Table = new int *[TSPLITS];
+    line4Table = new int *[TSPLITS];
+    diag8Table = new int *[TSPLITS];
 
     for(int i = 0; i < TSPLITS; i++) {
         edgeTable[i] = new int[6561];
         p24Table[i] = new int[6561];
         pE2XTable[i] = new int[59049];
         p33Table[i] = new int[19683];
+        line3Table[i] = new int[6561];
+        line4Table[i] = new int[6561];
+        diag8Table[i] = new int[6561];
     }
 
     s44Table = new int[65536];
@@ -134,6 +140,9 @@ Eval::Eval() {
     readTable("Flippy_Resources/p24table.txt", 729, p24Table);
     readTable("Flippy_Resources/pE2Xtable.txt", 6561, pE2XTable);
     readTable("Flippy_Resources/p33table.txt", 2187, p33Table);
+    readTable("Flippy_Resources/line3table.txt", 729, line3Table);
+    readTable("Flippy_Resources/line4table.txt", 729, line4Table);
+    readTable("Flippy_Resources/diag8table.txt", 729, diag8Table);
     readStability44Table();
 }
 
@@ -143,12 +152,18 @@ Eval::~Eval() {
         delete[] p24Table[i];
         delete[] pE2XTable[i];
         delete[] p33Table[i];
+        delete[] line3Table[i];
+        delete[] line4Table[i];
+        delete[] diag8Table[i];
     }
 
     delete[] edgeTable;
     delete[] p24Table;
     delete[] pE2XTable;
     delete[] p33Table;
+    delete[] line3Table;
+    delete[] line4Table;
+    delete[] diag8Table;
     delete[] s44Table;
 }
 
@@ -161,6 +176,8 @@ int Eval::heuristic(Board &b, int s) {
 
     int patterns = 2*boardTo24PV(b, turn) + boardToEPV(b, turn)
             + 3*boardToE2XPV(b, turn) + boardTo33PV(b, turn)
+            // + std::max(0, std::min(40-turn, 32)) * (boardToLine3PV(b, turn) + boardToLine4PV(b, turn)
+            //                                       + boardToDiag8PV(b, turn)) / 32
             + 200 * (boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
             //+ 200*(b.getStability(CBLACK) - b.getStability(CWHITE));
     if(s == CBLACK)
@@ -226,6 +243,9 @@ int Eval::end_heuristic(Board &b) {
     score += boardToEPV(b, t);
     score += 3*boardToE2XPV(b, t);
     score += boardTo33PV(b, t);
+    // score += boardToLine3PV(b, t);
+    // score += boardToLine4PV(b, t);
+    // score += boardToDiag8PV(b, t);
     //score += 64 * (b.getStability(CBLACK) - b.getStability(CWHITE));
     score += 128*(boardTo44SV(b, CBLACK) - boardTo44SV(b, CWHITE));
 
@@ -248,8 +268,8 @@ int Eval::boardToEPV(Board &b, int turn) {
       (int)((((black>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
       (int)((((white>>1) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
     int c7 = bitsToPI(
-      (int)((((black<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56),
-      (int)((((white<<1) & 0x8080808080808080ULL) * 0x0002040810204081ULL) >> 56) );
+      (int)((((black<<1) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<1) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
     int result = shift * (edgeTable[index][r2] + edgeTable[index][r7] +
                           edgeTable[index][c2] + edgeTable[index][c7])
         + (TURNSPERDIV-shift) * (edgeTable[index2][r2] + edgeTable[index2][r7] +
@@ -391,6 +411,66 @@ int Eval::boardTo33PV(Board &b, int turn) {
             p33Table[index][ur] + p33Table[index][lr])
         + (TURNSPERDIV-shift) * (p33Table[index2][ul] + p33Table[index2][ll] +
             p33Table[index2][ur] + p33Table[index2][lr]);
+    return result / TURNSPERDIV;
+}
+
+int Eval::boardToLine3PV(Board &b, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
+    int r2 = bitsToPI( (int)((black >> 16) & 0xFF), (int)((white >> 16) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 40) & 0xFF), (int)((white >> 40) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>2) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>2) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<2) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<2) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
+
+    int result = shift * (line3Table[index][r2] + line3Table[index][r7] +
+                          line3Table[index][c2] + line3Table[index][c7])
+        + (TURNSPERDIV-shift) * (line3Table[index2][r2] + line3Table[index2][r7] +
+                                 line3Table[index2][c2] + line3Table[index2][c7]);
+    return result / TURNSPERDIV;
+}
+
+int Eval::boardToLine4PV(Board &b, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
+    int r2 = bitsToPI( (int)((black >> 24) & 0xFF), (int)((white >> 24) & 0xFF) );
+    int r7 = bitsToPI( (int)((black >> 32) & 0xFF), (int)((white >> 32) & 0xFF) );
+    int c2 = bitsToPI(
+      (int)((((black>>3) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56),
+      (int)((((white>>3) & 0x0101010101010101ULL) * 0x0102040810204080ULL) >> 56) );
+    int c7 = bitsToPI(
+      (int)((((black<<3) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56),
+      (int)((((white<<3) & 0x8080808080808080ULL) * 0x8040201008040201ULL) >> 56) );
+
+    int result = shift * (line4Table[index][r2] + line4Table[index][r7] +
+                          line4Table[index][c2] + line4Table[index][c7])
+        + (TURNSPERDIV-shift) * (line4Table[index2][r2] + line4Table[index2][r7] +
+                                 line4Table[index2][c2] + line4Table[index2][c7]);
+    return result / TURNSPERDIV;
+}
+
+int Eval::boardToDiag8PV(Board &b, int turn) {
+    int index = (turn - IOFFSET) / TURNSPERDIV;
+    int index2 = (index >= TSPLITS-1) ? index : index+1;
+    int shift = (turn - IOFFSET) - index * TURNSPERDIV;
+    bitbrd black = b.getBits(CBLACK);
+    bitbrd white = b.getBits(CWHITE);
+    int d8 = bitsToPI( (int)(((black & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56),
+                       (int)(((white & 0x8040201008040201ULL) * 0x0101010101010101ULL) >> 56) );
+    int ad8 = bitsToPI( (int)(((black & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56),
+                        (int)(((white & 0x0102040810204080ULL) * 0x0101010101010101ULL) >> 56) );
+
+    int result = shift * (diag8Table[index][d8] + diag8Table[index][ad8])
+        + (TURNSPERDIV-shift) * (diag8Table[index2][d8] + diag8Table[index2][ad8]);
     return result / TURNSPERDIV;
 }
 
