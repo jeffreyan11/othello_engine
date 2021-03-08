@@ -1,38 +1,55 @@
 #include "endhash.h"
 
-// Creates a endgame hashtable, with argument in number of bits for the bitmask
-// The table will have 2^bits entries
-EndHash::EndHash(int bits) {
-    size = 1 << bits;
-    table = new EndgameEntry[size];
-    keys = 0;
+#include <cstring>
+
+EndHash::EndHash(uint32_t bits) {
+  if (bits < 10) bits = 10;
+  size = 1 << bits;
+  table = new EndgameEntry[size];
 }
 
 EndHash::~EndHash() {
-    delete[] table;
+  delete[] table;
 }
 
-// Adds key (b, ptm) and item move into the hashtable.
-// Assumes that this key has been checked with get and is not in the table.
-void EndHash::add(Board &b, int score, int move, int ptm, int depth) {
-    uint32_t index = b.getHashCode() & (size-1);
-    EndgameEntry *node = &(table[index]);
-    // Replacement strategy
-    if (depth + 2 >= node->depth) {
-        if (node->depth == 0)
-            keys++;
-        node->setEntry(b.getBits(CWHITE), b.getBits(CBLACK), score, move, ptm, depth);
-    }
+void EndHash::add(Board &b, Color c, int score, int move, int depth) {
+  uint32_t index = b.hash() & (size-1);
+  EndgameEntry *node = &(table[index]);
+  // Replacement strategy
+  if (depth + 2 >= node->depth) {
+    node->set_entry(b.get_bits(WHITE), b.get_bits(BLACK), c, score, move, depth);
+  }
 }
 
 // Get the move, if any, associated with a board b and player to move.
-EndgameEntry *EndHash::get(Board &b, int ptm) {
-    uint32_t index = b.getHashCode() & (size-1);
-    EndgameEntry *node = &(table[index]);
+EndgameEntry *EndHash::get(Board &b, Color c) {
+  uint32_t index = b.hash() & (size-1);
+  EndgameEntry *node = &(table[index]);
 
-    if (node->white == b.getBits(CWHITE) && node->black == b.getBits(CBLACK)
-                && node->ptm == (uint8_t) ptm)
-        return node;
+  if (node->white == b.get_bits(WHITE)
+   && node->black == b.get_bits(BLACK)
+   && node->color == (uint8_t) c) {
+    return node;
+  }
 
-    return nullptr;
+  return nullptr;
+}
+
+int EndHash::hash_full() {
+  int used = 0;
+  for (int i = 0; i < 1000; i++) {
+    used += table[i].depth > 0;
+  }
+  return used;
+}
+
+void EndHash::resize(uint32_t bits) {
+  if (bits < 10) bits = 10;
+  delete[] table;
+  size = 1 << bits;
+  table = new EndgameEntry[size];
+}
+
+void EndHash::clear() {
+  std::memset(static_cast<void*>(table), 0, size * sizeof(EndgameEntry));
 }

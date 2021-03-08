@@ -1,11 +1,11 @@
 CC          = g++
-CFLAGS      = -Wall -ansi -pedantic -ggdb -std=c++0x -g -O3 -flto
+CFLAGS      = -Wall -Wshadow -ansi -pedantic -ggdb -std=c++11 -g -O3 -flto
 LDFLAGS     = -static -static-libgcc -static-libstdc++
-OBJS        = common.o player.o board.o openings.o endgame.o hash.o eval.o endhash.o
+OBJS        = common.o board.o endgame.o endhash.o eval.o hash.o openings.o player.o search.o
 PLAYERNAME  = Flippy
 
 all: $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites
-evaltools: evalbuilder blur tuneheuristic crtbk
+evaltools: evalbuilder tuneheuristic crtbk
 	
 $(PLAYERNAME)$(EXT): $(OBJS) wrapper.o
 	$(CC) -O3 -flto -o $@ $^
@@ -22,11 +22,8 @@ testsuites: $(OBJS) testsuites.o
 tuneheuristic: $(OBJS) patternbuilder.o tuneheuristic.o
 	$(CC) -o $@ $^
 
-evalbuilder: common.o board.o endgame.o eval.o endhash.o hash.o patternbuilder.o evalbuilder.o
-	$(CC) -o $@ $^
-
-blur:
-	$(CC) $(CFLAGS) -o blur blur.cpp
+evalbuilder: $(OBJS) patternbuilder.o evalbuilder.o
+	$(CC) -O3 -flto -o $@ $^
 
 crtbk: $(OBJS) crtbk.o
 	$(CC) -o $@ $^
@@ -41,6 +38,6 @@ cleanjava:
 	make -C java/ clean
 
 clean:
-	rm -f *.o $(PLAYERNAME)$(EXT).exe $(PLAYERNAME)$(EXT)T.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder blur crtbk tuneheuristic.exe evalbuilder.exe blur.exe crtbk.exe
+	rm -f *.o $(PLAYERNAME)$(EXT).exe $(PLAYERNAME)$(EXT)T.exe $(PLAYERNAME)$(EXT) $(PLAYERNAME)$(EXT)T testgame testsuites tuneheuristic evalbuilder crtbk tuneheuristic.exe evalbuilder.exe crtbk.exe testgame.exe testsuites.exe
 	
 .PHONY: java

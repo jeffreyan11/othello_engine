@@ -1,1026 +1,523 @@
 #include "board.h"
+
 #include <random>
-
-const bitbrd NORTHRAY[64] = {
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 
-0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080, 
-0x0000000000000101, 0x0000000000000202, 0x0000000000000404, 0x0000000000000808, 
-0x0000000000001010, 0x0000000000002020, 0x0000000000004040, 0x0000000000008080, 
-0x0000000000010101, 0x0000000000020202, 0x0000000000040404, 0x0000000000080808, 
-0x0000000000101010, 0x0000000000202020, 0x0000000000404040, 0x0000000000808080, 
-0x0000000001010101, 0x0000000002020202, 0x0000000004040404, 0x0000000008080808, 
-0x0000000010101010, 0x0000000020202020, 0x0000000040404040, 0x0000000080808080, 
-0x0000000101010101, 0x0000000202020202, 0x0000000404040404, 0x0000000808080808, 
-0x0000001010101010, 0x0000002020202020, 0x0000004040404040, 0x0000008080808080, 
-0x0000010101010101, 0x0000020202020202, 0x0000040404040404, 0x0000080808080808, 
-0x0000101010101010, 0x0000202020202020, 0x0000404040404040, 0x0000808080808080, 
-0x0001010101010101, 0x0002020202020202, 0x0004040404040404, 0x0008080808080808, 
-0x0010101010101010, 0x0020202020202020, 0x0040404040404040, 0x0080808080808080
-};
-
-const bitbrd SOUTHRAY[64] = {
-0x0101010101010100, 0x0202020202020200, 0x0404040404040400, 0x0808080808080800, 
-0x1010101010101000, 0x2020202020202000, 0x4040404040404000, 0x8080808080808000, 
-0x0101010101010000, 0x0202020202020000, 0x0404040404040000, 0x0808080808080000, 
-0x1010101010100000, 0x2020202020200000, 0x4040404040400000, 0x8080808080800000, 
-0x0101010101000000, 0x0202020202000000, 0x0404040404000000, 0x0808080808000000, 
-0x1010101010000000, 0x2020202020000000, 0x4040404040000000, 0x8080808080000000, 
-0x0101010100000000, 0x0202020200000000, 0x0404040400000000, 0x0808080800000000, 
-0x1010101000000000, 0x2020202000000000, 0x4040404000000000, 0x8080808000000000, 
-0x0101010000000000, 0x0202020000000000, 0x0404040000000000, 0x0808080000000000, 
-0x1010100000000000, 0x2020200000000000, 0x4040400000000000, 0x8080800000000000, 
-0x0101000000000000, 0x0202000000000000, 0x0404000000000000, 0x0808000000000000, 
-0x1010000000000000, 0x2020000000000000, 0x4040000000000000, 0x8080000000000000, 
-0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 0x0800000000000000, 
-0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
-};
-
-const bitbrd EASTRAY[64] = {
-0x00000000000000fe, 0x00000000000000fc, 0x00000000000000f8, 0x00000000000000f0, 
-0x00000000000000e0, 0x00000000000000c0, 0x0000000000000080, 0x0000000000000000, 
-0x000000000000fe00, 0x000000000000fc00, 0x000000000000f800, 0x000000000000f000, 
-0x000000000000e000, 0x000000000000c000, 0x0000000000008000, 0x0000000000000000, 
-0x0000000000fe0000, 0x0000000000fc0000, 0x0000000000f80000, 0x0000000000f00000, 
-0x0000000000e00000, 0x0000000000c00000, 0x0000000000800000, 0x0000000000000000, 
-0x00000000fe000000, 0x00000000fc000000, 0x00000000f8000000, 0x00000000f0000000, 
-0x00000000e0000000, 0x00000000c0000000, 0x0000000080000000, 0x0000000000000000, 
-0x000000fe00000000, 0x000000fc00000000, 0x000000f800000000, 0x000000f000000000, 
-0x000000e000000000, 0x000000c000000000, 0x0000008000000000, 0x0000000000000000, 
-0x0000fe0000000000, 0x0000fc0000000000, 0x0000f80000000000, 0x0000f00000000000, 
-0x0000e00000000000, 0x0000c00000000000, 0x0000800000000000, 0x0000000000000000, 
-0x00fe000000000000, 0x00fc000000000000, 0x00f8000000000000, 0x00f0000000000000, 
-0x00e0000000000000, 0x00c0000000000000, 0x0080000000000000, 0x0000000000000000, 
-0xfe00000000000000, 0xfc00000000000000, 0xf800000000000000, 0xf000000000000000, 
-0xe000000000000000, 0xc000000000000000, 0x8000000000000000, 0x0000000000000000
-};
-
-const bitbrd SERAY[64] = {
-0x8040201008040200, 0x0080402010080400, 0x0000804020100800, 0x0000008040201000, 
-0x0000000080402000, 0x0000000000804000, 0x0000000000008000, 0x0000000000000000, 
-0x4020100804020000, 0x8040201008040000, 0x0080402010080000, 0x0000804020100000, 
-0x0000008040200000, 0x0000000080400000, 0x0000000000800000, 0x0000000000000000, 
-0x2010080402000000, 0x4020100804000000, 0x8040201008000000, 0x0080402010000000, 
-0x0000804020000000, 0x0000008040000000, 0x0000000080000000, 0x0000000000000000, 
-0x1008040200000000, 0x2010080400000000, 0x4020100800000000, 0x8040201000000000, 
-0x0080402000000000, 0x0000804000000000, 0x0000008000000000, 0x0000000000000000, 
-0x0804020000000000, 0x1008040000000000, 0x2010080000000000, 0x4020100000000000, 
-0x8040200000000000, 0x0080400000000000, 0x0000800000000000, 0x0000000000000000, 
-0x0402000000000000, 0x0804000000000000, 0x1008000000000000, 0x2010000000000000, 
-0x4020000000000000, 0x8040000000000000, 0x0080000000000000, 0x0000000000000000, 
-0x0200000000000000, 0x0400000000000000, 0x0800000000000000, 0x1000000000000000, 
-0x2000000000000000, 0x4000000000000000, 0x8000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
-};
-
-const bitbrd NERAY[64] = {
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 0x0000000000000010, 
-0x0000000000000020, 0x0000000000000040, 0x0000000000000080, 0x0000000000000000, 
-0x0000000000000204, 0x0000000000000408, 0x0000000000000810, 0x0000000000001020, 
-0x0000000000002040, 0x0000000000004080, 0x0000000000008000, 0x0000000000000000, 
-0x0000000000020408, 0x0000000000040810, 0x0000000000081020, 0x0000000000102040, 
-0x0000000000204080, 0x0000000000408000, 0x0000000000800000, 0x0000000000000000, 
-0x0000000002040810, 0x0000000004081020, 0x0000000008102040, 0x0000000010204080, 
-0x0000000020408000, 0x0000000040800000, 0x0000000080000000, 0x0000000000000000, 
-0x0000000204081020, 0x0000000408102040, 0x0000000810204080, 0x0000001020408000, 
-0x0000002040800000, 0x0000004080000000, 0x0000008000000000, 0x0000000000000000, 
-0x0000020408102040, 0x0000040810204080, 0x0000081020408000, 0x0000102040800000, 
-0x0000204080000000, 0x0000408000000000, 0x0000800000000000, 0x0000000000000000, 
-0x0002040810204080, 0x0004081020408000, 0x0008102040800000, 0x0010204080000000, 
-0x0020408000000000, 0x0040800000000000, 0x0080000000000000, 0x0000000000000000
-};
-
-const bitbrd WESTRAY[64] = {
-0x0000000000000000, 0x0000000000000001, 0x0000000000000003, 0x0000000000000007, 
-0x000000000000000f, 0x000000000000001f, 0x000000000000003f, 0x000000000000007f, 
-0x0000000000000000, 0x0000000000000100, 0x0000000000000300, 0x0000000000000700, 
-0x0000000000000f00, 0x0000000000001f00, 0x0000000000003f00, 0x0000000000007f00, 
-0x0000000000000000, 0x0000000000010000, 0x0000000000030000, 0x0000000000070000, 
-0x00000000000f0000, 0x00000000001f0000, 0x00000000003f0000, 0x00000000007f0000, 
-0x0000000000000000, 0x0000000001000000, 0x0000000003000000, 0x0000000007000000, 
-0x000000000f000000, 0x000000001f000000, 0x000000003f000000, 0x000000007f000000, 
-0x0000000000000000, 0x0000000100000000, 0x0000000300000000, 0x0000000700000000, 
-0x0000000f00000000, 0x0000001f00000000, 0x0000003f00000000, 0x0000007f00000000, 
-0x0000000000000000, 0x0000010000000000, 0x0000030000000000, 0x0000070000000000, 
-0x00000f0000000000, 0x00001f0000000000, 0x00003f0000000000, 0x00007f0000000000, 
-0x0000000000000000, 0x0001000000000000, 0x0003000000000000, 0x0007000000000000, 
-0x000f000000000000, 0x001f000000000000, 0x003f000000000000, 0x007f000000000000, 
-0x0000000000000000, 0x0100000000000000, 0x0300000000000000, 0x0700000000000000, 
-0x0f00000000000000, 0x1f00000000000000, 0x3f00000000000000, 0x7f00000000000000
-};
-
-const bitbrd NWRAY[64] = {
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 
-0x0000000000000008, 0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 
-0x0000000000000000, 0x0000000000000100, 0x0000000000000201, 0x0000000000000402, 
-0x0000000000000804, 0x0000000000001008, 0x0000000000002010, 0x0000000000004020, 
-0x0000000000000000, 0x0000000000010000, 0x0000000000020100, 0x0000000000040201, 
-0x0000000000080402, 0x0000000000100804, 0x0000000000201008, 0x0000000000402010, 
-0x0000000000000000, 0x0000000001000000, 0x0000000002010000, 0x0000000004020100, 
-0x0000000008040201, 0x0000000010080402, 0x0000000020100804, 0x0000000040201008, 
-0x0000000000000000, 0x0000000100000000, 0x0000000201000000, 0x0000000402010000, 
-0x0000000804020100, 0x0000001008040201, 0x0000002010080402, 0x0000004020100804, 
-0x0000000000000000, 0x0000010000000000, 0x0000020100000000, 0x0000040201000000, 
-0x0000080402010000, 0x0000100804020100, 0x0000201008040201, 0x0000402010080402, 
-0x0000000000000000, 0x0001000000000000, 0x0002010000000000, 0x0004020100000000, 
-0x0008040201000000, 0x0010080402010000, 0x0020100804020100, 0x0040201008040201
-};
-
-const bitbrd SWRAY[64] = {
-0x0000000000000000, 0x0000000000000100, 0x0000000000010200, 0x0000000001020400, 
-0x0000000102040800, 0x0000010204081000, 0x0001020408102000, 0x0102040810204000, 
-0x0000000000000000, 0x0000000000010000, 0x0000000001020000, 0x0000000102040000, 
-0x0000010204080000, 0x0001020408100000, 0x0102040810200000, 0x0204081020400000, 
-0x0000000000000000, 0x0000000001000000, 0x0000000102000000, 0x0000010204000000, 
-0x0001020408000000, 0x0102040810000000, 0x0204081020000000, 0x0408102040000000, 
-0x0000000000000000, 0x0000000100000000, 0x0000010200000000, 0x0001020400000000, 
-0x0102040800000000, 0x0204081000000000, 0x0408102000000000, 0x0810204000000000, 
-0x0000000000000000, 0x0000010000000000, 0x0001020000000000, 0x0102040000000000, 
-0x0204080000000000, 0x0408100000000000, 0x0810200000000000, 0x1020400000000000, 
-0x0000000000000000, 0x0001000000000000, 0x0102000000000000, 0x0204000000000000, 
-0x0408000000000000, 0x0810000000000000, 0x1020000000000000, 0x2040000000000000, 
-0x0000000000000000, 0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 
-0x0800000000000000, 0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
-};
-
-const bitbrd NORTHRAYI[64] = {
-0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 
-0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080, 
-0x0000000000000101, 0x0000000000000202, 0x0000000000000404, 0x0000000000000808, 
-0x0000000000001010, 0x0000000000002020, 0x0000000000004040, 0x0000000000008080, 
-0x0000000000010101, 0x0000000000020202, 0x0000000000040404, 0x0000000000080808, 
-0x0000000000101010, 0x0000000000202020, 0x0000000000404040, 0x0000000000808080, 
-0x0000000001010101, 0x0000000002020202, 0x0000000004040404, 0x0000000008080808, 
-0x0000000010101010, 0x0000000020202020, 0x0000000040404040, 0x0000000080808080, 
-0x0000000101010101, 0x0000000202020202, 0x0000000404040404, 0x0000000808080808, 
-0x0000001010101010, 0x0000002020202020, 0x0000004040404040, 0x0000008080808080, 
-0x0000010101010101, 0x0000020202020202, 0x0000040404040404, 0x0000080808080808, 
-0x0000101010101010, 0x0000202020202020, 0x0000404040404040, 0x0000808080808080, 
-0x0001010101010101, 0x0002020202020202, 0x0004040404040404, 0x0008080808080808, 
-0x0010101010101010, 0x0020202020202020, 0x0040404040404040, 0x0080808080808080, 
-0x0101010101010101, 0x0202020202020202, 0x0404040404040404, 0x0808080808080808, 
-0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080
-};
-
-const bitbrd SOUTHRAYI[64] = {
-0x0101010101010101, 0x0202020202020202, 0x0404040404040404, 0x0808080808080808, 
-0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080, 
-0x0101010101010100, 0x0202020202020200, 0x0404040404040400, 0x0808080808080800, 
-0x1010101010101000, 0x2020202020202000, 0x4040404040404000, 0x8080808080808000, 
-0x0101010101010000, 0x0202020202020000, 0x0404040404040000, 0x0808080808080000, 
-0x1010101010100000, 0x2020202020200000, 0x4040404040400000, 0x8080808080800000, 
-0x0101010101000000, 0x0202020202000000, 0x0404040404000000, 0x0808080808000000, 
-0x1010101010000000, 0x2020202020000000, 0x4040404040000000, 0x8080808080000000, 
-0x0101010100000000, 0x0202020200000000, 0x0404040400000000, 0x0808080800000000, 
-0x1010101000000000, 0x2020202000000000, 0x4040404000000000, 0x8080808000000000, 
-0x0101010000000000, 0x0202020000000000, 0x0404040000000000, 0x0808080000000000, 
-0x1010100000000000, 0x2020200000000000, 0x4040400000000000, 0x8080800000000000, 
-0x0101000000000000, 0x0202000000000000, 0x0404000000000000, 0x0808000000000000, 
-0x1010000000000000, 0x2020000000000000, 0x4040000000000000, 0x8080000000000000, 
-0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 0x0800000000000000, 
-0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000
-};
-
-const bitbrd EASTRAYI[64] = {
-0x00000000000000ff, 0x00000000000000fe, 0x00000000000000fc, 0x00000000000000f8, 
-0x00000000000000f0, 0x00000000000000e0, 0x00000000000000c0, 0x0000000000000080, 
-0x000000000000ff00, 0x000000000000fe00, 0x000000000000fc00, 0x000000000000f800, 
-0x000000000000f000, 0x000000000000e000, 0x000000000000c000, 0x0000000000008000, 
-0x0000000000ff0000, 0x0000000000fe0000, 0x0000000000fc0000, 0x0000000000f80000, 
-0x0000000000f00000, 0x0000000000e00000, 0x0000000000c00000, 0x0000000000800000, 
-0x00000000ff000000, 0x00000000fe000000, 0x00000000fc000000, 0x00000000f8000000, 
-0x00000000f0000000, 0x00000000e0000000, 0x00000000c0000000, 0x0000000080000000, 
-0x000000ff00000000, 0x000000fe00000000, 0x000000fc00000000, 0x000000f800000000, 
-0x000000f000000000, 0x000000e000000000, 0x000000c000000000, 0x0000008000000000, 
-0x0000ff0000000000, 0x0000fe0000000000, 0x0000fc0000000000, 0x0000f80000000000, 
-0x0000f00000000000, 0x0000e00000000000, 0x0000c00000000000, 0x0000800000000000, 
-0x00ff000000000000, 0x00fe000000000000, 0x00fc000000000000, 0x00f8000000000000, 
-0x00f0000000000000, 0x00e0000000000000, 0x00c0000000000000, 0x0080000000000000, 
-0xff00000000000000, 0xfe00000000000000, 0xfc00000000000000, 0xf800000000000000, 
-0xf000000000000000, 0xe000000000000000, 0xc000000000000000, 0x8000000000000000
-};
-
-const bitbrd SERAYI[64] = {
-0x8040201008040201, 0x0080402010080402, 0x0000804020100804, 0x0000008040201008, 
-0x0000000080402010, 0x0000000000804020, 0x0000000000008040, 0x0000000000000080, 
-0x4020100804020100, 0x8040201008040200, 0x0080402010080400, 0x0000804020100800, 
-0x0000008040201000, 0x0000000080402000, 0x0000000000804000, 0x0000000000008000, 
-0x2010080402010000, 0x4020100804020000, 0x8040201008040000, 0x0080402010080000, 
-0x0000804020100000, 0x0000008040200000, 0x0000000080400000, 0x0000000000800000, 
-0x1008040201000000, 0x2010080402000000, 0x4020100804000000, 0x8040201008000000, 
-0x0080402010000000, 0x0000804020000000, 0x0000008040000000, 0x0000000080000000, 
-0x0804020100000000, 0x1008040200000000, 0x2010080400000000, 0x4020100800000000, 
-0x8040201000000000, 0x0080402000000000, 0x0000804000000000, 0x0000008000000000, 
-0x0402010000000000, 0x0804020000000000, 0x1008040000000000, 0x2010080000000000, 
-0x4020100000000000, 0x8040200000000000, 0x0080400000000000, 0x0000800000000000, 
-0x0201000000000000, 0x0402000000000000, 0x0804000000000000, 0x1008000000000000, 
-0x2010000000000000, 0x4020000000000000, 0x8040000000000000, 0x0080000000000000, 
-0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 0x0800000000000000, 
-0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000
-};
-
-const bitbrd NERAYI[64] = {
-0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 
-0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080, 
-0x0000000000000102, 0x0000000000000204, 0x0000000000000408, 0x0000000000000810, 
-0x0000000000001020, 0x0000000000002040, 0x0000000000004080, 0x0000000000008000, 
-0x0000000000010204, 0x0000000000020408, 0x0000000000040810, 0x0000000000081020, 
-0x0000000000102040, 0x0000000000204080, 0x0000000000408000, 0x0000000000800000, 
-0x0000000001020408, 0x0000000002040810, 0x0000000004081020, 0x0000000008102040, 
-0x0000000010204080, 0x0000000020408000, 0x0000000040800000, 0x0000000080000000, 
-0x0000000102040810, 0x0000000204081020, 0x0000000408102040, 0x0000000810204080, 
-0x0000001020408000, 0x0000002040800000, 0x0000004080000000, 0x0000008000000000, 
-0x0000010204081020, 0x0000020408102040, 0x0000040810204080, 0x0000081020408000, 
-0x0000102040800000, 0x0000204080000000, 0x0000408000000000, 0x0000800000000000, 
-0x0001020408102040, 0x0002040810204080, 0x0004081020408000, 0x0008102040800000, 
-0x0010204080000000, 0x0020408000000000, 0x0040800000000000, 0x0080000000000000, 
-0x0102040810204080, 0x0204081020408000, 0x0408102040800000, 0x0810204080000000, 
-0x1020408000000000, 0x2040800000000000, 0x4080000000000000, 0x8000000000000000
-};
-
-const bitbrd WESTRAYI[64] = {
-0x0000000000000001, 0x0000000000000003, 0x0000000000000007, 0x000000000000000f, 
-0x000000000000001f, 0x000000000000003f, 0x000000000000007f, 0x00000000000000ff, 
-0x0000000000000100, 0x0000000000000300, 0x0000000000000700, 0x0000000000000f00, 
-0x0000000000001f00, 0x0000000000003f00, 0x0000000000007f00, 0x000000000000ff00, 
-0x0000000000010000, 0x0000000000030000, 0x0000000000070000, 0x00000000000f0000, 
-0x00000000001f0000, 0x00000000003f0000, 0x00000000007f0000, 0x0000000000ff0000, 
-0x0000000001000000, 0x0000000003000000, 0x0000000007000000, 0x000000000f000000, 
-0x000000001f000000, 0x000000003f000000, 0x000000007f000000, 0x00000000ff000000, 
-0x0000000100000000, 0x0000000300000000, 0x0000000700000000, 0x0000000f00000000, 
-0x0000001f00000000, 0x0000003f00000000, 0x0000007f00000000, 0x000000ff00000000, 
-0x0000010000000000, 0x0000030000000000, 0x0000070000000000, 0x00000f0000000000, 
-0x00001f0000000000, 0x00003f0000000000, 0x00007f0000000000, 0x0000ff0000000000, 
-0x0001000000000000, 0x0003000000000000, 0x0007000000000000, 0x000f000000000000, 
-0x001f000000000000, 0x003f000000000000, 0x007f000000000000, 0x00ff000000000000, 
-0x0100000000000000, 0x0300000000000000, 0x0700000000000000, 0x0f00000000000000, 
-0x1f00000000000000, 0x3f00000000000000, 0x7f00000000000000, 0xff00000000000000
-};
-
-const bitbrd NWRAYI[64] = {
-0x0000000000000001, 0x0000000000000002, 0x0000000000000004, 0x0000000000000008, 
-0x0000000000000010, 0x0000000000000020, 0x0000000000000040, 0x0000000000000080, 
-0x0000000000000100, 0x0000000000000201, 0x0000000000000402, 0x0000000000000804, 
-0x0000000000001008, 0x0000000000002010, 0x0000000000004020, 0x0000000000008040, 
-0x0000000000010000, 0x0000000000020100, 0x0000000000040201, 0x0000000000080402, 
-0x0000000000100804, 0x0000000000201008, 0x0000000000402010, 0x0000000000804020, 
-0x0000000001000000, 0x0000000002010000, 0x0000000004020100, 0x0000000008040201, 
-0x0000000010080402, 0x0000000020100804, 0x0000000040201008, 0x0000000080402010, 
-0x0000000100000000, 0x0000000201000000, 0x0000000402010000, 0x0000000804020100, 
-0x0000001008040201, 0x0000002010080402, 0x0000004020100804, 0x0000008040201008, 
-0x0000010000000000, 0x0000020100000000, 0x0000040201000000, 0x0000080402010000, 
-0x0000100804020100, 0x0000201008040201, 0x0000402010080402, 0x0000804020100804, 
-0x0001000000000000, 0x0002010000000000, 0x0004020100000000, 0x0008040201000000, 
-0x0010080402010000, 0x0020100804020100, 0x0040201008040201, 0x0080402010080402, 
-0x0100000000000000, 0x0201000000000000, 0x0402010000000000, 0x0804020100000000, 
-0x1008040201000000, 0x2010080402010000, 0x4020100804020100, 0x8040201008040201
-};
-
-const bitbrd SWRAYI[64] = {
-0x0000000000000001, 0x0000000000000102, 0x0000000000010204, 0x0000000001020408, 
-0x0000000102040810, 0x0000010204081020, 0x0001020408102040, 0x0102040810204080, 
-0x0000000000000100, 0x0000000000010200, 0x0000000001020400, 0x0000000102040800, 
-0x0000010204081000, 0x0001020408102000, 0x0102040810204000, 0x0204081020408000, 
-0x0000000000010000, 0x0000000001020000, 0x0000000102040000, 0x0000010204080000, 
-0x0001020408100000, 0x0102040810200000, 0x0204081020400000, 0x0408102040800000, 
-0x0000000001000000, 0x0000000102000000, 0x0000010204000000, 0x0001020408000000, 
-0x0102040810000000, 0x0204081020000000, 0x0408102040000000, 0x0810204080000000, 
-0x0000000100000000, 0x0000010200000000, 0x0001020400000000, 0x0102040800000000, 
-0x0204081000000000, 0x0408102000000000, 0x0810204000000000, 0x1020408000000000, 
-0x0000010000000000, 0x0001020000000000, 0x0102040000000000, 0x0204080000000000, 
-0x0408100000000000, 0x0810200000000000, 0x1020400000000000, 0x2040800000000000, 
-0x0001000000000000, 0x0102000000000000, 0x0204000000000000, 0x0408000000000000, 
-0x0810000000000000, 0x1020000000000000, 0x2040000000000000, 0x4080000000000000, 
-0x0100000000000000, 0x0200000000000000, 0x0400000000000000, 0x0800000000000000, 
-0x1000000000000000, 0x2000000000000000, 0x4000000000000000, 0x8000000000000000
-};
+#include "bbinit.h"
 
 const int BOARD_REGIONS[64] = {
-1, 1, 2, 2, 2, 2, 3, 3,
-1, 1, 2, 2, 2, 2, 3, 3,
-4, 4, 5, 5, 5, 5, 6, 6,
-4, 4, 5, 5, 5, 5, 6, 6,
-4, 4, 5, 5, 5, 5, 6, 6,
-4, 4, 5, 5, 5, 5, 6, 6,
-7, 7, 8, 8, 8, 8, 9, 9,
-7, 7, 8, 8, 8, 8, 9, 9
+  1, 1, 2, 2, 2, 2, 3, 3,
+  1, 1, 2, 2, 2, 2, 3, 3,
+  4, 4, 5, 5, 5, 5, 6, 6,
+  4, 4, 5, 5, 5, 5, 6, 6,
+  4, 4, 5, 5, 5, 5, 6, 6,
+  4, 4, 5, 5, 5, 5, 6, 6,
+  7, 7, 8, 8, 8, 8, 9, 9,
+  7, 7, 8, 8, 8, 8, 9, 9
 };
 
-// Initialize the zobrist table
-uint32_t **Board::initZobristTable() {
-    std::mt19937 rng (612801529U);
-    uint32_t **table = new uint32_t *[16];
-    for (int i = 0; i < 16; i++)
-        table[i] = new uint32_t[256];
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 256; j++) {
-            table[i][j] = rng();
-        }
+uint32_t **Board::init_zobrist_table() {
+  std::mt19937 rng(612801529U);
+  uint32_t **table = new uint32_t *[16];
+  for (int i = 0; i < 16; i++)
+    table[i] = new uint32_t[256];
+  for (int i = 0; i < 16; i++) {
+    for (int j = 0; j < 256; j++) {
+      table[i][j] = rng();
     }
-
-    return table;
+  }
+  return table;
 }
 
-uint32_t **Board::zobristTable = Board::initZobristTable();
+uint32_t **Board::zobristTable = Board::init_zobrist_table();
 
-uint32_t Board::getHashCode() {
-	// On-the-fly Zobrist hash calculation, using bytes as
-	// the base unit. Idea from Richard Delorme's edax-reversi.
-    const uint8_t *hashStrings = (const uint8_t *) (this);
-    uint32_t hash = 0;
-    for (int i = 0; i < 16; i++) {
-        hash ^= zobristTable[i][hashStrings[i]];
-    }
-    return hash;
+uint32_t Board::hash() {
+  // On-the-fly Zobrist hash calculation, using bytes as
+  // the base unit. Idea from Richard Delorme's edax-reversi.
+  const uint8_t *hash_strings = (const uint8_t *) (this);
+  uint32_t hash = 0;
+  for (int i = 0; i < 16; i++) {
+    hash ^= zobristTable[i][hash_strings[i]];
+  }
+  return hash;
 }
 
-/**
- * @brief Make a 8x8 othello board and initialize it to the standard setup.
- */
 Board::Board() {
-    pieces[CWHITE] = 0x0000001008000000;
-    pieces[CBLACK] = 0x0000000810000000;
+  pieces[WHITE] = 0x0000001008000000;
+  pieces[BLACK] = 0x0000000810000000;
 }
 
-/**
- * @brief A constructor allowing specification of white, black.
- */
-Board::Board(bitbrd w, bitbrd b) {
-    pieces[CWHITE] = w;
-    pieces[CBLACK] = b;
+Board::Board(uint64_t w, uint64_t b) {
+  pieces[WHITE] = w;
+  pieces[BLACK] = b;
 }
 
-/**
- * @brief Destructor for the board.
- */
-Board::~Board() {
+Board::Board(char data[]) {
+  pieces[WHITE] = 0;
+  pieces[BLACK] = 0;
+  for (int i = 0; i < 64; i++) {
+    if (data[i] == 'b' || data[i] == 'B' || data[i] == 'X') {
+      pieces[BLACK] |= SQ_TO_BIT[i];
+    } if (data[i] == 'w' || data[i] == 'W' || data[i] == 'O') {
+      pieces[WHITE] |= SQ_TO_BIT[i];
+    }
+  }
 }
 
-/**
- * @brief Creates a copy of the current board on the stack
- */
+Board::Board(const std::string& data) {
+  pieces[WHITE] = 0;
+  pieces[BLACK] = 0;
+  for (int i = 0; i < 64; i++) {
+    if (data[i] == 'b' || data[i] == 'B' || data[i] == 'X') {
+      pieces[BLACK] |= SQ_TO_BIT[i];
+    } if (data[i] == 'w' || data[i] == 'W' || data[i] == 'O') {
+      pieces[WHITE] |= SQ_TO_BIT[i];
+    }
+  }
+}
+
 Board Board::copy() {
-    return Board(pieces[CWHITE], pieces[CBLACK]);
+  return Board(pieces[WHITE], pieces[BLACK]);
 }
 
-/**
- * @brief Returns a dynamically allocated copy of this board.
- */
-Board *Board::dynamicCopy() {
-    Board *newBoard = new Board(pieces[CWHITE], pieces[CBLACK]);
-    return newBoard;
+void Board::do_move(Color c, int m) {
+  // A NULL move means pass.
+  if (m == MOVE_NULL) return;
+  uint64_t mask = get_do_move(c, m);
+  do_move(c, m, mask);
 }
 
-/**
- * @brief Checks whether a move is legal. Useful for checking database accuracy.
- */
-bool Board::checkMove(int index, int side) {
-    bitbrd legal = getLegal(side);
-    if((index < 0 || index > 63) && !legal)
-        return true;
-    return legal & MOVEMASK[index];
+void Board::do_move(Color c, int m, uint64_t mask) {
+  pieces[WHITE] ^= mask;
+  pieces[BLACK] ^= mask;
+  pieces[c] |= SQ_TO_BIT[m];
 }
 
-/**
- * @brief Modifies the board to reflect the specified move.
- */
-void Board::doMove(int index, int side) {
-    // A NULL move means pass.
-    if (index == MOVE_NULL) {
-        return;
-    }
+// This algorithm gets the mask by lookup with precalculated tables in each of
+// the eight directions. A switch with the board region is used to only
+// consider certain directions for efficiency.
+uint64_t Board::get_do_move(Color c, int m) {
+  uint64_t mask = 0;
+  uint64_t pos = ~pieces[~c];
+  uint64_t self = pieces[c];
 
-    bitbrd changeMask = getDoMove(index, side);
-    makeMove(index, changeMask, side);
+  switch (BOARD_REGIONS[m]) {
+    case 1:
+      mask = south_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= se_fill(m, self, pos);
+      break;
+    case 2:
+      mask = south_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= sw_fill(m, self, pos);
+      mask |= se_fill(m, self, pos);
+      break;
+    case 3:
+      mask = south_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= sw_fill(m, self, pos);
+      break;
+    case 4:
+      mask = north_fill(m, self, pos);
+      mask |= south_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= ne_fill(m, self, pos);
+      mask |= se_fill(m, self, pos);
+      break;
+    case 5:
+      mask = north_fill(m, self, pos);
+      mask |= south_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= ne_fill(m, self, pos);
+      mask |= nw_fill(m, self, pos);
+      mask |= sw_fill(m, self, pos);
+      mask |= se_fill(m, self, pos);
+      break;
+    case 6:
+      mask = north_fill(m, self, pos);
+      mask |= south_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= nw_fill(m, self, pos);
+      mask |= sw_fill(m, self, pos);
+      break;
+    case 7:
+      mask = north_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= ne_fill(m, self, pos);
+      break;
+    case 8:
+      mask = north_fill(m, self, pos);
+      mask |= east_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= ne_fill(m, self, pos);
+      mask |= nw_fill(m, self, pos);
+      break;
+    case 9:
+      mask = north_fill(m, self, pos);
+      mask |= west_fill(m, self, pos);
+      mask |= nw_fill(m, self, pos);
+      break;
+  }
+
+  return mask;
 }
 
-/**
- * @brief This function returns the mask of changed bits.
- *
- * This algorithm gets the mask by lookup with precalculated tables in
- * each of the eight directions. A switch with the board region is used to only
- * consider certain directions for efficiency.
- */
-bitbrd Board::getDoMove(int index, int side) {
-    bitbrd changeMask = 0;
-    bitbrd pos = ~pieces[side^1];
-    bitbrd self = pieces[side];
-
-    switch(BOARD_REGIONS[index]) {
-        case 1:
-            changeMask = southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 2:
-            changeMask = southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 3:
-            changeMask = southFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            break;
-        case 4:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 5:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            changeMask |= seFill(index, self, pos);
-            break;
-        case 6:
-            changeMask = northFill(index, self, pos);
-            changeMask |= southFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            changeMask |= swFill(index, self, pos);
-            break;
-        case 7:
-            changeMask = northFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            break;
-        case 8:
-            changeMask = northFill(index, self, pos);
-            changeMask |= eastFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= neFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            break;
-        case 9:
-            changeMask = northFill(index, self, pos);
-            changeMask |= westFill(index, self, pos);
-            changeMask |= nwFill(index, self, pos);
-            break;
-    }
-
-    return changeMask;
+void Board::undo_move(Color c, int m, uint64_t mask) {
+  pieces[WHITE] ^= mask;
+  pieces[BLACK] ^= mask;
+  pieces[c] ^= SQ_TO_BIT[m];
 }
 
-/**
- * @brief Given a move and the mask of opponent stones changed by this move,
- * updates the board to reflect the move.
- */
-void Board::makeMove(int index, bitbrd changeMask, int side) {
-    pieces[CWHITE] ^= changeMask;
-    pieces[CBLACK] ^= changeMask;
-    pieces[side] |= MOVEMASK[index];
+bool Board::is_legal(Color c, int m) {
+  uint64_t legal = legal_moves(c);
+  if ((m < 0 || m > 63) && !legal)
+    return true;
+  return legal & SQ_TO_BIT[m];
 }
 
-/**
- * @brief Undos a move with the given index and mask of opponent stones changed.
- */
-void Board::undoMove(int index, bitbrd changeMask, int side) {
-    pieces[CWHITE] ^= changeMask;
-    pieces[CBLACK] ^= changeMask;
-    pieces[side] ^= MOVEMASK[index];
+ArrayList Board::legal_movelist(Color c) {
+  ArrayList movelist;
+  uint64_t mask = legal_moves(c);
+  while (mask) {
+    movelist.add(bitscan_forward(mask));
+    mask &= mask-1;
+  }
+  return movelist;
 }
 
-/**
- * @brief Returns a list of all legal moves.
- */
-MoveList Board::getLegalMoves(int side) {
-    MoveList result;
-    bitbrd temp = getLegal(side);
-    while(temp) {
-        result.add(bitScanForward(temp));
-        temp &= temp-1;
-    }
-    return result;
+// This method operates by checking in all eight directions, first for the line
+// of pieces of the opposite color, then for the empty square to place the
+// anchor once the line ends.
+uint64_t Board::legal_moves(Color c) {
+  uint64_t result = 0;
+  uint64_t self = pieces[c];
+  uint64_t opp = pieces[~c];
+
+  uint64_t other = opp & 0x00FFFFFFFFFFFF00;
+  // north and south
+  uint64_t templ = other & (self << 8);
+  uint64_t tempr = other & (self >> 8);
+  templ |= other & (templ << 8);
+  tempr |= other & (tempr >> 8);
+  uint64_t maskl = other & (other << 8);
+  uint64_t maskr = other & (other >> 8);
+  templ |= maskl & (templ << 16);
+  tempr |= maskr & (tempr >> 16);
+  templ |= maskl & (templ << 16);
+  tempr |= maskr & (tempr >> 16);
+  result |= (templ << 8) | (tempr >> 8);
+
+  other = opp & 0x7E7E7E7E7E7E7E7E;
+  // east and west
+  templ = other & (self << 1);
+  tempr = other & (self >> 1);
+  templ |= other & (templ << 1);
+  tempr |= other & (tempr >> 1);
+  maskl = other & (other << 1);
+  maskr = other & (other >> 1);
+  templ |= maskl & (templ << 2);
+  tempr |= maskr & (tempr >> 2);
+  templ |= maskl & (templ << 2);
+  tempr |= maskr & (tempr >> 2);
+  result |= (templ << 1) | (tempr >> 1);
+
+  // ne and sw
+  templ = other & (self << 7);
+  tempr = other & (self >> 7);
+  templ |= other & (templ << 7);
+  tempr |= other & (tempr >> 7);
+  maskl = other & (other << 7);
+  maskr = other & (other >> 7);
+  templ |= maskl & (templ << 14);
+  tempr |= maskr & (tempr >> 14);
+  templ |= maskl & (templ << 14);
+  tempr |= maskr & (tempr >> 14);
+  result |= (templ << 7) | (tempr >> 7);
+
+  // nw and se
+  templ = other & (self << 9);
+  tempr = other & (self >> 9);
+  templ |= other & (templ << 9);
+  tempr |= other & (tempr >> 9);
+  maskl = other & (other << 9);
+  maskr = other & (other >> 9);
+  templ |= maskl & (templ << 18);
+  tempr |= maskr & (tempr >> 18);
+  templ |= maskl & (templ << 18);
+  tempr |= maskr & (tempr >> 18);
+  result |= (templ << 9) | (tempr >> 9);
+
+  return result & ~occupied();
 }
 
-/**
- * @brief Returns a list of all legal moves, given 4 or less empty squares.
- * Moves are sorted by hole parity (moves in holes of size 1 are prioritized).
- */
-int Board::getLegalMoves4(int side, int *moves) {
-    int m1 = MOVE_NULL;
-    int m2 = MOVE_NULL;
-    int m3 = MOVE_NULL;
-    int m4 = MOVE_NULL;
-    bitbrd temp = getLegal(side);
-    int n = 0;
+int Board::count_legal_moves(Color c) {
+  return count_bits(legal_moves(c));
+}
 
-    if(temp) {
-        m1 = bitScanForward(temp);
-        temp &= temp-1; n++;
-      if(temp) {
-          m2 = bitScanForward(temp);
-          temp &= temp-1; n++;
-        if(temp) {
-            m3 = bitScanForward(temp);
-            temp &= temp-1; n++;
-          if(temp) {
-              m4 = bitScanForward(temp);
-              n++;
-          }
-        }
+int Board::count_potential_mobility(Color c) {
+  uint64_t other = pieces[~c];
+  uint64_t empty = ~occupied();
+
+  uint64_t result = (other >> 8) | (other << 8);
+  result &= empty;
+
+  empty &= 0x7E7E7E7E7E7E7E7E;
+  result |= (other << 1) | (other >> 1);
+  result |= (other >> 7) | (other << 7);
+  result |= (other >> 9) | (other << 9);
+  result &= empty;
+
+  return count_bits(result);
+}
+
+int Board::count_stability(Color c) {
+  uint64_t result = 0;
+  uint64_t self = pieces[c];
+  uint64_t occ = occupied();
+
+  // north and south
+  // calculate full lines
+  uint64_t border = self & 0xFF000000000000FF;
+  uint64_t full = occ & (((occ << 8) & (occ >> 8)) | border);
+  full &= (((full << 8) & (full >> 8)) | border);
+  full &= (((full << 8) & (full >> 8)) | border);
+  full &= (((full << 8) & (full >> 8)) | border);
+  full &= (((full << 8) & (full >> 8)) | border);
+  full = (full << 8) & (full >> 8);
+
+  // propagate edge pieces, anywhere there are full lines,
+  // to find single direction stability
+  uint64_t tempM = border;
+  tempM |= (((border << 8) | (border >> 8)) & full);
+  tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+  tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+  tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+  tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+  tempM |= (((tempM << 8) | (tempM >> 8)) & full);
+  result = tempM;
+
+  // east and west
+  border = self & 0x8181818181818181;
+  full = occ & (((occ << 1) & (occ >> 1)) | border);
+  full &= (((full << 1) & (full >> 1)) | border);
+  full &= (((full << 1) & (full >> 1)) | border);
+  full &= (((full << 1) & (full >> 1)) | border);
+  full &= (((full << 1) & (full >> 1)) | border);
+  full = (full << 1) & (full >> 1);
+
+  tempM = border;
+  tempM |= (((border << 1) | (border >> 1)) & full);
+  tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+  tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+  tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+  tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+  tempM |= (((tempM << 1) | (tempM >> 1)) & full);
+  result &= tempM;
+
+  // ne and sw
+  border = self & 0xFF818181818181FF;
+  full = occ & (((occ << 7) & (occ >> 7)) | border);
+  full &= (((full << 7) & (full >> 7)) | border);
+  full &= (((full << 7) & (full >> 7)) | border);
+  full &= (((full << 7) & (full >> 7)) | border);
+  full &= (((full << 7) & (full >> 7)) | border);
+  full = (full << 7) & (full >> 7);
+
+  tempM = border;
+  tempM |= (((border << 7) | (border >> 7)) & full);
+  tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+  tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+  tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+  tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+  tempM |= (((tempM << 7) | (tempM >> 7)) & full);
+  result &= tempM;
+
+  // nw and se
+  border = self & 0xFF818181818181FF;
+  full = occ & (((occ << 9) & (occ >> 9)) | border);
+  full &= (((full << 9) & (full >> 9)) | border);
+  full &= (((full << 9) & (full >> 9)) | border);
+  full &= (((full << 9) & (full >> 9)) | border);
+  full &= (((full << 9) & (full >> 9)) | border);
+  full = (full << 9) & (full >> 9);
+
+  tempM = border;
+  tempM = (((border << 9) | (border >> 9)) & full);
+  tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+  tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+  tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+  tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+  tempM |= (((tempM << 9) | (tempM >> 9)) & full);
+  result &= tempM;
+
+  // Find corner stability
+  tempM = self & CORNERS;
+  tempM |= ((((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) | (tempM << 8) | (tempM >> 8)) & self;
+
+  uint64_t all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+
+  all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+
+  all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+
+  all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+  result |= tempM;
+
+  all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+
+  all_other = ((tempM << 1) | (tempM >> 1)) & ((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E;
+  tempM |= ((tempM << 8) | (tempM >> 8)) & self & all_other;
+  all_other = (((tempM << 7) | (tempM >> 7)) & ((tempM << 9) | (tempM >> 9)) & 0x7E7E7E7E7E7E7E7E) & ((tempM << 8) | (tempM >> 8));
+  tempM |= (((tempM << 1) | (tempM >> 1)) & 0x7E7E7E7E7E7E7E7E) & self & all_other;
+  result |= tempM;
+
+  return count_bits(result & self);
+}
+
+uint64_t Board::get_bits(Color c) {
+  return pieces[c];
+}
+
+uint64_t Board::occupied() {
+  return pieces[WHITE] | pieces[BLACK];
+}
+
+int Board::count(Color c) {
+  return count_bits(pieces[c]);
+}
+
+int Board::count_empty() {
+  return count_bits(~occupied());
+}
+
+std::string Board::to_string() {
+  char *buf = new char[65];
+  uint64_t occ = occupied();
+  for (int i = 0; i < 64; i++) {
+    if (occ & SQ_TO_BIT[i]) {
+      if (pieces[BLACK] & SQ_TO_BIT[i]) {
+        buf[i] = 'X';
+      } else {
+        buf[i] = 'O';
       }
+    } else {
+      buf[i] = '-';
     }
-
-    bitbrd empty = ~getTaken();
-    // parity sorting
-    if(n == 2) {
-        if( (NEIGHBORS[m1] & empty) && !(NEIGHBORS[m2] & empty) ) {
-            int temp = m1;
-            m1 = m2;
-            m2 = temp;
-        }
-    }
-    else if(n == 3) {
-        if( (NEIGHBORS[m1] & empty) ) {
-            if( !(NEIGHBORS[m2] & empty) ) {
-                int temp = m1;
-                m1 = m2;
-                m2 = temp;
-            }
-            else {
-                int temp = m1;
-                m1 = m3;
-                m3 = temp;
-            }
-        }
-    }
-    else if(n == 4) {
-        if( (NEIGHBORS[m1] & empty) ) {
-            if( !(NEIGHBORS[m2] & empty) ) {
-                int temp = m1;
-                m1 = m2;
-                m2 = m4;
-                m4 = temp;
-            }
-            else if ( !(NEIGHBORS[m3] & empty) ) {
-                int temp = m1;
-                m1 = m3;
-                m3 = temp;
-                temp = m2;
-                m2 = m4;
-                m4 = temp;
-            }
-            else {
-                int temp = m1;
-                m1 = m4;
-                m4 = temp;
-            }
-        }
-        else if( (NEIGHBORS[m2] & empty) ) {
-            if ( !(NEIGHBORS[m3] & empty) ) {
-                int temp = m2;
-                m2 = m3;
-                m3 = temp;
-            }
-            else {
-                int temp = m2;
-                m2 = m4;
-                m4 = temp;
-            }
-        }
-    }
-
-    moves[0] = m1;
-    moves[1] = m2;
-    moves[2] = m3;
-    moves[3] = m4;
-    return n;
+  }
+  // null terminate
+  buf[64] = 0;
+  std::string result = std::string(buf);
+  delete[] buf;
+  return result;
 }
 
-/**
- * @brief Returns a list of all legal moves, given 3 or less empty squares.
- * Moves are sorted by hole parity (moves in holes of size 1 are prioritized).
- */
-int Board::getLegalMoves3(int side, int *moves) {
-    int m1 = MOVE_NULL;
-    int m2 = MOVE_NULL;
-    int m3 = MOVE_NULL;
-    bitbrd temp = getLegal(side);
-    int n = 0;
-
-    if(temp) {
-        m1 = bitScanForward(temp);
-        temp &= temp-1; n++;
-      if(temp) {
-          m2 = bitScanForward(temp);
-          temp &= temp-1; n++;
-        if(temp) {
-            m3 = bitScanForward(temp);
-            n++;
-        }
-      }
-    }
-
-    bitbrd empty = ~getTaken();
-    // parity sorting
-    if(n == 2) {
-        if( (NEIGHBORS[m1] & empty) && !(NEIGHBORS[m2] & empty) ) {
-            int temp = m1;
-            m1 = m2;
-            m2 = temp;
-        }
-    }
-    else if(n == 3) {
-        if( (NEIGHBORS[m1] & empty) ) {
-            if( !(NEIGHBORS[m2] & empty) ) {
-                int temp = m1;
-                m1 = m2;
-                m2 = temp;
-            }
-            else {
-                int temp = m1;
-                m1 = m3;
-                m3 = temp;
-            }
-        }
-    }
-
-    moves[0] = m1;
-    moves[1] = m2;
-    moves[2] = m3;
-    return n;
+//----------------------------do_move() helpers---------------------------------
+uint64_t Board::north_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = NORTHRAY[m];
+  // Capture line ends with either own piece or empty square
+  uint64_t block = result & pos;
+  // If the line ends before the edge
+  if (block) {
+    int anchor = bitscan_reverse(block);
+    // use multiplication to reduce branching
+    // confirm line ender is an anchor piece
+    return ((bool) (self & SQ_TO_BIT[anchor]))
+    // and if so, we can return the captured pieces
+          * (result & SOUTHRAY[anchor]);
+  }
+  return 0;
 }
 
-/**
- * @brief Returns a bitmask with a 1 set in every square that is a legal move
- * for the given side.
- * 
- * This method operates by checking in all eight directions, first for the line
- * of pieces of the opposite color, then for the empty square to place the
- * anchor once the line ends.
- */
-bitbrd Board::getLegal(int side) {
-    bitbrd result = 0;
-    bitbrd self = pieces[side];
-    bitbrd opp = pieces[side^1];
-
-    bitbrd other = opp & 0x00FFFFFFFFFFFF00;
-    // north and south
-    bitbrd templ = other & (self << 8);
-    bitbrd tempr = other & (self >> 8);
-    templ |= other & (templ << 8);
-    tempr |= other & (tempr >> 8);
-    bitbrd maskl = other & (other << 8);
-    bitbrd maskr = other & (other >> 8);
-    templ |= maskl & (templ << 16);
-    tempr |= maskr & (tempr >> 16);
-    templ |= maskl & (templ << 16);
-    tempr |= maskr & (tempr >> 16);
-    result |= (templ << 8) | (tempr >> 8);
-
-    other = opp & 0x7E7E7E7E7E7E7E7E;
-    // east and west
-    templ = other & (self << 1);
-    tempr = other & (self >> 1);
-    templ |= other & (templ << 1);
-    tempr |= other & (tempr >> 1);
-    maskl = other & (other << 1);
-    maskr = other & (other >> 1);
-    templ |= maskl & (templ << 2);
-    tempr |= maskr & (tempr >> 2);
-    templ |= maskl & (templ << 2);
-    tempr |= maskr & (tempr >> 2);
-    result |= (templ << 1) | (tempr >> 1);
-
-    // ne and sw
-    templ = other & (self << 7);
-    tempr = other & (self >> 7);
-    templ |= other & (templ << 7);
-    tempr |= other & (tempr >> 7);
-    maskl = other & (other << 7);
-    maskr = other & (other >> 7);
-    templ |= maskl & (templ << 14);
-    tempr |= maskr & (tempr >> 14);
-    templ |= maskl & (templ << 14);
-    tempr |= maskr & (tempr >> 14);
-    result |= (templ << 7) | (tempr >> 7);
-
-    // nw and se
-    templ = other & (self << 9);
-    tempr = other & (self >> 9);
-    templ |= other & (templ << 9);
-    tempr |= other & (tempr >> 9);
-    maskl = other & (other << 9);
-    maskr = other & (other >> 9);
-    templ |= maskl & (templ << 18);
-    tempr |= maskr & (tempr >> 18);
-    templ |= maskl & (templ << 18);
-    tempr |= maskr & (tempr >> 18);
-    result |= (templ << 9) | (tempr >> 9);
-
-    return result & ~getTaken();
+uint64_t Board::south_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = SOUTHRAY[m];
+  uint64_t block = result & pos;
+  // Get single occupancy blocker mask, if the blocker is an anchor piece
+  block &= -block & self;
+  if (block) {
+    int anchor = bitscan_forward(block);
+    return (result & NORTHRAY[anchor]);
+  }
+  return 0;
 }
 
-/**
- * @brief Returns the mobility of the given player.
- */
-int Board::numLegalMoves(int side) {
-    return countSetBits(getLegal(side));
+uint64_t Board::east_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = EASTRAY[m];
+  uint64_t block = result & pos;
+  block &= -block & self;
+  if (block) {
+    int anchor = bitscan_forward(block);
+    return (result & WESTRAY[anchor]);
+  }
+  return 0;
 }
 
-/**
- * @brief Returns the potential mobility (frontier squares) of the given player.
- * This is the number of empty squares adjacent to your opponent's pieces.
- */
-int Board::potentialMobility(int side) {
-    bitbrd other = pieces[side^1];
-    bitbrd empty = ~getTaken();
-
-    bitbrd result = (other >> 8) | (other << 8);
-    result &= empty;
-
-    empty &= 0x7E7E7E7E7E7E7E7E;
-    result |= (other << 1) | (other >> 1);
-    result |= (other >> 7) | (other << 7);
-    result |= (other >> 9) | (other << 9);
-    result &= empty;
-
-    return countSetBits(result);
+uint64_t Board::west_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = WESTRAY[m];
+  uint64_t block = result & pos;
+  if (block) {
+    int anchor = bitscan_reverse(block);
+    return ((bool) (self & SQ_TO_BIT[anchor]))
+          * (result & EASTRAY[anchor]);
+  }
+  return 0;
 }
 
-/**
- * @brief Gets an estimate of the number of stable discs of the given player.
- * Currently overestimates and needs to be fixed.
- */
-int Board::getStability(int side) {
-    bitbrd result = 0;
-    bitbrd self = pieces[side];
-
-    bitbrd border = self & 0xFF818181818181FF;
-    bitbrd taken = getTaken();
-
-    // north and south
-    // calculate full lines
-    bitbrd full = taken & (((taken << 8) & (taken >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full &= (((full << 8) & (full >> 8)) | border);
-    full = (full << 8) & (full >> 8);
-
-    // propagate edge pieces, anywhere there are own pieces or full lines,
-    // to find single direction stability
-    bitbrd tempM = border;
-    tempM |= (((border << 8) | (border >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & full);
-    full = tempM;
-
-    tempM = border;
-    tempM |= (((border << 8) | (border >> 8)) & self);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
-    tempM |= (((tempM << 8) | (tempM >> 8)) & self);
-    result = (full | tempM);
-
-    // east and west
-    full = taken & (((taken << 1) & (taken >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full &= (((full << 1) & (full >> 1)) | border);
-    full = (full << 1) & (full >> 1);
-
-    tempM = border;
-    tempM |= (((border << 1) | (border >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & full);
-    full = tempM;
-
-    tempM = border;
-    tempM |= (((border << 1) | (border >> 1)) & self);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
-    tempM |= (((tempM << 1) | (tempM >> 1)) & self);
-    result &= (full | tempM);
-
-    // ne and sw
-    full = taken & (((taken << 7) & (taken >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full &= (((full << 7) & (full >> 7)) | border);
-    full = (full << 7) & (full >> 7);
-
-    tempM = border;
-    tempM |= (((border << 7) | (border >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & full);
-    full = tempM;
-
-    tempM = border;
-    tempM |= (((border << 7) | (border >> 7)) & self);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
-    tempM |= (((tempM << 7) | (tempM >> 7)) & self);
-    result &= (full | tempM);
-
-    // nw and se
-    full = taken & (((taken << 9) & (taken >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full &= (((full << 9) & (full >> 9)) | border);
-    full = (full << 9) & (full >> 9);
-
-    tempM = border;
-    tempM = (((border << 9) | (border >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & full);
-    full = tempM;
-
-    tempM = border;
-    tempM = (((border << 9) | (border >> 9)) & self);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
-    tempM |= (((tempM << 9) | (tempM >> 9)) & self);
-    result &= (full | tempM);
-
-    return countSetBits(result & self);
+uint64_t Board::ne_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = NERAY[m];
+  uint64_t block = result & pos;
+  if (block) {
+    int anchor = bitscan_reverse(block);
+    return ((bool) (self & SQ_TO_BIT[anchor]))
+          * (result & SWRAY[anchor]);
+  }
+  return 0;
 }
 
-bitbrd Board::getBits(int side) {
-    return pieces[side];
+uint64_t Board::nw_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = NWRAY[m];
+  uint64_t block = result & pos;
+  if (block) {
+    int anchor = bitscan_reverse(block);
+    return ((bool) (self & SQ_TO_BIT[anchor]))
+          * (result & SERAY[anchor]);
+  }
+  return 0;
 }
 
-/*
- * Sets the board state given an 8x8 char array where 'w', 'O' indicates a white
- * piece and 'b', 'X' indicates a black piece. Mainly for testing purposes.
- */
-void Board::setBoard(char data[]) {
-    pieces[CWHITE] = 0;
-    pieces[CBLACK] = 0;
-    for (int i = 0; i < 64; i++) {
-        if (data[i] == 'b' || data[i] == 'B' || data[i] == 'X') {
-            pieces[CBLACK] |= MOVEMASK[i];
-        } if (data[i] == 'w' || data[i] == 'W' || data[i] == 'O') {
-            pieces[CWHITE] |= MOVEMASK[i];
-        }
-    }
+uint64_t Board::sw_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = SWRAY[m];
+  uint64_t block = result & pos;
+  block &= -block & self;
+  if (block) {
+    int anchor = bitscan_forward(block);
+    return (result & NERAY[anchor]);
+  }
+  return 0;
 }
 
-char *Board::toString() {
-    char *result = new char[64];
-    bitbrd taken = getTaken();
-    for (int i = 0; i < 64; i++) {
-        if (taken & MOVEMASK[i]) {
-            if (pieces[CBLACK] & MOVEMASK[i])
-                result[i] = 'b';
-            else
-                result[i] = 'w';
-        }
-        else
-            result[i] = '-';
-    }
-    return result;
-}
-
-bitbrd Board::getTaken() {
-    return pieces[CWHITE] | pieces[CBLACK];
-}
-
-int Board::countEmpty() {
-    return countSetBits(~getTaken());
-}
-
-/**
- * @brief Returns the current count of given side's stones.
- */
-int Board::count(int side) {
-    return countSetBits(pieces[side]);
-}
-
-//----------------------------doMove() helpers----------------------------------
-bitbrd Board::northFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = NORTHRAY[index];
-    // Capture line ends with either my piece or empty square
-    bitbrd block = result & pos;
-    // If the line ends before the edge
-    if (block) {
-        int anchor = bitScanReverse(block);
-        // use multiplication to reduce branching
-        // confirm line ender is an anchor piece
-        return ((bool) (self & MOVEMASK[anchor]))
-        // and if so, we can return the captured pieces
-              * (result ^ NORTHRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::southFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = SOUTHRAY[index];
-    bitbrd block = result & pos;
-    // Get single occupancy blocker mask, if the blocker is an anchor piece
-    block &= -block & self;
-    if (block) {
-        int anchor = bitScanForward(block);
-        return (result ^ SOUTHRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::eastFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = EASTRAY[index];
-    bitbrd block = result & pos;
-    block &= -block & self;
-    if (block) {
-        int anchor = bitScanForward(block);
-        return (result ^ EASTRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::westFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = WESTRAY[index];
-    bitbrd block = result & pos;
-    if (block) {
-        int anchor = bitScanReverse(block);
-        return ((bool) (self & MOVEMASK[anchor])) *
-                (result ^ WESTRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::neFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = NERAY[index];
-    bitbrd block = result & pos;
-    if (block) {
-        int anchor = bitScanReverse(block);
-        return ((bool) (self & MOVEMASK[anchor])) *
-                (result ^ NERAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::nwFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = NWRAY[index];
-    bitbrd block = result & pos;
-    if (block) {
-        int anchor = bitScanReverse(block);
-        return ((bool) (self & MOVEMASK[anchor])) *
-                (result ^ NWRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::swFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = SWRAY[index];
-    bitbrd block = result & pos;
-    block &= -block & self;
-    if (block) {
-        int anchor = bitScanForward(block);
-        return (result ^ SWRAYI[anchor]);
-    }
-    return 0;
-}
-
-bitbrd Board::seFill(int index, bitbrd self, bitbrd pos) {
-    bitbrd result = SERAY[index];
-    bitbrd block = result & pos;
-    block &= -block & self;
-    if (block) {
-        int anchor = bitScanForward(block);
-        return (result ^ SERAYI[anchor]);
-    }
-    return 0;
+uint64_t Board::se_fill(int m, uint64_t self, uint64_t pos) {
+  uint64_t result = SERAY[m];
+  uint64_t block = result & pos;
+  block &= -block & self;
+  if (block) {
+    int anchor = bitscan_forward(block);
+    return (result & NWRAY[anchor]);
+  }
+  return 0;
 }

@@ -4,72 +4,73 @@
 #include "board.h"
 #include "common.h"
 
-struct BoardData {
-    bitbrd taken;
-    bitbrd black;
-    int score;
-    uint8_t move;
-    uint8_t ptm;
-    uint8_t turn;
-    uint8_t depth;
-    uint8_t nodeType;
+struct HashEntry {
+  uint64_t taken;
+  uint64_t black;
+  int score;
+  uint8_t selectivity;
+  uint8_t color;
+  uint8_t move;
+  uint8_t turn;
+  uint8_t depth;
+  uint8_t nodeType;
 
-    BoardData() {
-        setData(0, 0, 0, 0, 0, 0, 0, 0);
-    }
+  HashEntry() {
+    setData(0, 0, WHITE, 0, 0, 0, 0, 0, 0);
+  }
+  HashEntry(uint64_t t, uint64_t b, Color c, int s, int sel, int m, uint8_t tu, int d, uint8_t nt) {
+    setData(t, b, c, s, sel, m, tu, d, nt);
+  }
+  ~HashEntry() = default;
 
-    BoardData(bitbrd t, bitbrd b, int s, int m, int p, uint8_t tu, int d,
-        uint8_t nt) {
-        setData(t, b, s, m, p, tu, d, nt);
-    }
-
-    void setData(bitbrd t, bitbrd b, int s, int m, int p, uint8_t tu, int d,
-        uint8_t nt) {
-        taken = t;
-        black = b;
-        score = s;
-        move = (uint8_t) m;
-        ptm = (uint8_t) p;
-        turn = tu;
-        depth = (uint8_t) d;
-        nodeType = nt;
-    }
+  void setData(uint64_t t, uint64_t b, Color c, int s, int sel, int m, uint8_t tu, int d,
+    uint8_t nt) {
+    taken = t;
+    black = b;
+    score = s;
+    selectivity = sel;
+    color = (uint8_t) c;
+    move = (uint8_t) m;
+    turn = tu;
+    depth = (uint8_t) d;
+    nodeType = nt;
+  }
 };
 
-class HashLL {
+class HashNode {
+ public:
+  HashEntry entry1, entry2;
 
-public:
-    BoardData entry1;
-    BoardData entry2;
-
-    HashLL() {}
-
-    HashLL(bitbrd t, bitbrd b, int s, int m, int ptm, uint8_t tu, int d,
-        uint8_t nt) {
-        entry1 = BoardData(t, b, s, m, ptm, tu, d, nt);
-    }
-
-    ~HashLL() {}
+  HashNode() = default;
+  HashNode(uint64_t t, uint64_t b, Color c, int s, int sel, int m, uint8_t tu, int d, uint8_t nt) {
+    entry1 = HashEntry(t, b, c, s, sel, m, tu, d, nt);
+  }
+  ~HashNode() = default;
 };
 
 class Hash {
+ public:
+  // Creates a hashtable, with argument in number of bits for the bitmask
+  // The table will have 2^bits entries
+  Hash(uint32_t bits);
+  ~Hash();
 
-private:
-    HashLL *table;
-    int size;
+  // Adds a hash entry into the table.
+  // Assumes that this key has been checked with get() and is not in the table.
+  void add(Board &b, Color c, int score, int selectivity, int move, uint8_t turn, int depth, uint8_t node_type);
+  // Get the move, if any, associated with a board b and player color c.
+  HashEntry *get(Board &b, Color c);
+  int hash_full();
 
-    Hash(const Hash &other);
-    Hash& operator=(const Hash &other);
+  void resize(uint32_t bits);
+  void clear();
 
-public:
-    int keys;
+ private:
+  HashNode *table;
+  uint32_t size;
 
-    Hash(int isize);
-    ~Hash();
-
-    void add(Board &b, int score, int move, int ptm, uint8_t turn, int depth,
-        uint8_t nodeType);
-    BoardData *get(Board &b, int ptm);
+  Hash(const Hash &other);
+  Hash& operator=(const Hash &other);
 };
 
 #endif

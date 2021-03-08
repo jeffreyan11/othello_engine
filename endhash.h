@@ -5,44 +5,48 @@
 #include "common.h"
 
 struct EndgameEntry {
-    bitbrd white;
-    bitbrd black;
-    int8_t score;
-    uint8_t move;
-    uint8_t ptm;
-    uint8_t depth;
+  uint64_t white, black;
+  uint8_t color;
+  int8_t score;
+  uint8_t move;
+  uint8_t depth;
 
-    EndgameEntry() {
-        setEntry(0, 0, 0, 0, 0, 0);
-    }
+  EndgameEntry() {
+    set_entry(0, 0, WHITE, 0, 0, 0);
+  }
+  ~EndgameEntry() = default;
 
-    void setEntry(bitbrd w, bitbrd b, int s, int m, int p, int d) {
-        white = w;
-        black = b;
-        score = (int8_t) s;
-        move = (uint8_t) m;
-        ptm = (uint8_t) p;
-        depth = (uint8_t) d;
-    }
+  void set_entry(uint64_t w, uint64_t b, Color c, int s, int m, int d) {
+    white = w;
+    black = b;
+    color = (uint8_t) c;
+    score = (int8_t) s;
+    move = (uint8_t) m;
+    depth = (uint8_t) d;
+  }
 };
 
 class EndHash {
+ public:
+  // Creates a endgame hashtable, with argument in number of bits for the bitmask
+  // The table will have 2^bits entries
+  EndHash(uint32_t bits);
+  ~EndHash();
+  EndHash(const EndHash &other) = delete;
+  EndHash& operator=(const EndHash &other) = delete;
 
-private:
-    EndgameEntry *table;
-    int size;
+  // Adds key (board, color) and item move into the hashtable.
+  // Assumes that this key has been checked with get() and is not in the table.
+  void add(Board &b, Color c, int score, int move, int depth);
+  EndgameEntry *get(Board &b, Color c);
+  int hash_full();
 
-    EndHash(const EndHash &other);
-    EndHash& operator=(const EndHash &other);
+  void resize(uint32_t bits);
+  void clear();
 
-public:
-    int keys;
-
-    EndHash(int bits);
-    ~EndHash();
-
-    void add(Board &b, int score, int move, int ptm, int depth);
-    EndgameEntry *get(Board &b, int ptm);
+ private:
+  EndgameEntry *table;
+  uint32_t size;
 };
 
 #endif

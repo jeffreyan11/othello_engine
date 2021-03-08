@@ -4,24 +4,23 @@
 #include "common.h"
 
 struct Node {
-    bitbrd taken, black;
-    int move;
+  uint64_t taken, black;
+  int move;
 };
 
 class Openings {
+ public:
+  Openings();
+  ~Openings();
 
-private:
-    Node **openings;
-    int bookSize;
-    int binarySearch(bitbrd taken, bitbrd black);
+  int get(uint64_t taken, uint64_t black);
 
-    bool readFile();
+ private:
+  Node *openings;
+  int bookSize;
 
-public:
-    Openings();
-    ~Openings();
-
-    int get(bitbrd taken, bitbrd black);
+  int binary_search(uint64_t taken, uint64_t black);
+  bool read_file();
 };
 
 #endif

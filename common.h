@@ -4,88 +4,77 @@
 #include <cstdint>
 #include <cstdlib>
 #include <chrono>
+#include <string>
 
-#define PRINT_SEARCH_INFO true
+#define PRINT_SEARCH_INFO false
 
-typedef uint64_t bitbrd;
-typedef std::chrono::high_resolution_clock OthelloClock;
-typedef std::chrono::high_resolution_clock::time_point OthelloTime;
+using Clock = std::chrono::high_resolution_clock;
+using TimePoint = std::chrono::high_resolution_clock::time_point;
 
 const int INFTY = (1 << 30);
-const int WIPEOUT = (1 << 28);
 const int MOVE_NULL = 64;
 const int MOVE_BROKEN = -2;
 const int OPENING_NOT_FOUND = -3;
-const int CBLACK = 1;
-const int CWHITE = 0;
 const uint8_t PV_NODE = 0;
 const uint8_t CUT_NODE = 1;
 const uint8_t ALL_NODE = 2;
 
+enum Color {
+  WHITE, BLACK
+};
+
+constexpr Color operator~(Color c) { return Color(c ^ 1); }
+
+constexpr int move_row(int m) { return m >> 3; }
+constexpr int move_col(int m) { return m & 7; }
+constexpr int move_xy(int x, int y) { return 8 * y + x; }
+
 // Bitboard functions
-int countSetBits(bitbrd i);
-int bitScanForward(bitbrd bb);
-int bitScanReverse(bitbrd bb);
-bitbrd reflectVertical(bitbrd i);
-bitbrd reflectHorizontal(bitbrd x);
-bitbrd reflectDiag(bitbrd x);
+int count_bits(uint64_t i);
+int bitscan_forward(uint64_t i);
+int bitscan_reverse(uint64_t i);
+uint64_t reflect_vert(uint64_t i);
+uint64_t reflect_hor(uint64_t i);
+uint64_t reflect_diag(uint64_t i);
 
 // Utility functions
-double getTimeElapsed(OthelloTime startTime);
-void printMove(int move);
+uint64_t get_time_elapsed(TimePoint start_time);
+std::string print_move(int move);
 
-enum Side { 
-    WHITE, BLACK
+class ArrayList {
+ public:
+  int data[32];
+  int length;
+
+  ArrayList() {
+    clear();
+  }
+  ~ArrayList() = default;
+
+  void add(int m) {
+    data[length] = m;
+    length++;
+  }
+  void remove(int i) {
+    length--;
+    data[i] = data[length];
+  }
+
+  int get(int i) { return data[i]; }
+  void set(int i, int val) { data[i] = val; }
+  int last() { return data[length-1]; }
+  void clear() { length = 0; }
+  int size() { return length; }
+
+  void swap(int i, int j) {
+    int temp = data[i];
+    data[i] = data[j];
+    data[j] = temp;
+  }
 };
 
-class Move {
-   
-public:
-    int x, y;
-    Move(int x, int y) {
-        this->x = x;
-        this->y = y;     
-    }
-    ~Move() {}
-
-    int getX() { return x; }
-    int getY() { return y; }
-
-    void setX(int x) { this->x = x; }
-    void setY(int y) { this->y = y; }
-};
-
-class MoveList {
-public:
-    int moves[32];
-    unsigned int size;
-
-    MoveList() {
-        size = 0;
-    }
-    ~MoveList() {}
-
-    void add(int m) {
-        moves[size] = m;
-        size++;
-    }
-
-    int get(int i) { return moves[i]; }
-    int last() { return moves[size-1]; }
-    void set(int i, int val) { moves[i] = val; }
-
-    void swap(int i, int j) {
-        int temp = moves[i];
-        moves[i] = moves[j];
-        moves[j] = temp;
-    }
-
-    void clear() {
-        size = 0;
-    }
-};
-
-int nextMove(MoveList &moves, MoveList &scores, unsigned int index);
-void sort(MoveList &moves, MoveList &scores, int left, int right);
+// Retrieves the next move with the highest score starting from given index
+// using a partial selection sort.
+int next_move(ArrayList &moves, ArrayList &scores, int index);
 
 #endif
